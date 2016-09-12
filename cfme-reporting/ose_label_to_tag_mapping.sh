@@ -6,7 +6,8 @@ cd /root/git/openshift-tools
 git pull
 
 ##Move to the correct VMDB path with the correct rails version
-/var/www/miq/vmdb/bin/bundle exec rails runner ~/git/openshift-tools/cfme-reporting/map-labels-to-tags.rb
+cd /var/www/miq/vmdb
+bundle exec rails runner ~/git/openshift-tools/cfme-reporting/map-labels-to-tags.rb
 
 ## Restart CFME services
 systemctl restart evmserverd
