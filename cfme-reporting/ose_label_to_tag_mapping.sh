@@ -4,6 +4,7 @@
 ## Update latest map-labels-to-tags.rb from github (https://github.com/BCDevOps/openshift-tools.git)
 cd /root/git/openshift-tools
 git pull
+sleep 5
 
 ##Move to the correct VMDB path with the correct rails version
 vmdb
