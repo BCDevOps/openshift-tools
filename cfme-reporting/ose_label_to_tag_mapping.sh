@@ -4,11 +4,9 @@
 ## Update latest map-labels-to-tags.rb from github (https://github.com/BCDevOps/openshift-tools.git)
 cd /root/git/openshift-tools
 git pull
-sleep 5
 
 ##Move to the correct VMDB path with the correct rails version
-vmdb
-bundle exec rails runner ~/git/openshift-tools/cfme-reporting/map-labels-to-tags.rb
+/var/www/miq/vmdb/bin/bundle exec rails runner ~/git/openshift-tools/cfme-reporting/map-labels-to-tags.rb
 
 ## Restart CFME services
 systemctl restart evmserverd
