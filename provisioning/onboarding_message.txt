@@ -1,0 +1,40 @@
+Welcome to the BC Developers' Exchange OpenShift DevOps platform.
+
+The following projects have been created for you
+
+${project}
+
+The GitHub user ${user} has the admin role for all of the above projects. This will permit him/her to manage/administer all aspects of these projects, including:
+
+- adding/removing users to the projects (provided they are already members of the BCDevOps GitHub organization)
+- assigning roles/access levels within projects
+- creating and managing project resources such as pods, services, routes, secrets, etc.
+
+The OpenShift web console can be accessed by logging into https://console.pathfinder.gov.bc.ca:8443; you'll be prompted for GitHub authorization.
+
+OpenShift functions can also be accessed via the "oc" command line tool, which can be downloaded at the locations below for your platform of choice:
+
+https://github.com/openshift/origin/releases/tag/v1.2.1
+
+Once downloaded and unzipped (to a location in your PATH), you can login using a login command that you can copy from:
+
+https://console.pathfinder.gov.bc.ca:8443/console/command-line
+
+The command will look similar to:
+
+oc login https://console.pathfinder.gov.bc.ca:8443 --token=xtyz123xtyz123xtyz123xtyz123
+
+Background reading/Resources
+
+[Free OpenShift book](https://www.openshift.com/promotions/for-developers.html) from RedHat – good overview
+
+[Red Hat Container Development Kit](http://developers.redhat.com/products/cdk/overview/)
+
+OpenShift CI/CD pieline Demos (for inspiration):
+
+- https://www.youtube.com/watch?v=65BnTLcDAJI
+- https://www.youtube.com/watch?v=wSFyg6Etwx8
+
+
+
+

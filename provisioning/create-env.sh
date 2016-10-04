@@ -6,22 +6,48 @@ echo -n "Enter the short name of the product: "
 read PRODUCT
 echo -n "Enter the display name of the product: "
 read PRODUCT_DISPLAY
-echo -n "Enter the description name of the product: "
+echo -n "Enter the description of the product: "
 read PRODUCT_DESCRIPTION
 echo -n "Enter the category of the product: "
 read CATEGORY
 echo -n "Enter the name of the environment: "
 read ENVIRONMENT
 
-OS_PROJECT_NAME=$TEAM-$PRODUCT-$ENVIRONMENT
+#generate default project name, ensuring lowercase
+DEFAULT_OS_PROJECT_NAME=$(echo $TEAM-$PRODUCT-$ENVIRONMENT  | tr '[:upper:]' '[:lower:]')
+
+echo -n "Enter the name for the project (or enter to use a '$DEFAULT_OS_PROJECT_NAME'):"
+read OS_PROJECT_NAME
+
+if [[ -z "${OS_PROJECT_NAME// }" ]]; then
+    OS_PROJECT_NAME=$DEFAULT_OS_PROJECT_NAME
+fi
 
 echo "Creating new Project called $OS_PROJECT_NAME..."
 
-oc new-project $OS_PROJECT_NAME --display-name='$PRODUCT_DISPLAY' --description='$PRODUCT_DESCRIPTION'
+oc new-project $OS_PROJECT_NAME --display-name="$PRODUCT_DISPLAY ($ENVIRONMENT)" --description="$PRODUCT_DESCRIPTION ($ENVIRONMENT)"
 
 echo -n "Enter the path to the environment creation template: "
 read CREATE_SCRIPT
 
-oc create -f $CREATE_SCRIPT
+if [[ -z "${CREATE_SCRIPT// }" ]]; then
+    echo "Skipping project resource creation."
+else
+    if [ -e $CREATE_SCRIPT ]; then
+        echo "Creating project resources from file $CREATE_SCRIPT..."
+        oc create -f $CREATE_SCRIPT -n $OS_PROJECT_NAME
+    fi
+fi
+
+echo -n "Enter the username name for the user who will be the admin for the new project (or enter to skip):"
+read PROJECT_ADMIN_USER
+
+if [[ -z "${PROJECT_ADMIN_USER// }" ]]; then
+    echo "Skipping project resource creation."
+else
+    oc policy add-role-to-user admin $PROJECT_ADMIN_USER -n $OS_PROJECT_NAME
+fi
+
+echo "Labelling project..."
 
 /bin/bash project_label.sh $OS_PROJECT_NAME category=$CATEGORY team=$TEAM product=$PRODUCT environment=$ENVIRONMENT
