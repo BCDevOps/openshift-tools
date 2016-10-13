@@ -1,3 +1,5 @@
 FROM alpine:3.3
 
-ENTRYPOINT ["sh"]
+ADD sleep.sh .
+
+ENTRYPOINT ["sh", "sleep.sh"]
