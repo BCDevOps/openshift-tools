@@ -6,6 +6,6 @@
  
  To use pv_create.sh
  
- - create a text file containing the paths of the Gluster volumes/shares, one per line
- - if necessary, update 
+ - create a text file called pv_list in the same directory as pv_create, containing the paths of the Gluster volumes/shares, one per line
+ - run the script; it will create a PV for each of the entries in the pv_list file and output the results of the pv creation operations as they complete. 
 
