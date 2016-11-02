@@ -5,7 +5,7 @@
 # Created by shea.stewart@arctiq.ca
 
 ENDPOINT=glusterfs-cluster-app
-for i in $(cat /Users/wombat/Development/openshift-tools/pv_list)
+for i in $(cat pv_list)
 do
 SIZE=$(echo ${i} | awk -F"-" '{print $4}')
 SIZE=$(echo ${SIZE} | sed 's/G//')
