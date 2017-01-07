@@ -3,13 +3,16 @@ import requests
 import re
 import fileinput
 import sys
+import concurrent.futures
+
+from datetime import datetime
 
 routes = []
+# for stats if we ever wanted to print at the end of a run.
+succeeded = []
+failed = []
 
-for route in fileinput.input():
-    routes.append(route)
-
-for route in routes:
+def check_route(route):
     route_parts = route.split()
     project = route_parts[0]
     route_name = route_parts[1]
@@ -17,7 +20,7 @@ for route in routes:
     base_url = route_parts[2]
 
     if "bcgov" in base_url:
-        continue
+        return
 
     protocol = "http://"
 
@@ -34,25 +37,25 @@ for route in routes:
 
     full_url = "%s%s" % (protocol, base_url)
 
-    succeeded = []
-    failed = []
-
     try:
         response = requests.get(full_url)
         response_code = response.status_code
         if response_code not in [200, 403, 404] :
-            print "\nFailed... project:%s, route: %s, url: %s, response code: %d" % (project, route_name, full_url, response_code )
-            sys.stdout.flush()
+            print("time='{0}', error=Failed with bad status, project={1}, route_name={2}, route={3}, response_code={4} ".format(datetime.now(), project, route_name, full_url, response_code))
             failed.append(full_url)
         else:
-            sys.stdout.write('.')
-            sys.stdout.flush()
             succeeded.append(full_url)
     except Exception as e:
-        print "\nFailed (with Exception) ... project:%s, route: %s, url: %s, exception: %s" % (project, route_name, full_url, e )
+        print("time='{0}',error=Failed with Exception, project={1}, route_name={2}, route={3}, exception='{4}''".format(datetime.now(), project, route_name, full_url, e))
 
-        # print "\nGah! project:%s, route: %s, url: %s" % (project, route_name, full_url)
-        # print e
 
-    # for successful_route in  succeeded:
-    #     print "Succeed: %s" % (successful_route)
+for route in fileinput.input():
+    routes.append(route)
+
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+
+for route in routes:
+    executor.submit(check_route, route)
+
+if len(failed) > 0:
+    sys.exit(len(failed))
