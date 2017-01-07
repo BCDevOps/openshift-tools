@@ -18,3 +18,15 @@ To run:
 ```
 
 There will be "false negatives" due to orphaned routes or broken apps, but the purpose of this script is mainly to check whether the router is experiencing problems, not to test specific apps.
+
+Sample output (names, etc. changed to protect the guilty...):
+
+```
+=================
+Starting a run.
+=================
+time='2017-01-07 10:08:45.218158',error=Failed with Exception, project=xyz, route_name=xyz, route=https://xyz.gov.bc.ca, exception='('Connection aborted.', RemoteDisconnected('Remote end closed connection without response',))''
+time='2017-01-07 10:07:12.953645', error=Failed with bad status, project=pqr, route_name=pqr, route=http://pqr.gov.bc.ca, response_code=503
+=================
+Run complete... Grabbing a coffee before next run...
+=================
