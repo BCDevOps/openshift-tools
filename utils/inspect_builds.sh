@@ -1,10 +1,24 @@
 #!/usr/bin/env bash
 
-for project in $(oc get projects --no-headers | awk '{print $1}');
+
+#echo -n "Enter the name of the project whoe builds you'd like to inspect: "
+BUILD_PROJECT=$1
+
+PROJECTS=""
+
+if [[ -z "${BUILD_PROJECT// }" ]]; then
+    echo "Showing all projects' builds."
+    PROJECTS=$(oc get projects --no-headers | awk '{print $1}')
+else
+    echo "Showing builds for $BUILD_PROJECT ..."
+    PROJECTS+=(${BUILD_PROJECT})
+fi
+
+for project in  ${PROJECTS[@]};
 do
 #    echo "project: $project";
 #    for build in $(oc get builds -n $project --no-headers | awk '/Failed|Cancelled/' | awk '/hours/{print $1}');
-    for build in $(oc get builds -n $project --no-headers | awk '/hours/{print $1}');
+    for build in $(oc get builds -n $project --no-headers | awk '/hours|seconds|minutes/{print $1}');
         do
             build_description=$(oc describe build $build -n $project)
             build_status=`echo "$build_description" | awk '/Status/{print $2}'`
