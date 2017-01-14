@@ -26,4 +26,4 @@ while 1:
                     print("Build Config is {0}".format(build_config))
                     subprocess.call("oc start-build {0}".format(build_config), shell=True)
         except Exception as e:
-                print e
+                print(e)
