@@ -20,7 +20,7 @@ while 1:
             else:
                 print("Build '{0}' is {1}.".format( build['name'], build['status']))
 
-                if (build['status'] == 'Complete') and (running_builds.has_key(build['name'])):
+                if (build['status'] == 'Complete') and (build['name'] in running_builds):
                     print("Build '{0}' has now Completed.".format( build['name']))
                     build_config = subprocess.check_output("oc describe build {0} | awk '/Build Config/{{print $3}}'".format(build['name']), shell=True).rstrip('\n')
                     print("Build Config is {0}".format(build_config))
