@@ -1,11 +1,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pspd-config
+  name: testvolclaim
 spec:
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi
+      storage: 5Gi
+  volumename: "testvol"
 status: {}
