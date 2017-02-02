@@ -36,7 +36,7 @@ Run complete... Grabbing a coffee before next run...
 ### critical (alert on issues)
 CPU - reservations per node (alert at 80%?)
 ### warning (needs a warning to the groups)
-Build times (what should be the threashold?)
+Build times (what should be the threshold?)
 ### notice (more things to track)
 Disk - How many of each size of persistant volumes are available (Daily/Weekly report?)
 ### trending (long term perfomance data)
