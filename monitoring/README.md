@@ -30,6 +30,7 @@ time='2017-01-07 10:07:12.953645', error=Failed with bad status, project=pqr, ro
 =================
 Run complete... Grabbing a coffee before next run...
 =================
+```
 
 ## List of things to be monitored
 ### critical (alert on issues)
