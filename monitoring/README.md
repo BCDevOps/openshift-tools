@@ -34,7 +34,11 @@ Run complete... Grabbing a coffee before next run...
 
 ## List of things to be monitored
 ### critical (alert on issues)
-CPU reservations per node (alert at 80%?)
+CPU - reservations per node (alert at 80%?)
 ### warning (needs a warning to the groups)
+Build times (what should be the threashold?)
 ### notice (more things to track)
-### trending (long term peromance data)
+Disk - How many of each size of persistant volumes are available (Daily/Weekly report?)
+### trending (long term perfomance data)
+CPU/MEM/IOPS per project
+CPU/MEM/IOPS per pod
