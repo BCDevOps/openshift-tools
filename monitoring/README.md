@@ -33,13 +33,23 @@ Run complete... Grabbing a coffee before next run...
 ```
 
 ## List of things to be monitored
+
 ### critical (alert on issues)
-CPU - reservations per node (alert at 80%?)
+
+- CPU - reservations per node (alert at 80%?) `oc describe nodes -l region=app | grep -A4 'Allocated resources:' | grep '%' | awk '{print $2, $6}'`
+- Gluster thin pool usage
+- Docker Pool usage - Currently monitored on all hosts with `lvs --noheadings -o data_percent /dev/docker-vg/docker-pool | tr -d [:space:]` and critical alerts at 90% (where docker will break)
+
 ### warning (needs a warning to the groups)
+
 Build times (what should be the threshold?)
+
 ### notice (more things to track)
-Disk - How many of each size of persistant volumes are available (Daily/Weekly report?)
+
+- Disk - How many of each size of persistant volumes are available (Daily/Weekly report?) `oc get pv | grep Available | awk '{print $2}' | sort | uniq -c`
+
 ### trending (long term perfomance data)
+
 CPU/MEM/IOPS per project
 
 CPU/MEM/IOPS per pod
