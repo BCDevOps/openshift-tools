@@ -38,6 +38,7 @@ Run complete... Grabbing a coffee before next run...
 
 - CPU - reservations per node (alert at 80%?) `oc describe nodes -l region=app | grep -A4 'Allocated resources:' | grep '%' | awk '{print $2, $6}'`
 - Gluster thin pool usage
+- Gluster volumes for registry, logging, and metrics
 - Docker Pool usage - Currently monitored on all hosts with `lvs --noheadings -o data_percent /dev/docker-vg/docker-pool | tr -d [:space:]` and critical alerts at 90% (where docker will break)
 
 ### warning (needs a warning to the groups)
