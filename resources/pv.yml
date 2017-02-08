@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: testvol
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+  glusterfs:
+    endpoints: glusterfs-cluster-app
+    path: /testvol
+  persistentVolumeReclaimPolicy: Recycle

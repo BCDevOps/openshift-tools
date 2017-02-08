@@ -2,7 +2,7 @@ Welcome to the BC Developers' Exchange OpenShift DevOps platform.
 
 The following projects have been created for you
 
-${project}
+${projects}
 
 The GitHub user ${user} has the admin role for all of the above projects. This will permit him/her to manage/administer all aspects of these projects, including:
 
@@ -14,7 +14,7 @@ The OpenShift web console can be accessed by logging into https://console.pathfi
 
 OpenShift functions can also be accessed via the "oc" command line tool, which can be downloaded at the locations below for your platform of choice:
 
-https://github.com/openshift/origin/releases/tag/v1.2.1
+https://github.com/openshift/origin/releases/tag/v1.4.1
 
 Once downloaded and unzipped (to a location in your PATH), you can login using a login command that you can copy from:
 
