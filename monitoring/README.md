@@ -32,6 +32,24 @@ Run complete... Grabbing a coffee before next run...
 =================
 ```
 
+## prune.sh
+
+This script will prune the builds, deployments, and images from the registry. Set up as a cron on one of the master servers.
+
+To create the pruner user for the script
+
+```
+oc project default
+echo '{"kind":"ServiceAccount","apiVersion":"v1","metadata":{"name":"pruner"}}' | oc create -f -
+oadm policy add-cluster-role-to-user system:image-pruner system:serviceaccount:default:pruner
+secret=$(oc get sa/pruner --template '{{index .secrets 0 "name"}}')
+token=$(oc get secret $secret --template '{{.data.token}}' | base64 -d)
+oc login --token $token
+oc config view --minify --flatten > pruner.kubeconfig
+```
+
+Script will have no output, but will email on error.
+
 ## List of things to be monitored
 
 ### critical (alert on issues)
