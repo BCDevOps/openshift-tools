@@ -42,6 +42,7 @@ To create the pruner user for the script
 oc project default
 echo '{"kind":"ServiceAccount","apiVersion":"v1","metadata":{"name":"pruner"}}' | oc create -f -
 oadm policy add-cluster-role-to-user system:image-pruner system:serviceaccount:default:pruner
+oadm policy add-cluster-role-to-user cluster-admin system:serviceaccount:default:pruner
 secret=$(oc get sa/pruner --template '{{index .secrets 0 "name"}}')
 token=$(oc get secret $secret --template '{{.data.token}}' | base64 -d)
 oc login --token $token
