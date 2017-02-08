@@ -23,7 +23,7 @@ then
         echo -e "Run:\n$BUILDS\n\nDry run:\n$DR_BUILDS" | mail -s "OpenShift Prune Failed" $MAILTO
         exit 1
 fi
-exit 2
+
 # Dry run of deployments cleanup
 DR_DEPLOY=$(/bin/oadm prune deployments --orphans --keep-younger-than=96h 2>&1)
 if [ $? -ne 0 ]
