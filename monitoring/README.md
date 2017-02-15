@@ -62,7 +62,8 @@ Script will have no output, but will email on error.
 
 ### warning (needs a warning to the groups)
 
-Build times (what should be the threshold?)
+- Build times (what should be the threshold?)
+- Number of items needing pruning. This can also let us know if the prune cron is failing
 
 ### notice (more things to track)
 
