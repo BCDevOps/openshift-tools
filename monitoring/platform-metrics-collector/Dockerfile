@@ -18,9 +18,10 @@ RUN apk add --no-cache --virtual .build-deps \
     && apk del .build-deps \
     && mkdir /opt
 
-COPY *.py requirements.txt oc_info.sh /opt/
+#COPY *.py requirements.txt oc_metrics.sh /opt/
+COPY oc_metrics.sh /opt/
 WORKDIR /opt
 
-RUN pip install -r requirements.txt
+#RUN pip install -r requirements.txt
 
-CMD ["./oc_info.sh"]
+CMD ["./oc_metrics.sh"]
