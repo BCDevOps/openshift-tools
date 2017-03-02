@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
+function export_projects { local IFS="$1"; shift; export PROJECTS="$*"; }
+
 ENVIRONMENTS=()
+PROJECTS=()
 
 while getopts ":e:" env_name ;  do
   echo "Will provision environment $OPTARG"
@@ -45,6 +48,7 @@ do
 
     oc new-project $OS_PROJECT_NAME --display-name="$PRODUCT_DISPLAY ($ENVIRONMENT)" --description="$PRODUCT_DESCRIPTION ($ENVIRONMENT)"
 
+    PROJECTS+=(${OS_PROJECT_NAME})
 
     if [[ -z "${CREATE_SCRIPT// }" ]]; then
         echo "Skipping project resource creation."
@@ -66,4 +70,7 @@ do
     /bin/bash project_label.sh $OS_PROJECT_NAME category=$CATEGORY team=$TEAM product=$PRODUCT environment=$ENVIRONMENT
 done
 
+export_projects , ${PROJECTS[@]}
+export PROJECT_ADMIN_USER=$PROJECT_ADMIN_USER
 
+envsubst < onboarding_message.txt > onboarding_message_out.txt

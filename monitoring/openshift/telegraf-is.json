@@ -1,0 +1,10 @@
+{
+  "kind": "ImageStream",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "telegraf"
+  },
+  "spec": {
+    "dockerImageRepository": "docker.io/library/telegraf"
+  }
+}

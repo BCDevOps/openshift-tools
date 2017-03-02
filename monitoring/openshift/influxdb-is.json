@@ -1,0 +1,10 @@
+{
+  "kind": "ImageStream",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "influxdb"
+  },
+  "spec": {
+    "dockerImageRepository": "docker.io/library/influxdb"
+  }
+}

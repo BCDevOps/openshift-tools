@@ -1,0 +1,79 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "grafana-build",
+    "creationTimestamp": null
+  },
+  "objects": [
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "grafana"
+      },
+      "spec": {},
+      "status": {
+        "dockerImageRepository": ""
+      }
+    },
+    {
+      "kind": "BuildConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "grafana",
+        "creationTimestamp": null,
+        "labels": {
+          "app": "grafana"
+        },
+        "annotations": {
+          "openshift.io/generated-by": "OpenShiftNewApp"
+        }
+      },
+      "spec": {
+        "triggers": [
+          {
+            "type": "GitHub",
+            "github": {
+              "secret": "7UL1PX61UumJQ4tHaTRk"
+            }
+          },
+          {
+            "type": "Generic",
+            "generic": {
+              "secret": "QcrPwfIiv9Yzu1v0ngEc"
+            }
+          },
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "ImageChange",
+            "imageChange": {}
+          }
+        ],
+        "runPolicy": "Serial",
+        "source": {
+          "type": "Git",
+          "git": {
+            "uri": "https://github.com/OpenShiftDemos/grafana-openshift.git"
+          }
+        },
+        "strategy": {
+          "type": "Docker"
+        },
+        "output": {
+          "to": {
+            "kind": "ImageStreamTag",
+            "name": "grafana:latest"
+          }
+        },
+        "resources": {},
+        "postCommit": {}
+      },
+      "status": {
+        "lastVersion": 0
+      }
+    }
+  ]
+}

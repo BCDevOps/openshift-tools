@@ -1,0 +1,175 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "influxdb",
+    "creationTimestamp": null
+  },
+  "objects": [
+    {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "influxdb-persistence"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "${PERSISTENT_VOLUME_CAPACITY}"
+          }
+        }
+      },
+      "status": {}
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "influxdb",
+        "generation": 4,
+        "creationTimestamp": null,
+        "labels": {
+          "app": "influxdb"
+        },
+        "annotations": {
+          "openshift.io/generated-by": "OpenShiftWebConsole"
+        }
+      },
+      "spec": {
+        "strategy": {
+          "type": "Rolling",
+          "rollingParams": {
+            "updatePeriodSeconds": 1,
+            "intervalSeconds": 1,
+            "timeoutSeconds": 600,
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          },
+          "resources": {}
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "influxdb"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "namespace": "opsteam-operations-tools",
+                "name": "influxdb:alpine"
+              }
+            }
+          }
+        ],
+        "replicas": 1,
+        "test": false,
+        "selector": {
+          "app": "influxdb",
+          "deploymentconfig": "influxdb"
+        },
+        "template": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "app": "influxdb",
+              "deploymentconfig": "influxdb"
+            },
+            "annotations": {
+              "openshift.io/generated-by": "OpenShiftWebConsole"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "influxdb-persistence",
+                "persistentVolumeClaim": {
+                  "claimName": "influxdb-persistence"
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "influxdb",
+                "image": " ",
+                "ports": [
+                  {
+                    "containerPort": 8086,
+                    "protocol": "TCP"
+                  }
+                ],
+                "resources": {},
+                "volumeMounts": [
+                  {
+                    "name": "influxdb-persistence",
+                    "mountPath": "/var/lib/influxdb"
+                  }
+                ],
+                "terminationMessagePath": "/dev/termination-log",
+                "imagePullPolicy": "IfNotPresent"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "dnsPolicy": "ClusterFirst",
+            "securityContext": {}
+          }
+        }
+      },
+      "status": {
+        "observedGeneration": 4,
+        "replicas": 1,
+        "updatedReplicas": 1,
+        "availableReplicas": 1
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "influxdb",
+        "creationTimestamp": null,
+        "labels": {
+          "app": "influxdb"
+        },
+        "annotations": {
+          "openshift.io/generated-by": "OpenShiftWebConsole"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "8086-tcp",
+            "protocol": "TCP",
+            "port": 8086,
+            "targetPort": 8086
+          }
+        ],
+        "selector": {
+          "deploymentconfig": "influxdb"
+        },
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "name": "PERSISTENT_VOLUME_CAPACITY",
+      "displayName": "Persistent Data Volume Capacity",
+      "description": "Volume space available for persistent data including metrics data, e.g. 1Gi, 5Gi",
+      "value": "1Gi",
+      "required": true
+    }
+  ]
+}

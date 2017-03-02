@@ -1,10 +1,12 @@
+Hello,
+
 Welcome to the BC Developers' Exchange OpenShift DevOps platform.
 
 The following projects have been created for you
 
-${projects}
+$PROJECTS
 
-The GitHub user ${user} has the admin role for all of the above projects. This will permit him/her to manage/administer all aspects of these projects, including:
+The GitHub user ${PROJECT_ADMIN_USER} has the admin role for all of the above projects. This will permit him/her to manage/administer all aspects of these projects, including:
 
 - adding/removing users to the projects (provided they are already members of the BCDevOps GitHub organization)
 - assigning roles/access levels within projects
@@ -34,7 +36,3 @@ OpenShift CI/CD pieline Demos (for inspiration):
 
 - https://www.youtube.com/watch?v=65BnTLcDAJI
 - https://www.youtube.com/watch?v=wSFyg6Etwx8
-
-
-
-

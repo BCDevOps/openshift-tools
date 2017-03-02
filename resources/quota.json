@@ -1,0 +1,15 @@
+{
+    "kind": "ResourceQuota",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "compute-resources",
+        "creationTimestamp": null
+    },
+    "spec": {
+        "hard": {
+            "limits.cpu": "8",
+            "limits.memory": "32Gi"
+        }
+    },
+    "status": {}
+}

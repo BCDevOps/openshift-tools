@@ -1,0 +1,254 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "grafana-deploy",
+        "creationTimestamp": null
+    },
+    "objects": [
+        {
+            "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "grafana-persistence"
+            },
+            "spec": {
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "1Gi"
+                    }
+                }
+            },
+            "status": {}
+        },
+        {
+            "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "grafana-plugins"
+            },
+            "spec": {
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "1Gi"
+                    }
+                }
+            },
+            "status": {}
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "grafana",
+                "generation": 9,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "grafana"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftWebConsole"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "Rolling",
+                    "rollingParams": {
+                        "updatePeriodSeconds": 1,
+                        "intervalSeconds": 1,
+                        "timeoutSeconds": 600,
+                        "maxUnavailable": "25%",
+                        "maxSurge": "25%"
+                    },
+                    "resources": {}
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "grafana"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "namespace": "opsteam-operations-tools",
+                                "name": "grafana:latest"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "test": false,
+                "selector": {
+                    "app": "grafana",
+                    "deploymentconfig": "grafana"
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "grafana",
+                            "deploymentconfig": "grafana"
+                        },
+                        "annotations": {
+                            "openshift.io/generated-by": "OpenShiftWebConsole"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "grafana-plugins",
+                                "persistentVolumeClaim": {
+                                    "claimName": "grafana-plugins"
+                                }
+                            },
+                            {
+                                "name": "grafana-persistence",
+                                "persistentVolumeClaim": {
+                                    "claimName": "grafana-persistence"
+                                }
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "grafana",
+                                "image": " ",
+                                "ports": [
+                                    {
+                                        "containerPort": 3000,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                    {
+                                        "name": "GF_SERVER_ROOT_URL",
+                                        "value": "https://${GRAFANA_SUBDOMAIN}.pathfinder.gov.bc.ca"
+                                    },
+                                    {
+                                        "name": "GF_SECURITY_ADMIN_PASSWORD",
+                                        "value": "commit-hush-dilate"
+                                    }
+                                ],
+                                "resources": {},
+                                "volumeMounts": [
+                                    {
+                                        "name": "grafana-plugins",
+                                        "mountPath": "/var/lib/grafana/plugins"
+                                    },
+                                    {
+                                        "name": "grafana-persistence",
+                                        "mountPath": "/var/lib/grafana"
+                                    }
+                                ],
+                                "terminationMessagePath": "/dev/termination-log",
+                                "imagePullPolicy": "Always"
+                            }
+                        ],
+                        "restartPolicy": "Always",
+                        "terminationGracePeriodSeconds": 30,
+                        "dnsPolicy": "ClusterFirst",
+                        "securityContext": {}
+                    }
+                }
+            },
+            "status": {
+                "observedGeneration": 9,
+                "replicas": 1,
+                "updatedReplicas": 1,
+                "availableReplicas": 1
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "grafana",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "grafana"
+                }
+            },
+            "spec": {
+                "host": "${GRAFANA_SUBDOMAIN}.pathfinder.gov.bc.ca",
+                "to": {
+                    "kind": "Service",
+                    "name": "grafana",
+                    "weight": 100
+                },
+                "port": {
+                    "targetPort": "3000-tcp"
+                },
+                "tls": {
+                    "termination": "edge",
+                    "insecureEdgeTerminationPolicy": "Redirect"
+                }
+            },
+            "status": {
+                "ingress": [
+                    {
+                        "host": "grafana.pathfinder.gov.bc.ca",
+                        "routerName": "router",
+                        "conditions": [
+                            {
+                                "type": "Admitted",
+                                "status": "True",
+                                "lastTransitionTime": "2017-02-04T03:39:23Z"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "grafana",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "grafana"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftWebConsole"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "3000-tcp",
+                        "protocol": "TCP",
+                        "port": 3000,
+                        "targetPort": 3000
+                    }
+                ],
+                "selector": {
+                    "deploymentconfig": "grafana"
+                },
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        }
+    ],
+    "parameters": [
+    {
+        "name": "GRAFANA_SUBDOMAIN",
+        "displayName": "subdomain for Grafana web UI",
+        "description": "subdomain for Grafana web UI",
+        "value": "grafana",
+        "required": true
+    }
+]
+}

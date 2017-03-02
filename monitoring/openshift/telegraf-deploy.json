@@ -1,0 +1,163 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "telegraf",
+    "creationTimestamp": null
+  },
+  "objects": [
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "telegraf",
+        "generation": 2,
+        "creationTimestamp": null,
+        "labels": {
+          "app": "telegraf"
+        }
+      },
+      "spec": {
+        "strategy": {
+          "type": "Rolling",
+          "rollingParams": {
+            "updatePeriodSeconds": 1,
+            "intervalSeconds": 1,
+            "timeoutSeconds": 600,
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          },
+          "resources": {}
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "telegraf"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "namespace": "opsteam-operations-tools",
+                "name": "telegraf:latest"
+              }
+            }
+          }
+        ],
+        "replicas": 1,
+        "test": false,
+        "selector": {
+          "app": "telegraf",
+          "deploymentconfig": "telegraf"
+        },
+        "template": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "app": "telegraf",
+              "deploymentconfig": "telegraf"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "telegraf-conf-volume",
+                "configMap": {
+                  "name": "telegraf-conf"
+                }
+              },
+              {
+                "name": "metrics-scripts-volume",
+                "configMap": {
+                  "name": "metrics-scripts"
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "telegraf",
+                "image": " ",
+                "ports": [
+                  {
+                    "containerPort": 8092,
+                    "protocol": "UDP"
+                  },
+                  {
+                    "containerPort": 8094,
+                    "protocol": "TCP"
+                  },
+                  {
+                    "containerPort": 8125,
+                    "protocol": "UDP"
+                  }
+                ],
+                "resources": {},
+                "volumeMounts": [
+                  {
+                    "name": "telegraf-conf-volume",
+                    "mountPath": "/etc/telegraf"
+                  },
+                  {
+                    "name": "metrics-scripts-volume",
+                    "mountPath": "/etc/telegraf/scripts"
+                  }
+                ],
+                "terminationMessagePath": "/dev/termination-log",
+                "imagePullPolicy": "Always"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "dnsPolicy": "ClusterFirst",
+            "securityContext": {}
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "telegraf",
+        "creationTimestamp": null,
+        "labels": {
+          "app": "telegraf"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "8092-udp",
+            "protocol": "UDP",
+            "port": 8092,
+            "targetPort": 8092
+          },
+          {
+            "name": "8094-tcp",
+            "protocol": "TCP",
+            "port": 8094,
+            "targetPort": 8094
+          },
+          {
+            "name": "8125-udp",
+            "protocol": "UDP",
+            "port": 8125,
+            "targetPort": 8125
+          }
+        ],
+        "selector": {
+          "deploymentconfig": "telegraf"
+        },
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    }
+  ]
+}
