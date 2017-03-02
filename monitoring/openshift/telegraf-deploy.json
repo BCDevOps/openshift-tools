@@ -91,6 +91,10 @@
                     "protocol": "TCP"
                   },
                   {
+                    "containerPort": 8186,
+                    "protocol": "TCP"
+                  },
+                  {
                     "containerPort": 8125,
                     "protocol": "UDP"
                   }
