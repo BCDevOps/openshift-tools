@@ -2,13 +2,15 @@
 
 while [ 1 ]
 do
-    pod_count=$(oc get pods --no-headers | wc -l)
-    echo "Pod count is '$pod_count'"
+    pod_count=$(oc get pods --no-headers | wc -l | tr -d '[:space:]')
 
     ts_secs=$(date +%s)
-    ts_nano="$(($ts_secs * 1000000))"
+    ts_nano="$(($ts_secs * 1000000000))"
 
-    curl -i -XPOST "http://${TELEGRAF_HTTP_SERVICE_HOST}:8186/write" --data-binary "pod_count,project=myproject value=${pod_count} $ts_nano"
+    payload="pod_count,project=myproject value=${pod_count} $ts_nano"
+    echo "$payload"
+
+    curl -s -i -XPOST "http://${TELEGRAF_HTTP_SERVICE_HOST}:8186/write" --data-binary "$payload"
 
     sleep 30
 done
