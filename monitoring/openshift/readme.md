@@ -12,6 +12,10 @@
 
 `oc process -f grafana-build.json | oc create -f -`
 
+* The BuildConfig for the Platform Metrics Collector:
+
+`oc process -f platform-metrics-collector-build.json | oc create -f -`
+
 #Set up resources in deployment project(s)
 
 * The DeploymentConfig for InfluxDB (setting PERSISTENT_VOLUME_CAPACITY as desired):
@@ -32,3 +36,7 @@ oc create configmap metrics-script --from-file=../metrics_scripts/
 * The DeploymentConfig for Telegraf:
 
 `oc process -f telegraf-deploy.json | oc create -f -`
+
+* The DeploymentConfig for the Platform Metrics Collector:
+
+`oc process -f platform-metrics-collector-deploy.json | oc create -f -`
