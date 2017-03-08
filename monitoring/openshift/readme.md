@@ -16,6 +16,12 @@
 
 `oc process -f platform-metrics-collector-build.json | oc create -f -`
 
+#Set up permissions so deployment projects can pull images from -tools
+
+* Assuming your deployment project is `opsteam-operations-test` and your -tools project is `opsteam-operations-tools`:
+
+`oc policy add-role-to-user system:image-puller system:serviceaccount:opsteam-operations-test:default -n opsteam-operations-tools`
+
 #Set up resources in deployment project(s)
 
 * The DeploymentConfig for InfluxDB (setting PERSISTENT_VOLUME_CAPACITY as desired):
