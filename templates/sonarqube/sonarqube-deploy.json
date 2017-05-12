@@ -1,0 +1,257 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "true",
+    "creationTimestamp": null
+  },
+  "objects": [
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${SONARQUBE_SERVICE_NAME}",
+        "generation": 18,
+        "creationTimestamp": null,
+        "labels": {
+          "app": "${SONARQUBE_SERVICE_NAME}"
+        }
+      },
+      "spec": {
+        "strategy": {
+          "type": "Rolling",
+          "rollingParams": {
+            "updatePeriodSeconds": 1,
+            "intervalSeconds": 1,
+            "timeoutSeconds": 600,
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          },
+          "resources": {}
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "${SONARQUBE_SERVICE_NAME}"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "namespace": "${NAMESPACE}",
+                "name": "${SONARQUBE_IMAGESTREAM_TAG}"
+              }
+            }
+          }
+        ],
+        "replicas": 1,
+        "test": false,
+        "selector": {
+          "app": "${SONARQUBE_SERVICE_NAME}",
+          "deploymentconfig": "${SONARQUBE_SERVICE_NAME}"
+        },
+        "template": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "app": "${SONARQUBE_SERVICE_NAME}",
+              "deploymentconfig": "${SONARQUBE_SERVICE_NAME}"
+            },
+            "annotations": {
+              "openshift.io/container.sonarqube.image.entrypoint": "[\"./bin/run.sh\"]"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "sonarqube-extensions",
+                "persistentVolumeClaim": {
+                  "claimName": "sonarqube-data"
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "${SONARQUBE_SERVICE_NAME}",
+                "image": " ",
+                "ports": [
+                  {
+                    "containerPort": 9000,
+                    "protocol": "TCP"
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "SONARQUBE_JDBC_USERNAME",
+                    "value": "${SONARQUBE_JDBC_USERNAME}"
+                  },
+                  {
+                    "name": "SONARQUBE_JDBC_URL",
+                    "value": "jdbc:postgresql://${DATABASE_SERVICE_NAME}/${SONARQUBE_JDBC_DATABASE_NAME}"
+                  },
+                  {
+                    "name": "SONARQUBE_JDBC_PASSWORD",
+                    "value": "${SONARQUBE_JDBC_PASSWORD}"
+                  }
+                ],
+                "resources": {},
+                "volumeMounts": [
+                  {
+                    "name": "sonarqube-extensions",
+                    "mountPath": "/opt/sonarqube/extensions"
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": 9000,
+                    "scheme": "HTTP"
+                  },
+                  "timeoutSeconds": 1,
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "failureThreshold": 3
+                },
+                "terminationMessagePath": "/dev/termination-log",
+                "imagePullPolicy": "IfNotPresent"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "dnsPolicy": "ClusterFirst",
+            "securityContext": {}
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${SONARQUBE_SERVICE_NAME}",
+        "creationTimestamp": null,
+        "labels": {
+          "app": "${SONARQUBE_SERVICE_NAME}"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "9000-tcp",
+            "protocol": "TCP",
+            "port": 9000,
+            "targetPort": 9000
+          }
+        ],
+        "selector": {
+          "app": "${SONARQUBE_SERVICE_NAME}",
+          "deploymentconfig": "${SONARQUBE_SERVICE_NAME}"
+        },
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    },
+    {
+      "kind": "PersistentVolumeClaim",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "sonarqube-data"
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "resources": {
+          "requests": {
+            "storage": "5Gi"
+          }
+        }
+      },
+      "status": {}
+    },
+    {
+      "kind": "Route",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${SONARQUBE_SERVICE_NAME}",
+        "creationTimestamp": null,
+        "labels": {
+          "app": "${SONARQUBE_SERVICE_NAME}"
+        },
+        "annotations": {
+          "openshift.io/host.generated": "true"
+        }
+      },
+      "spec": {
+        "host": "${SONARQUBE_ROUTE_URL}",
+        "to": {
+          "kind": "Service",
+          "name": "${SONARQUBE_SERVICE_NAME}",
+          "weight": 100
+        },
+        "port": {
+          "targetPort": "9000-tcp"
+        }
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "name": "SONARQUBE_SERVICE_NAME",
+      "displayName": "SonarQube service name",
+      "description": "Name for the SonarQube service (also used to name other resources).",
+      "value": "sonarqube"
+    },
+    {
+      "name": "SONARQUBE_ROUTE_URL",
+      "displayName": "SonarQube ImageStreamTag",
+      "description": "Name of the ImageStreamTag to be used for the SonarQube image.",
+      "value": "sonarqube-myproject.pathfinder.gov.bc.ca"
+    },
+    {
+      "name": "SONARQUBE_IMAGESTREAM_TAG",
+      "displayName": "SonarQube ImageStreamTag",
+      "description": "Name of the ImageStreamTag to be used for the SonarQube image.",
+      "value": "sonarqube:6.0"
+    },
+    {
+      "name": "NAMESPACE",
+      "displayName": "Namespace",
+      "description": "The OpenShift Namespace where the ImageStream resides.",
+      "value": "openshift"
+    },
+    {
+      "name": "DATABASE_SERVICE_NAME",
+      "displayName": "Database Service Name",
+      "description": "The name of the OpenShift Service exposed for the database.",
+      "value": "postgresql",
+      "required": true
+    },
+    {
+      "name": "SONARQUBE_JDBC_USERNAME",
+      "displayName": "Database user Name",
+      "description": "The name of the database user.",
+      "required": true
+    },
+    {
+      "name": "SONARQUBE_JDBC_PASSWORD",
+      "displayName": "Database password",
+      "description": "The password for the database user.",
+      "required": true
+    },
+    {
+      "name": "SONARQUBE_JDBC_DATABASE_NAME",
+      "displayName": "Database user Name",
+      "description": "The name of the database user.",
+      "value": "sonarqube",
+      "required": true
+    }
+  ]
+}
