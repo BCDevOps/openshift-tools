@@ -20,3 +20,6 @@ postgres_password=$(oc env dc postgresql --list | awk  -F  "=" '/POSTGRESQL_PASS
 
 #deploy sonar in the selected project using the template in the current directory, passing jdbc passsword, etc. as params
 oc process -f sonarqube-deploy.json -v SONARQUBE_JDBC_USERNAME=sonarqube,SONARQUBE_JDBC_PASSWORD=$postgres_password | oc create -n $OS_PROJECT_NAME -f -
+
+
+echo "*****IMPORTANT**** Once SonarQube has successfully deployed and initialized (takes a couple minutes), you must run ./update-sonarqube-password.sh to ensure the default admin password is regenerated."
