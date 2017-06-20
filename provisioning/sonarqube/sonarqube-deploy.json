@@ -98,7 +98,12 @@
                     "value": "${SONARQUBE_JDBC_PASSWORD}"
                   }
                 ],
-                "resources": {},
+                "resources": {
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "4Gi"
+                  }
+                },
                 "volumeMounts": [
                   {
                     "name": "sonarqube-extensions",
@@ -213,7 +218,7 @@
       "name": "SONARQUBE_ROUTE_URL",
       "displayName": "SonarQube ImageStreamTag",
       "description": "Name of the ImageStreamTag to be used for the SonarQube image.",
-      "value": "sonarqube-myproject.pathfinder.gov.bc.ca"
+      "required": true
     },
     {
       "name": "SONARQUBE_IMAGESTREAM_TAG",
