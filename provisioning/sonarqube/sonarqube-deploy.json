@@ -167,7 +167,11 @@
       "kind": "PersistentVolumeClaim",
       "apiVersion": "v1",
       "metadata": {
-        "name": "sonarqube-data"
+        "name": "sonarqube-data",
+        "labels": {
+          "app": "${SONARQUBE_SERVICE_NAME}"
+        }
+
       },
       "spec": {
         "accessModes": [
@@ -236,7 +240,7 @@
       "name": "DATABASE_SERVICE_NAME",
       "displayName": "Database Service Name",
       "description": "The name of the OpenShift Service exposed for the database.",
-      "value": "postgresql",
+      "value": "postgresql-sonarqube",
       "required": true
     },
     {

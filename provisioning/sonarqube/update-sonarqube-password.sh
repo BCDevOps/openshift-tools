@@ -6,12 +6,12 @@ admin_password=$(openssl rand -base64 8)
 echo "Generated password is '$admin_password'. Enter to continue..."
 read BLAH
 
-# figure out the sonaqube route so we know where to access the API
+# figure out the sonarqube route so we know where to access the API
 sonarqube_url=$(oc get routes | awk '/sonarqube/{print $2}')
 curl -G -X POST -v -u admin:admin --data-urlencode "login=admin" --data-urlencode "password=$admin_password" --data-urlencode "previousPassword=admin" "http://$sonarqube_url/api/users/change_password"
 
 #guess what the sonarqube dc is.
-DEFAULT_SONARQUBE_DC=$(oc get dc --no-headers | grep sonar | awk '{ print $1 }')
+DEFAULT_SONARQUBE_DC=sonarqube
 
 # allow user to override guessed value above
 echo "This will update the password for your SonarQube instance."
