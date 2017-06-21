@@ -17,11 +17,17 @@ You'll be prompted to answer a few questions, all of which have default answers,
 Once PostGres and SonarQube instances are running, you *must* run the second script as follows to update the default SonarQube admin password:
 
 ```
-update-sonarqube-password.sh
+./update-sonarqube-password.sh
 ```
 
 ## How to login
  
 As you ran `update-sonarqube-password.sh` you will have seen a generated admin password displayed on the console.  You can login using the username `admin` and this password at the path where your QonrQube instance is running.
+
+As part of the password update script, the generated admin password is also captured as an environment variable (`SONARQUBE_ADMINPW`) in the `sonarqube` DeploymentConfig (although it is not used directly by the app), meaning you can display it by:
+  
+ ```
+ oc env dc sonarqube --list | grep SONARQUBE_ADMINPW
+ ```
  
 
