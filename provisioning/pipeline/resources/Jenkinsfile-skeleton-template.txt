@@ -1,0 +1,14 @@
+node('maven') {
+  stage('build') {
+    echo "Pretending to build..."
+    echo "Pretending to deploy to DEV..."
+  }
+  stage('deploy-test') {
+    input "Deploy to test?"
+    echo "Pretending to deploy to TEST..."
+  }
+  stage('deploy-prod') {
+    input "Deploy to prod?"
+    echo "Pretending to deploy to PROD..."
+  }
+}
