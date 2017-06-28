@@ -4,7 +4,7 @@ node('maven') {
     echo "checking out source"
     echo "Build: ${BUILD_ID}"
     checkout scm
-    echo "Commit: ${COMMIT_ID}"
+
     sh 'ls -lart'
   }
   stage('build') {
