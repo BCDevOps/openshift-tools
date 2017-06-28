@@ -1,4 +1,12 @@
 node('maven') {
+
+  stage('checkout') {
+    echo "checking out source"
+    echo "Build: ${BUILD_ID}"
+    checkout scm
+    echo "Commit: ${COMMIT_ID}"
+    sh 'ls -lart'
+  }
   stage('build') {
     echo "Pretending to build..."
     echo "Pretending to deploy to DEV..."
