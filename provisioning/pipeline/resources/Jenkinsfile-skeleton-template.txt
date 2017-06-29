@@ -5,7 +5,7 @@ node('maven') {
     echo "Build: ${BUILD_ID}"
     checkout scm
   }
-  statge('unit test') {
+  stage('unit test') {
     echo "Pretending to run unit tests..."
   }
   stage('build') {
