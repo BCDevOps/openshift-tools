@@ -1,12 +1,12 @@
 Hello,
 
-Welcome to the BC Developers' Exchange OpenShift DevOps platform.
+Welcome to the BC Gov OpenShift DevOps platform.
 
-The following projects have been created for you
+The following projects have been created for you :
 
-$PROJECTS
+$CONCATENATED_PROJECTS
 
-The GitHub user ${PROJECT_ADMIN_USER} has the admin role for all of the above projects. This will permit him/her to manage/administer all aspects of these projects, including:
+The GitHub user $PROJECT_ADMIN_USER has the admin role for all of the above projects. This will permit him/her to manage/administer all aspects of these projects, including:
 
 - adding/removing users to the projects (provided they are already members of the BCDevOps GitHub organization)
 - assigning roles/access levels within projects

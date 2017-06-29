@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-function export_projects { local IFS="$1"; shift; export PROJECTS="$*"; }
+function concatenate_projects { local IFS="$1"; shift; echo "$*"; }
 
 ENVIRONMENTS=()
 PROJECTS=()
@@ -33,7 +33,7 @@ fi
 
 for ENVIRONMENT in ${ENVIRONMENTS[@]}
 do
-  echo "${ENVIRONMENT}"
+  echo "Creating environment '${ENVIRONMENT}'"
       #generate default project name, ensuring lowercase
     DEFAULT_OS_PROJECT_NAME=$(echo $TEAM-$PRODUCT-$ENVIRONMENT  | tr '[:upper:]' '[:lower:]')
 
@@ -70,7 +70,10 @@ do
     /bin/bash project_label.sh $OS_PROJECT_NAME category=$CATEGORY team=$TEAM product=$PRODUCT environment=$ENVIRONMENT
 done
 
-export_projects , ${PROJECTS[@]}
-export PROJECT_ADMIN_USER=$PROJECT_ADMIN_USER
+CONCATENATED_PROJECTS=$(concatenate_projects , ${PROJECTS[@]})
 
-envsubst < onboarding_message.txt > onboarding_message_out.txt
+echo "All projects: '${CONCATENATED_PROJECTS}'"
+
+export CONCATENATED_PROJECTS=$CONCATENATED_PROJECTS PROJECT_ADMIN_USER=$PROJECT_ADMIN_USER
+
+envsubst < onboarding_message.txt

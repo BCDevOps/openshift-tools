@@ -4,8 +4,9 @@ node('maven') {
     echo "checking out source"
     echo "Build: ${BUILD_ID}"
     checkout scm
-
-    sh 'ls -lart'
+  }
+  statge('unit test') {
+    echo "Pretending to run unit tests..."
   }
   stage('build') {
     echo "Pretending to build..."
