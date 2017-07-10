@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
 usage(){
-	echo "Usage: $0 -i <IMAGESTREAM_NAME> -d <DEPLOYMENT_CONFIG> -t <JENKINSFILE_TEMPLATE (optional)>"
+	echo "Usage: $0 -i <IMAGESTREAM_NAME> -b <BUIlD_CONFIG> -t <JENKINSFILE_TEMPLATE (optional)>"
 	exit 1
 }
 
 TEMPLATE="./resources/Jenkinsfile-template.txt"
 
-while getopts ":i:d:t:" opt; do
+while getopts ":i:b:t:" opt; do
   case $opt in
     i)
       IMAGESTREAM_NAME=$OPTARG
       ;;
-    d)
-      DEPLOYMENT_CONFIG=$OPTARG
+    b)
+      BUILD_CONFIG=$OPTARG
       ;;
     t)
       TEMPLATE=$OPTARG
@@ -24,7 +24,7 @@ while getopts ":i:d:t:" opt; do
   esac
 done
 
-if [ -z "$IMAGESTREAM_NAME" ] || [ -z "$DEPLOYMENT_CONFIG" ] || [ -z "$TEMPLATE" ]
+if [ -z "$IMAGESTREAM_NAME" ] || [ -z "$BUILD_CONFIG" ] || [ -z "$TEMPLATE" ]
 then
     echo "Missing required parameters..."
     usage
@@ -32,13 +32,12 @@ then
 fi
 
 echo "OpenShift ImageStream name is '$IMAGESTREAM_NAME'" >&2
-echo "OpenShift DeploymentConfiguration is '$DEPLOYMENT_CONFIG'" >&2
+echo "OpenShift BuildConfiguration is '$BUILD_CONFIG'" >&2
 echo "Jenkinsfile template is '$TEMPLATE'" >&2
 
 export IMAGESTREAM_NAME=$IMAGESTREAM_NAME
-export DEPLOYMENT_CONFIG=$DEPLOYMENT_CONFIG
+export BUILD_CONFIG=$BUILD_CONFIG
 
-envsubst '${IMAGESTREAM_NAME} ${DEPLOYMENT_CONFIG}' < ${TEMPLATE}
-#envsubst '${IMAGESTREAM_NAME} ${DEPLOYMENT_CONFIG}' < ${TEMPLATE} > ./Jenkinsfile
+envsubst '${IMAGESTREAM_NAME} ${BUILD_CONFIG}' < ${TEMPLATE}
 
-echo "A Jenkinsfile has been created for you in this directory. You can place this in your GitHub repo and point to it when you run 'create-pipeline.sh'"
+echo "Jenkinsfile has been generated for you, above ^^^. Copy this into your GitHub repo and point to it when you run 'create-pipeline.sh'"
