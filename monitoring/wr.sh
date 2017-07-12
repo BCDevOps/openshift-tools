@@ -15,23 +15,27 @@ function resources {
         	CLOAD=$(ssh -q $n "awk '{print \$1, \$2, \$3}' /proc/loadavg")
         	CVOLS=$(ssh -q $n "df -h | grep openshift.local.volumes | wc -l")
 		CVOLS_PAD=$(echo $CVOLS | awk '{printf "%3s",$1}')
+        	CMETA=$(ssh -q $n "lvdisplay docker-vg/docker-pool | grep 'Allocated metadata'")
+		CMETA_PAD=$(echo $CMETA | sed -e 's/%//' | awk '{printf "%2.f",$3}')
         	CKUBE=$(oc describe node $n | egrep -A 4 'Name:|Allocated resources:|Kubelet Version:' | egrep 'Name:|%|Non-terminated Pods' | sed -e 's/Non-terminated Pods://g' -e 's/Name://g' | perl -p -i -e 's/dmz\n/dmz /g' | perl -p -i -e 's/in total\)\n/ /g' | tr -d '()' | awk '{printf "Node: %s  Pods: %2s  CPU: %3s  Memory: %3s", $1,$2,$4,$8}' | perl -p -i -e 's/\n//')
-        	MSG="$MSG $CKUBE  Volumes: $CVOLS_PAD  Load: $CLOAD \n"
+        	MSG="$MSG $CKUBE  Volumes: $CVOLS_PAD  Metadata: $CMETA_PAD%  Load: $CLOAD \n"
 	done
 
 	NSTAT=$(oc get nodes -o go-template="{{range .items}}{{if  eq .metadata.name $NODES}}{{.metadata.name}}{{print \"\t\"}}{{.status.allocatable.cpu}}{{print \"\t\"}}{{.status.allocatable.memory}}{{print \"\n\"}}{{end}}{{end}}")
 
-	PODS=$(oc get pods --all-namespaces -o go-template="{{range .items}}{{if and (not (eq .status.phase \"Failed\" \"Succeeded\")) (eq .spec.nodeName $NODES)}}{{range .spec.containers}}{{.name}}{{print \"\t\"}}{{.resources.requests.cpu}}{{print \"\t\"}}{{.resources.requests.memory}}{{print \"\n\"}}{{end}}{{end}}{{end}}")
+	PODS=$(oc get pods --all-namespaces -o go-template="{{range .items}}{{if .spec.nodeName}}{{if and (not (eq .status.phase \"Failed\" \"Succeeded\")) (eq .spec.nodeName $NODES)}}{{range .spec.containers}}{{.name}}{{print \"\t\"}}{{.resources.requests.cpu}}{{print \"\t\"}}{{.resources.requests.memory}}{{print \"\n\"}}{{end}}{{end}}{{end}}{{end}}")
 
 	MSG="$MSG\n Total CPU requests:\n"
 	TCPU=$(echo "$PODS" | awk -F "\t" 'BEGIN { SUM=0 } {if ($2 ~ "m") SUM+=$2/1000; else SUM+=$2 } END {print SUM}')
 	ACPU=$(echo "$NSTAT" | awk -F "\t" 'BEGIN { SUM=0 } {if ($2 ~ "m") SUM+=$2/1000; else SUM+=$2 } END {print SUM}')
-	MSG="$MSG $TCPU / $ACPU\n"
+	PCPU=$(echo "scale=4;$TCPU/$ACPU*100" | bc | awk '{printf "%2.f",$0}') 
+	MSG="$MSG $TCPU / $ACPU ($PCPU%)\n"
 
 	MSG="$MSG\n Total Memory requests:\n"
 	TMEM=$(echo "$PODS" | awk -F "\t" 'BEGIN { SUM=0 } {if ($3 ~ "Gi") $3=$3*1024"Mi"; if ($3 ~ "G") $3=$3*1000"M"; if ($3 ~ "Mi") $3=$3*1024"Ki"; if ($3 ~ "M") $3=$3*1000"K"; if ($3 ~ "Ki") $3=$3*1024; if ($3 ~ "K") $3=$3*1000; SUM+=$3} END { print SUM/1024/1024/1024"Gi"}')
 	AMEM=$(echo "$NSTAT" | awk -F "\t" 'BEGIN { SUM=0 } {if ($3 ~ "Gi") $3=$3*1024"Mi"; if ($3 ~ "G") $3=$3*1000"M"; if ($3 ~ "Mi") $3=$3*1024"Ki"; if ($3 ~ "M") $3=$3*1000"K"; if ($3 ~ "Ki") $3=$3*1024; if ($3 ~ "K") $3=$3*1000; SUM+=$3} END { print SUM/1024/1024/1024"Gi"}')
-	MSG="$MSG $TMEM / $AMEM\n"
+	PMEM=$(echo "scale=4;$(echo "$TMEM" | sed -e 's/Gi//')/$(echo "$AMEM" | sed -e 's/Gi//')*100" | bc | awk '{printf "%2.f",$0}')
+	MSG="$MSG $TMEM / $AMEM ($PMEM%)\n"
 
 	
 }
@@ -53,9 +57,9 @@ EOF
 
 #statusCode=$(curl --write-out %{http_code} --silent --output /dev/null -X POST -H 'Content-type: application/json' --data "${payLoad}" ${slackUrl})
 
-statusCode=$(curl --write-out %{http_code} -X POST  -H 'Content-type: application/json' --data "${payLoad}" ${slackUrl})
-echo ${payLoad}
-echo ${statusCode}
+statusCode=$(curl -s --write-out %{http_code} -X POST  -H 'Content-type: application/json' --data "${payLoad}" ${slackUrl})
+#echo ${payLoad}
+#echo ${statusCode}
 
 }
 
@@ -80,7 +84,7 @@ resources $INODES
 MSG="$MSG\nCompute Nodes:\n"
 resources $CNODES 
 
-if [ -n '$QNODES' ]; then
+if [ -n "$QNODES" ]; then
 	MSG="$MSG\nQuarantined Nodes:\n"
 	resources $QNODES
 fi
@@ -90,6 +94,13 @@ NBUILD=$(oc get builds --all-namespaces -o go-template='{{range .items}}{{if or 
 if [ ${#NBUILD} != 0 ]; then
 	MSG="$MSG\nBuilds in NEW status:\n"
 	MSG="$MSG$NBUILD\n"
+fi
+
+OPODS=$(oc get pods --all-namespaces -o go-template="{{range .items}}{{if .spec.nodeName}}{{else}}{{if not (eq .status.phase \"Failed\" \"Succeeded\")}}{{.metadata.namespace}}{{print \"/\"}}{{.metadata.name}}{{print \"\n\"}}{{end}}{{end}}{{end}}")
+
+if [ ${#OPODS} != 0 ]; then
+	MSG="$MSG\nOrphan Pods:\n"
+	MSG="$MSG$OPODS\n"
 fi
 
 if [[ $1 == "" ]]
