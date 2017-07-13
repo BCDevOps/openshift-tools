@@ -27,7 +27,7 @@
             }
           }
         ],
-        "runPolicy": "Serial",
+        "runPolicy": "Parallel",
         "source": {
           "type": "Git",
           "git": {
