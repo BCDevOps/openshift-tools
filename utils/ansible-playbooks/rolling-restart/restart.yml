@@ -1,0 +1,144 @@
+---
+- name: Upgrade masters
+  hosts: masters
+  serial: 1
+  any_errors_fatal: true
+  tasks:
+  - name: Rebooting {{ inventory_hostname | lower }}
+    shell: >
+      sleep 2 &&
+      /sbin/shutdown -r now "Controlled Reboot"
+    async: 1
+    poll: 0
+    ignore_errors: true
+
+  - name: Wait for {{ inventory_hostname | lower }} to boot
+    become: false
+    local_action: wait_for
+    args:
+      host: "{{ inventory_hostname }}"
+      port: 22
+      state: started
+      delay: 30
+      timeout: 600
+
+  - name: Wait for {{ inventory_hostname | lower }} to be ready
+    shell: oc get nodes {{ inventory_hostname }} | awk 'NR>1 {print $2}'
+    register: result
+    until: result.stdout.find("Ready,SchedulingDisabled") != -1
+    retries: 25
+    delay: 15
+    delegate_to: localhost
+
+
+- name: Upgrade infra
+  hosts: infra
+  serial: 1
+  any_errors_fatal: true
+  tasks:
+  - name: Mark {{ inventory_hostname | lower }} unschedulable
+    command: >
+      oc adm cordon {{ inventory_hostname | lower }}
+    delegate_to: localhost
+
+  - name: Drain {{ inventory_hostname | lower }}
+    command: >
+      oc adm drain {{ inventory_hostname | lower }} --force --delete-local-data --ignore-daemonsets
+    delegate_to: localhost
+    register: l_drain_result
+    until: not l_drain_result | failed
+    retries: 60
+    delay: 60
+
+  - name: Rebooting {{ inventory_hostname | lower }}
+    shell: >
+      sleep 2 &&
+      /sbin/shutdown -r now "Controlled Reboot"
+    async: 1
+    poll: 0
+    ignore_errors: true
+
+  - name: Wait for {{ inventory_hostname | lower }} to boot
+    become: false
+    local_action: wait_for
+    args:
+      host: "{{ inventory_hostname }}"
+      port: 22
+      state: started
+      delay: 30
+      timeout: 600
+
+  - name: Wait for {{ inventory_hostname | lower }} to be ready
+    shell: oc get nodes {{ inventory_hostname }} | awk 'NR>1 {print $2}'
+    register: result
+    until: result.stdout.find("Ready,SchedulingDisabled") != -1
+    retries: 25
+    delay: 15
+    delegate_to: localhost
+
+
+  - name: Set {{ inventory_hostname | lower }} schedulability
+    command: >
+      oc adm uncordon {{ inventory_hostname | lower }}
+    delegate_to: localhost
+    delay: 60
+
+  - name: Wait for {{ inventory_hostname | lower }} to have a running router
+    shell: oc get pods -n default -o wide | grep {{ inventory_hostname | lower }} | grep router | awk '{print $3}'
+    register: result
+    until: result.stdout.find("Running") != -1
+    retries: 25
+    delay: 15
+    delegate_to: localhost
+
+- name: Upgrade app nodes
+  hosts: app
+  serial: 1
+  any_errors_fatal: true
+  tasks:
+  - name: Mark {{ inventory_hostname | lower }} unschedulable
+    command: >
+      oc adm cordon {{ inventory_hostname | lower }}
+    delegate_to: localhost
+
+  - name: Drain {{ inventory_hostname | lower }}
+    command: >
+      oc adm drain {{ inventory_hostname | lower }} --force --delete-local-data --ignore-daemonsets
+    delegate_to: localhost
+    register: l_drain_result
+    until: not l_drain_result | failed
+    retries: 60
+    delay: 60
+
+  - name: Rebooting {{ inventory_hostname | lower }}
+    shell: >
+      sleep 2 &&
+      /sbin/shutdown -r now "Controlled Reboot"
+    async: 1
+    poll: 0
+    ignore_errors: true
+
+  - name: Wait for {{ inventory_hostname | lower }} to boot
+    become: false
+    local_action: wait_for
+    args:
+      host: "{{ inventory_hostname }}"
+      port: 22
+      state: started
+      delay: 30
+      timeout: 600
+
+  - name: Wait for {{ inventory_hostname | lower }} to be ready
+    shell: oc get nodes {{ inventory_hostname }} | awk 'NR>1 {print $2}'
+    register: result
+    until: result.stdout.find("Ready,SchedulingDisabled") != -1
+    retries: 25
+    delay: 15
+    delegate_to: localhost
+
+
+  - name: Set {{ inventory_hostname | lower }} schedulability
+    command: >
+      oc adm uncordon {{ inventory_hostname | lower }}
+    delegate_to: localhost
+    delay: 60
