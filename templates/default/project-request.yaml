@@ -106,7 +106,7 @@ objects:
   spec:
     limits:
     - default:
-        cpu: 1
+        cpu: 250m
         memory: 1Gi
       defaultRequest:
         cpu: 100m
