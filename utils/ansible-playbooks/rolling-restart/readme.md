@@ -1,4 +1,4 @@
-#Purpose
+# Purpose
 This playbook is is intended to perform an automated *graceful* restart
 of all openshift components ( masters, infrastructure nodes, application nodes).
 
@@ -11,9 +11,9 @@ This playbook simply works in this order:
 to be running on the restarted node before moving on
 3. Restart each app node, one at a time
 
-#Requirements
-*ocp_inventory* should be updated to reflect the appropriate environment. 
+# Requirements
+*ocp_inventory* should be updated to reflect the appropriate environment.
 
-#Inventory
+# Inventory
 The playbook assumes an inventory similar to that of ocp_inventory and can
 be used to target any set of nodes.
