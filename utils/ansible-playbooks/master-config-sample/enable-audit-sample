@@ -1,0 +1,28 @@
+cat <<EOF > audit.yaml
+---
+- hosts: masters
+  tasks:
+  - name: Add AD configuration to masters and restart
+    blockinfile:
+      dest: /etc/origin/master/master-config.yaml
+      marker: "# {mark} ANSIBLE MANAGED AUDIT BLOCK #"
+      insertafter: EOF
+      block: |
+          auditConfig:
+            auditFilePath: "/var/log/audit-ocp.log"
+            enabled: true
+            maximumFileRetentionDays: 10
+            maximumFileSizeMegabytes: 10
+            maximumRetainedFiles: 10
+      backup: yes
+      state: present
+  - name: restart controller service
+    service:
+      name: atomic-openshift-master-controllers
+      state: restarted
+  - name: restart api service
+    service:
+      name: atomic-openshift-master-api
+      state: restarted
+EOF
+ansible-playbook -i node_list audit.yaml

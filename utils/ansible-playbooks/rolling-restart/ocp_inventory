@@ -1,0 +1,18 @@
+[all:children]
+masters
+infra
+app
+
+[all:vars]
+openshift_deployment_type=openshift-enterprise
+
+
+#Exclude any master that is the ansible control node (if so)
+#Best to run from an alternate control node
+[masters]
+
+
+[infra]
+
+
+[app]
