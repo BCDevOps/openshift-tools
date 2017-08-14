@@ -1,0 +1,12 @@
+---
+- name: cordon
+  include: cordon.yml
+  when: inventory_hostname not in groups['masters']
+- name: yum update
+  include: yum_update.yml
+  when: yum_update == "yes"
+- name: reboot server
+  include: reboot.yml
+- name: uncordon
+  include: uncordon.yml
+  when: inventory_hostname not in groups['masters']

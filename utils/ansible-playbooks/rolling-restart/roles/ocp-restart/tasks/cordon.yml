@@ -1,0 +1,18 @@
+---
+- name: Drain {{ inventory_hostname | lower }}
+  command: >
+    oc adm drain {{ inventory_hostname | lower }} --force --delete-local-data --ignore-daemonsets
+  delegate_to: localhost
+  register: l_drain_result
+  until: not l_drain_result | failed
+  retries: 60
+  delay: 60
+
+
+- name: Validate {{ inventory_hostname | lower }} has no pods stuck Terminating
+  shell: oc get pods --all-namespaces=true -o wide | grep {{ inventory_hostname | lower }} | awk {'print $4'}
+  delegate_to: localhost
+  register: drain_result
+  until: drain_result.stdout.find("Terminating") != 1
+  retries: 25
+  delay: 15

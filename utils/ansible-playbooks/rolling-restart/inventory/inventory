@@ -5,10 +5,9 @@ app
 
 [all:vars]
 openshift_deployment_type=openshift-enterprise
+yum_update=no
 
-
-#Exclude any master that is the ansible control node (if so)
-#Best to run from an alternate control node
+#Exclude any master that is the ansible control node
 [masters]
 
 
