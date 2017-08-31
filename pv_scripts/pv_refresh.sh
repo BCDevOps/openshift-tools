@@ -71,7 +71,6 @@ EOF
 fi
 
 /usr/bin/oc delete pv $pv
-/usr/bin/oc create -f /tmp/pv_create.yaml -n openshift
 
 
 if [[ $ReclaimPolicy == "Recycle" ]]; then 
@@ -81,6 +80,8 @@ ls -lha /mnt/glusterfstmp >> /var/log/pv_refresh_recycle.log
 rm -rf /mnt/glusterfstmp/*
 umount /mnt/glusterfstmp
 fi
+
+/usr/bin/oc create -f /tmp/pv_create.yaml -n openshift
 
 echo "`date` Failed PV Found ($pv) and refreshed" >> /var/log/pv_refresh.log
 cat /tmp/pv_create.yaml >> /var/log/pv_refresh.log
