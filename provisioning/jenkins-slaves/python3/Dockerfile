@@ -22,3 +22,5 @@ RUN yum repolist > /dev/null && \
 # installation.
 RUN source scl_source enable rh-python35 && \
     virtualenv /opt/app-root
+
+RUN chmod -R 775 /opt/app-root
