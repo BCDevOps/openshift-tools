@@ -5,18 +5,25 @@
         "name": "jenkins-pipeline",
         "creationTimestamp": null,
         "annotations": {
-            "description": "Default Jenkins configuration for Pipeline BuildConfigs. Note this does not include persistent storage.",
+            "description": "Jenkins service, with persistent storage.\n\nNOTE: You must have persistent volumes available in your cluster to use this template.",
             "iconClass": "icon-jenkins",
-            "tags": "instant-app,jenkins"
+            "openshift.io/display-name": "Jenkins (Persistent)",
+            "tags": "instant-app,jenkins",
+            "template.openshift.io/documentation-url": "https://docs.openshift.org/latest/using_images/other_images/jenkins.html",
+            "template.openshift.io/long-description": "This template deploys a Jenkins server capable of managing OpenShift Pipeline builds and supporting OpenShift-based oauth login.",
+            "template.openshift.io/provider-display-name": "Red Hat, Inc.",
+            "template.openshift.io/support-url": "https://access.redhat.com"
         }
     },
-    "message": "A Jenkins service has been created in your project.  The username/password are admin/${JENKINS_PASSWORD}.  The tutorial at https://github.com/openshift/origin/blob/master/examples/jenkins/README.md contains more information about using this template.",
+    "message": "A Jenkins service has been created in your project.  Log into Jenkins with your OpenShift account.  The tutorial at https://github.com/openshift/origin/blob/master/examples/jenkins/README.md contains more information about using this template.",
     "objects": [
         {
             "apiVersion": "v1",
             "kind": "Route",
             "metadata": {
-                "creationTimestamp": null,
+                "annotations": {
+                    "template.openshift.io/expose-uri": "http://{.spec.host}{.spec.path}"
+                },
                 "name": "${JENKINS_SERVICE_NAME}"
             },
             "spec": {
@@ -31,8 +38,8 @@
             }
         },
         {
-            "kind": "PersistentVolumeClaim",
             "apiVersion": "v1",
+            "kind": "PersistentVolumeClaim",
             "metadata": {
                 "name": "${JENKINS_SERVICE_NAME}"
             },
@@ -51,7 +58,9 @@
             "apiVersion": "v1",
             "kind": "DeploymentConfig",
             "metadata": {
-                "creationTimestamp": null,
+                "annotations": {
+                    "template.alpha.openshift.io/wait-for-ready": "true"
+                },
                 "name": "${JENKINS_SERVICE_NAME}"
             },
             "spec": {
@@ -64,7 +73,6 @@
                 },
                 "template": {
                     "metadata": {
-                        "creationTimestamp": null,
                         "labels": {
                             "name": "${JENKINS_SERVICE_NAME}"
                         }
@@ -75,8 +83,16 @@
                                 "capabilities": {},
                                 "env": [
                                     {
-                                        "name": "JENKINS_PASSWORD",
-                                        "value": "${JENKINS_PASSWORD}"
+                                        "name": "OPENSHIFT_ENABLE_OAUTH",
+                                        "value": "${ENABLE_OAUTH}"
+                                    },
+                                    {
+                                        "name": "OPENSHIFT_ENABLE_REDIRECT_PROMPT",
+                                        "value": "true"
+                                    },
+                                    {
+                                        "name": "OPENSHIFT_JENKINS_JVM_ARCH",
+                                        "value": "${JVM_ARCH}"
                                     },
                                     {
                                         "name": "KUBERNETES_MASTER",
@@ -94,11 +110,12 @@
                                 "image": " ",
                                 "imagePullPolicy": "IfNotPresent",
                                 "livenessProbe": {
+                                    "failureThreshold": 30,
                                     "httpGet": {
                                         "path": "/login",
                                         "port": 8080
                                     },
-                                    "initialDelaySeconds": 120,
+                                    "initialDelaySeconds": 420,
                                     "timeoutSeconds": 3
                                 },
                                 "name": "jenkins",
@@ -114,10 +131,6 @@
                                     "limits": {
                                         "memory": "${MEMORY_LIMIT}",
                                         "cpu": "${CPU_LIMIT}"
-                                    },
-                                    "requests": {
-                                        "memory": "${MEMORY_REQUEST}",
-                                        "cpu": "${CPU_REQUEST}"
                                     }
                                 },
                                 "securityContext": {
@@ -172,6 +185,9 @@
             "apiVersion": "v1",
             "kind": "ServiceAccount",
             "metadata": {
+                "annotations": {
+                    "serviceaccounts.openshift.io/oauth-redirectreference.jenkins": "{\"kind\":\"OAuthRedirectReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"Route\",\"name\":\"${JENKINS_SERVICE_NAME}\"}}"
+                },
                 "name": "${JENKINS_SERVICE_NAME}"
             }
         },
@@ -223,7 +239,6 @@
                     "service.alpha.openshift.io/dependencies": "[{\"name\": \"${JNLP_SERVICE_NAME}\", \"namespace\": \"\", \"kind\": \"Service\"}]",
                     "service.openshift.io/infrastructure": "true"
                 },
-                "creationTimestamp": null,
                 "name": "${JENKINS_SERVICE_NAME}"
             },
             "spec": {
@@ -249,7 +264,7 @@
             "name": "JENKINS_SERVICE_NAME",
             "displayName": "Jenkins Service Name",
             "description": "The name of the OpenShift Service exposed for the Jenkins container.",
-            "value": "jenkins-pipeline-svc"
+            "value": "jenkins"
         },
         {
             "name": "JNLP_SERVICE_NAME",
@@ -258,12 +273,16 @@
             "value": "jenkins-jnlp"
         },
         {
-            "name": "JENKINS_PASSWORD",
-            "displayName": "Jenkins Password",
-            "description": "Password for the Jenkins 'admin' user.",
-            "generate": "expression",
-            "from": "[a-zA-Z0-9]{16}",
-            "required": true
+            "name": "ENABLE_OAUTH",
+            "displayName": "Enable OAuth in Jenkins",
+            "description": "Whether to enable OAuth OpenShift integration. If false, the static account 'admin' will be initialized with the password 'password'.",
+            "value": "true"
+        },
+        {
+            "name": "JVM_ARCH",
+            "displayName": "Jenkins JVM Architecture",
+            "description": "Whether Jenkins runs with a 32 bit (i386) or 64 bit (x86_64) JVM.",
+            "value": "x86_64"
         },
         {
             "name": "MEMORY_LIMIT",
@@ -275,19 +294,7 @@
             "name": "CPU_LIMIT",
             "displayName": "CPU Limit",
             "description": "Maximum amount of CPU the container can use.",
-            "value": "1"
-        },
-        {
-            "name": "MEMORY_REQUEST",
-            "displayName": "Memory Request",
-            "description": "Amount of memory the container initially requests.",
-            "value": "1Gi"
-        },
-        {
-            "name": "CPU_REQUEST",
-            "displayName": "CPU Request",
-            "description": "Amount of memory the container initially requests.",
-            "value": "100m"
+            "value": "4"
         },
         {
             "name": "VOLUME_CAPACITY",
@@ -306,10 +313,10 @@
             "name": "JENKINS_IMAGE_STREAM_TAG",
             "displayName": "Jenkins ImageStreamTag",
             "description": "Name of the ImageStreamTag to be used for the Jenkins image.",
-            "value": "jenkins-2-rhel7:2.32-4"
+            "value": "jenkins:latest"
         }
     ],
     "labels": {
-        "template": "jenkins-pipeline-template"
+        "template": "jenkins-persistent-template"
     }
 }
