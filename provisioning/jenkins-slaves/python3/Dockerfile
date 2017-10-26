@@ -63,6 +63,3 @@ RUN source scl_source enable rh-python35 && \
 RUN chown -R 1001:0 /opt/app-root && chmod -R og+rwx /opt/app-root
 
 USER 1001
-
-# Set the default CMD to print the usage of the language image.
-CMD "source /opt/app-root/bin/activate"
