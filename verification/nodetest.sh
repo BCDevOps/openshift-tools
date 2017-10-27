@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
-# User Tunables
+## User Tunables
+# Project to run test in, will be deleted if it exists
 PROJECT=node-validation
+# App template to use
+# django-psql-persistent is nice because it contains the most things to
+# excersise. A S2I build, a Service, a DeploymentController, a
+# Persistent Volume, and a route.
 TEMPLATE=django-psql-persistent
 
 # Exit on error. Append "|| true" if you expect an error.
@@ -97,6 +102,14 @@ then
     exit 1
 fi
 
+# Confirm selector matches nodes
+NODE_COUNT=$(oc get nodes -o name --selector "${SELECTOR}" | wc -l)
+if [[ "${NODE_COUNT}" -lt 1 ]]
+then
+    error "${SELECTOR} doesn't match any nodes"
+    exit 1
+fi
+
 # Delete old validation project if it exists
 if oc get project "${PROJECT}" >/dev/null 2>&1
 then
@@ -115,7 +128,7 @@ fi
 oc new-project "${PROJECT}" >/dev/null
 
 # For each node
-for NODE in $(oc get nodes -o name --selector "${SELECTOR}" | sed 's/node\///')
+for NODE in $(oc get nodes -o name --selector "${SELECTOR}" | sed 's/nodes*\///')
 do
     echo "=== Testing $NODE"
     # Set project to use node
@@ -182,6 +195,7 @@ do
         echo -n .
         sleep 1
     done
+    echo
 
 done
 
