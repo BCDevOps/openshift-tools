@@ -21,3 +21,5 @@ done
 ##
 ## oc export pvc mariadb -o yaml  --as-template=mariadb_old  | sed '/^    volumeName/ d' | sed '/  status/ d' | sed -i 
 # oc project -q
+
+#oc describe pods|grep deploymentconfig
