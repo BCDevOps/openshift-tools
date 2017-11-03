@@ -13,11 +13,11 @@ objects:
     creationTimestamp: null
     labels:
       template: {{ PVC_TEMPLATE_LABEL }}
-    name: {{ PVC_VOLUME_NAME }}
+    name: {{ PVC_VOLUME_CLAIM_NAME }}
   spec:
     accessModes:
-    - ReadWriteOnce
+    - {{ PVV_ACCESS_MODE }}
     resources:
       requests:
-        storage: {{ PVC_VOLUME-SIZE }}
+        storage: {{ PVC_VOLUME_SIZE }}
     volumeName: {{ PVC_VOLUME_NAME }}
