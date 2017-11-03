@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: {{ PVC_TEMPLATE_NAME }}
+objects:
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    annotations:
+      pv.kubernetes.io/bind-completed: "yes"
+      pv.kubernetes.io/bound-by-controller: "yes"
+    creationTimestamp: null
+    labels:
+      template: {{ PVC_TEMPLATE_LABEL }}
+    name: {{ PVC_VOLUME_NAME }}
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi
+    volumeName: app-pv-134-5g
