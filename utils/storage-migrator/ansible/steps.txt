@@ -1,0 +1,88 @@
+Migrating to new storage
+
+A) Create service account: storage-migrator  (Rights: project admin)
+   get service account token to login with service account
+   
+B) Set Storage-quota to 200GB
+
+C) Cretae Replacement template (PVC_TEMPLATE.yaml)
+ 
+D) Spin  up migration pod
+
+E) Migration (in migration pod):
+   1) Collect pod info (running pods, #instances for each) 
+   2) Scale down running pods to 0 (remember current running pod # to be able to scale back to same #)
+      oc scale dc/<apps> --replicas=0
+   3) collect dc config info
+      - find all dc with pvc's attached
+      - for each dc  with pvc's attached
+        - for each pvc do
+          - collect pvc config info
+          - connect to old pvc 
+            oc volume dc/<migration-pod> --add --overwrite --name=<pvc-name> --type=persistentVolumeClaim --claim-name=<pvc-claim-name>
+          - create new storage on cns (same size ?, type block?)
+            oc create -f pvc-cns.json
+            oc volume dc/<migration-pod> --add --claim-size <pvc-size> --mount-path <pvc-mount-path> --name <pvc-vol-name>
+          - mount both PVC (old and new)
+          - copy data 
+             tar cf - . | oc rsh <pod> tar xofC - <mount-point>
+          - verify data ?
+        - for each pvc, do
+          - update dc (to mount new pvc) (doing this at end because config update will trigger deploy)
+   4) spin up applicatiomn pods in project (oc scale dc/<apps> --replicas=x) Note: need to remember what it was before
+   7) decommission/cleanup old pvc  (oc delete pvc <claim-name>
+      - for each dc  with pvc's attached
+        - delete& reclaim old pvc
+           oc delete pvc <claim-name>
+           oc volume dc/<dc-config-name --remove --name <pvc-claim-name>
+
+F) decommission migration pod
+
+
+
+
+
+
+
+----------
+
+oc get pvc
+oc volume dc --all
+oc volume dc/python-app --add --claim-size 4Gi --mount-path /extra_volume --name extra-volume-files
+
+oc create -f pvc.json
+oc volume dc/logging-es-pm7uamdy --add --overwrite --name=elasticsearch-storage --type=persistentVolumeClaim --claim-name=logging-es-1
+
+oc scale dc/<apps> --replicas=0
+
+curl -o /tmp/Nginx.HTTP.Server.pdf http://nginx-download-server.apps.10.2.2.2.xip.io/Nginx.HTTP.Server.pdf
+
+oc delete pvc <claim-name>
+oc volume dc/nginx --remove --name downloads
+
+
+#!/bin/bash
+DC=$(oc get dc | awk  'NR >1 {print $1}')
+for x in $DC
+do
+  if [ $x != ocp-storage-migrator ]
+  then
+      oc get dc/$x
+      cn=$(oc describe dc/$x | grep ClaimName | awk '{print $2}')
+      for pvcname in $cn 
+      do 
+        oc get pvc/$pvcname
+        oc export pvc/$pvcname -o yaml --as-template=${pvcname}_old >PVC_$x_$pvcname.yaml
+      done 
+  else
+      echo "This is us"
+  fi
+  echo "----"
+done
+
+
+##
+## oc export pvc mariadb -o yaml  --as-template=mariadb_old  | sed '/^    volumeName/ d' | sed '/  status/ d' | sed -i 
+# oc project -q
+
+#oc describe pods|grep deploymentconfig

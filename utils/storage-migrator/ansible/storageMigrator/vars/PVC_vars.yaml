@@ -1,0 +1,7 @@
+---
+PVC_TEMPLATE_NAME=jenkins_old
+PVC_TEMPLATE_LABEL=jenkins-persistent-template
+PVC_VOLUME_CLAIM_NAME=jenkins
+PVV_ACCESS_MODE=ReadWriteOnce
+PVC_VOLUME_SIZE=1Gi
+PVC_VOLUME_NAME=app-pv-241-1g
