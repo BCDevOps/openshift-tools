@@ -25,11 +25,15 @@
     - PVC_VOLUME_NAME
     - PVC_STORAGE_CLASS
   tasks:
+    - name: collect running deployments and number of pods for each
+      shell: "oc get dc | awk 'NR >1 {print($1, $4)}'"
+      register: deployment_state
+    - debug: var=deployment_state
     - name: gather deploy config info
       shell: oc get dc | awk  'NR >1 {print $1}'
       register: dc_apps_listing
+    - debug: var=dc_apps_listing
     - name: gather pvc info
-      shell: "oc volume dc --all {{ item }}|tr -d '\n'|sed 's/[()]//g'>/tmp/{{item}}_pvc_info.txt"
       shell: "oc volume dc --all {{ item }}|tr -d '\n'|sed 's/[()]//g'|awk '{print $1}'"
       register: dc_config_name
       shell: "oc volume dc --all {{ item }}|tr -d '\n'|sed 's/[()]//g'|awk '{print $2}'"
