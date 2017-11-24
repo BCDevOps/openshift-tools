@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 export FLASK_APP=request_logger.py
-flask run
+flask run --port=8080
