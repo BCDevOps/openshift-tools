@@ -8,6 +8,8 @@ errors stdout
 
 gzip
 
+realip
+
 proxy / http://request-logger:8080 {
     transparent
 }
