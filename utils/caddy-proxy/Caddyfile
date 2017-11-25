@@ -8,7 +8,9 @@ errors stdout
 
 gzip
 
-realip 172.51.0.0/16
+realip {
+    from 172.51.0.0/16
+}
 
 proxy / http://request-logger:8080 {
     transparent
