@@ -7,3 +7,7 @@ log stdout
 errors stdout
 
 gzip
+
+proxy / http://request-logger:8080 {
+    transparent
+}
