@@ -19,4 +19,5 @@ proxy / http://request-logger:8080 {
 ipfilter  / {
     rule allow
 	ip 142.24.75.0/24
+	ip 70.67.108.4
 }
