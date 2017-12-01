@@ -19,6 +19,7 @@ LABEL summary="$SUMMARY" \
  
 # We need to call 2 (!) yum commands before being able to enable repositories properly
 # This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1479388
+# Chrome install info: https://access.redhat.com/discussions/917293
 RUN yum repolist > /dev/null && \
     yum install -y yum-utils && \
     yum-config-manager --disable \* &> /dev/null && \
@@ -36,11 +37,7 @@ RUN yum repolist > /dev/null && \
     rm google-chrome-stable_current_x86_64.rpm
  
 # Add Chrome as a user
-RUN groupadd -r chrome && useradd -r -g chrome -G audio,video chrome \
-    && mkdir -p /home/chrome && chown -R chrome:chrome /home/chrome
+# RUN groupadd -r chrome && useradd -r -g chrome -G audio,video chrome \
+#    && mkdir -p /home/chrome && chown -R chrome:chrome /home/chrome
  
-# Run Chrome non-privileged
-# USER chrome
- 
-CMD [ "/bin/bash" ]
- 
+USER 1001
