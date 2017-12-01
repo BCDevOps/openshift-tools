@@ -30,7 +30,7 @@ RUN yum repolist > /dev/null && \
     INSTALL_PKGS="redhat-lsb libXScrnSaver firefox" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    rpm -e --nodeps redhat-logos && \
+    #rpm -e --nodeps redhat-logos && \
     yum clean all -y && \
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
     yum -y localinstall google-chrome-stable_current_x86_64.rpm && \
