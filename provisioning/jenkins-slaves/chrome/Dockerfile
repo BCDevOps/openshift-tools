@@ -27,7 +27,7 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
-    INSTALL_PKGS="redhat-lsb libXSrnSaver firefox" && \
+    INSTALL_PKGS="redhat-lsb libXScrnSaver firefox" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     rpm -e --nodeps redhat-logos && \
