@@ -1,22 +1,22 @@
 FROM registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7
- 
+
 EXPOSE 8080
- 
+
 ENV PATH=$HOME/.local/bin/:$PATH \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
- 
-ENV SUMMARY="Jenkins slave with chrome and firefox installed." \
-    DESCRIPTION="Jenkins pipeline slave with chrome and firefox for testing application with headless browser."
- 
+
+ENV SUMMARY="Jenkins slave with chrome and firefox installed for use with functional/BDD tests that use BDDStack." \
+    DESCRIPTION="Jenkins pipeline slave with chrome and firefox for testing application with headless browser. (aka 'BDDStack')"
+
 LABEL summary="$SUMMARY" \
       description="$DESCRIPTION" \
       io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="Jenkins-Pipeline-Chrome" \
+      io.k8s.display-name="Jenkins-Pipeline-BDDStack" \
       io.openshift.expose-services="8080:http" \
       io.openshift.tags="builder,jenkins-jnlp-chrome,jenkins-jnlp-firefox,jenkins-jnlp" \
       release="1"
- 
+
 # NOTES:
 # We need to call 2 (!) yum commands before being able to enable repositories properly
 # This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1479388
@@ -35,5 +35,5 @@ RUN yum repolist > /dev/null && \
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
     yum -y localinstall google-chrome-stable_current_x86_64.rpm && \
     rm google-chrome-stable_current_x86_64.rpm
-    
+
 USER 1001
