@@ -38,6 +38,6 @@ RUN yum repolist > /dev/null && \
     yum -y localinstall google-chrome-stable_current_x86_64.rpm && \
     rm google-chrome-stable_current_x86_64.rpm
 
-ENV OPENSHIFT_JENKINS_JVM_ARC=x86_64
+ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
 
 USER 1001
