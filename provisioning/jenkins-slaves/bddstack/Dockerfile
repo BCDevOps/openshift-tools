@@ -5,7 +5,7 @@ EXPOSE 8080
 ENV PATH=$HOME/.local/bin/:$PATH \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8
-
+   
 ENV SUMMARY="Jenkins slave with chrome and firefox installed for use with functional/BDD tests that use BDDStack." \
     DESCRIPTION="Jenkins pipeline slave with chrome and firefox for testing application with headless browser. (aka 'BDDStack')"
 
@@ -37,5 +37,7 @@ RUN yum repolist > /dev/null && \
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
     yum -y localinstall google-chrome-stable_current_x86_64.rpm && \
     rm google-chrome-stable_current_x86_64.rpm
+
+ENV OPENSHIFT_JENKINS_JVM_ARC=x86_64
 
 USER 1001
