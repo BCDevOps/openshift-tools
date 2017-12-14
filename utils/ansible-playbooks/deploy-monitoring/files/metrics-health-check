@@ -46,7 +46,7 @@ readonly POD_NAMESPACE="openshift-infra"
 #Two connection parameters, these may need to be tweaked
 #Depending on what defines a dead service.
 readonly MAX_TIME="30"
-readonly CONNECT_TIMEOUT="1"
+readonly CONNECT_TIMEOUT="5"
 
 #cURL parms and headers
 #parms passed to cURL
