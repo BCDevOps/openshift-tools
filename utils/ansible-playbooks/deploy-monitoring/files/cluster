@@ -105,3 +105,13 @@ then
   echo "$(datestamp) ERROR: Low Metrics Cassandra Space"
 fi
 
+# Check that all nodes are Ready
+echo "$(datestamp) Check for NodeNotReady"
+if oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}" | grep -v True
+then
+  echo "$(datestamp) ERROR: Some nodes are not Ready"
+else
+  NODES=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}"|wc -l)
+  echo "$(datestamp) INFO: $NODES nodes online and ready"
+fi
+
