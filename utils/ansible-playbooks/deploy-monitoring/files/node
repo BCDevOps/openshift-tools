@@ -103,3 +103,10 @@ then
   echo "$(datestamp) ERROR: OpenVSwitch is not running"
 fi
 
+# Test that the API is responding
+echo -n "$(datestamp) OpenShift API Status: "
+if ! curl -s https://console.pathfinder.gov.bc.ca:8443/healthz | grep ok
+then
+  echo "$(datestamp) ERROR: curl of API https://console.pathfinder.gov.bc.ca:8443/healthz failed"
+fi
+
