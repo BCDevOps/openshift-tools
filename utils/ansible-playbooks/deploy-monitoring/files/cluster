@@ -94,3 +94,14 @@ then
   echo "$(datestamp) ERROR: Low Docker Registry Space"
 fi
 
+# Check disk space of Metrics Cassandra
+echo -n "$(datestamp) Metrics disk usage: "
+POD=$(oc -n openshift-infra get pods -l type=hawkular-cassandra -o name | sed 's#pods/##' | head -n 1)
+SPACE=$(oc -n openshift-infra exec $POD -- sh -c 'echo "$(df /cassandra_data | awk '\''/cassandra_data/ {print $5}'\'' | tr -d "%")"')
+echo "$(echo 100 '-' $SPACE | bc -l)% free"
+FREE=$(echo 100 '-' $SPACE '>' 15 | bc -l)
+if [ "$FREE" -lt 1 ]
+then
+  echo "$(datestamp) ERROR: Low Metrics Cassandra Space"
+fi
+
