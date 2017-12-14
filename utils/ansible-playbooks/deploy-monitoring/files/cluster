@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+# Exit on error. Append "|| true" if you expect an error.
+set -o errexit
+# Exit on error inside any functions or subshells.
+set -o errtrace
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
+set -o nounset
+# Catch the error in case mysqldump fails (but gzip succeeds) in `mysqldump |gzip`
+set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
+
+# Print a backtrace on error
+# https://github.com/ab/bin/blob/master/bash-backtrace.sh
+bash_backtrace() {
+    # Return value of command that caused error
+    local RET=$?
+    # Frame counter
+    local I=0
+    # backtrace layers
+    local FRAMES=${#BASH_SOURCE[@]}
+
+    # Restore STDOUT and STDERR as they might be in unknown states due to catching
+    # an error in the middle of a command
+    exec 1>&3 2>&4
+
+    echo "Traceback (most recent call last):"
+
+    for ((FRAME=FRAMES-2; FRAME >= 0; FRAME--)); do
+        local LINENO=${BASH_LINENO[FRAME]}
+
+        # Location of error
+        echo "  File ${BASH_SOURCE[FRAME+1]}, line ${LINENO}, in ${FUNCNAME[FRAME+1]}"
+
+        # Print the error line, with preceding whitespace removed
+        echo "$(sed -n "${LINENO}s/^[   ]*/    /p" "${BASH_SOURCE[FRAME+1]}")"
+    done
+
+    echo "Exiting with status ${RET}"
+    exit "${RET}"
+}
+
+# Copy STDOUT and STDERR so they can be restored later
+exec 3>&1 4>&2
+# Trap script errors and print some helpful debug info
+trap bash_backtrace ERR
+
+# Standardize the date stamps output
+function datestamp () {
+  date "+%F %H:%M:%S"
+}
+
+# Test that the API is responding
+echo -n "$(datestamp) OpenShift API Status: "
+if ! curl -s https://console.pathfinder.gov.bc.ca:8443/healthz | grep ok
+then
+  echo "$(datestamp) ERROR: curl of API https://console.pathfinder.gov.bc.ca:8443/healthz failed"
+fi
+
+# Test that the Router service is responding
+# TODO switch to DNS name once server are using dnsmasq properly
+echo -n "$(datestamp) OpenShift Router Status: "
+if ! curl -s http://172.50.56.219:1936/healthz | grep 'Service ready'
+then
+  echo "$(datestamp) ERROR: curl of router service http://172.50.56.219:1936/healthz failed"
+fi
+
+# Test the Docker Registry is responding
+# TOD switch to DNS name once server is using dnsmasq properly
+echo -n "$(datestamp) Docker Registry Status: "
+if ! curl -Is http://172.50.0.2:5000/healthz | grep '200 OK'
+then
+  echo "$(datestamp) ERROR: curl of docker registry service http://172.50.0.2:5000/healthz failed"
+fi
+
+# Run provided metrics health check
+# Find the dir we are running in
+DIR=$(dirname $(readlink -f "$0"))
+echo -n "$(datestamp) Metrics status: "
+if ! /usr/local/bin/metrics-health-check https://hawkular-metrics.pathfinder.gov.bc.ca
+then
+  echo "$(datestamp) ERROR: Metrics health check failed"
+fi
