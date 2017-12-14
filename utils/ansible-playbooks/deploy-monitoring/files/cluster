@@ -66,6 +66,13 @@ then
   echo "$(datestamp) ERROR: curl of router service http://172.50.56.219:1936/healthz failed"
 fi
 
+# Test that a sample route is working
+echo -n "$(datestamp) BCDevExchange Status: "
+if ! curl -Isk https://bcdevexchange.org/ | grep '200 OK'
+then
+  echo "$(datestamp) ERROR: curl of https://bcdevexchange.org/ failed"
+fi
+
 # Test the Docker Registry is responding
 # TOD switch to DNS name once server is using dnsmasq properly
 echo -n "$(datestamp) Docker Registry Status: "
