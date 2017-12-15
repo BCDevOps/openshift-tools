@@ -122,3 +122,16 @@ else
   echo "$(datestamp) INFO: $NODES nodes online and ready"
 fi
 
+# Verify the Registry is on 3 nodes
+NODES=$(oc -n default get pods -l deploymentconfig=docker-registry -o yaml -o go-template="{{range .items}}{{if eq .status.phase \"Running\"}}{{.spec.nodeName}}{{print \"\n\"}}{{end}}{{end}}")
+POD_COUNT=$(echo "$NODES" | wc -l)
+UNIQ_NODES=$(echo "$NODES" | sort | uniq | wc -l)
+echo "$(datestamp) Check that Registry is scaled to 3: $POD_COUNT"
+echo "$(datestamp) Check that Registry is scaled to all infra nodes: " $UNIQ_NODES
+if [ "$POD_COUNT" -lt 3 ]
+then
+  echo "$(datestamp) ERROR: Registry pod count $POD_COUNT is less than 3"
+elif [ "$UNIQ_NODES" -lt 3 ]
+then
+  echo "$(datestamp) ERROR: Registry on too few nodes " $NODES
+fi
