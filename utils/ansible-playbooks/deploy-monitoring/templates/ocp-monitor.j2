@@ -158,13 +158,13 @@ NODES=$(oc -n default get pods -l deploymentconfig=ipf-ha-router-kamloops -o yam
 POD_COUNT=$(echo "$NODES" | wc -l)
 UNIQ_NODES=$(echo "$NODES" | sort | uniq | wc -l)
 echo "$(datestamp) Check that IPF is scaled to 3: $POD_COUNT"
-echo "$(datestamp) Check that IPS is scaled to all infra nodes: " $UNIQ_NODES
+echo "$(datestamp) Check that IPF is scaled to all infra nodes: " $UNIQ_NODES
 if [ "$POD_COUNT" -lt 3 ]
 then
-  echo "$(datestamp) ERROR: Router pod count $POD_COUNT is less than 3"
+  echo "$(datestamp) ERROR: IPF pod count $POD_COUNT is less than 3"
 elif [ "$UNIQ_NODES" -lt 3 ]
 then
-  echo "$(datestamp) ERROR: Router on too few nodes " $NODES
+  echo "$(datestamp) ERROR: IPF on too few nodes " $NODES
 fi
 
 # Check the clusters capacity
