@@ -163,3 +163,52 @@ elif [ "$UNIQ_NODES" -lt 3 ]
 then
   echo "$(datestamp) ERROR: Router on too few nodes " $NODES
 fi
+
+# Check the clusters capacity
+echo "$(datestamp) Check Cluster Capacity of region=app"
+# Get all the nodes in region=app
+# Format into a string with each node enclosed in quotes
+NODE_LIST=$(oc get nodes -l region=app -o name | sed 's#nodes/##')
+NODES=
+for N in $NODE_LIST; do NODES="$NODES \"$N\""; done
+# Get Node capacity
+# node.dmz cpu_int mem_ki pods
+NODE_CAP=$(oc get nodes -o go-template="{{range .items}}{{if  eq .metadata.name $NODES}}{{.metadata.name}}{{print \"\t\"}}{{.status.capacity.cpu}}{{print \"\t\"}}{{.status.capacity.memory}}{{print \"\t\"}}{{.status.capacity.pods}}{{print \"\n\"}}{{end}}{{end}}")
+# CPU Capacity
+CPU_CAP=$(echo "$NODE_CAP" | awk -F "\t" 'BEGIN { SUM=0 } {if ($2 ~ "m") SUM+=$2/1000; else SUM+=$2 } END {print SUM}')
+# Memory Capacity in Gi
+MEM_CAP=$(echo "$NODE_CAP" | awk -F "\t" 'BEGIN { SUM=0 } {if ($3 ~ "Gi") $3=$3*1024"Mi"; if ($3 ~ "G") $3=$3*1000"M"; if ($3 ~ "Mi") $3=$3*1024"Ki"; if ($3 ~ "M") $3=$3*1000"K"; if ($3 ~ "Ki") $3=$3*1024; if ($3 ~ "K") $3=$3*1000; SUM+=$3} END { print SUM/1024/1024/1024"Gi"}')
+# Pod Capacity
+POD_CAP=$(echo "$NODE_CAP" | awk -F "\t" 'BEGIN { SUM=0 } {SUM+=$4 } END {print SUM}')
+# Get stats for running pods
+PODS=$(oc get pods --all-namespaces -o go-template="{{range .items}}{{if .spec.nodeName}}{{if and (not (eq .status.phase \"Failed\" \"Succeeded\")) (eq .spec.nodeName $NODES)}}{{range .spec.containers}}{{.name}}{{print \"\t\"}}{{.resources.requests.cpu}}{{print \"\t\"}}{{.resources.requests.memory}}{{print \"\n\"}}{{end}}{{end}}{{end}}{{end}}")
+# CPU Requests
+CPU_REQ=$(echo "$PODS" | awk -F "\t" 'BEGIN { SUM=0 } {if ($2 ~ "m") SUM+=$2/1000; else SUM+=$2 } END {print SUM}')
+# Memory Requests in Gi
+MEM_REQ=$(echo "$PODS" | awk -F "\t" 'BEGIN { SUM=0 } {if ($3 ~ "Gi") $3=$3*1024"Mi"; if ($3 ~ "G") $3=$3*1000"M"; if ($3 ~ "Mi") $3=$3*1024"Ki"; if ($3 ~ "M") $3=$3*1000"K"; if ($3 ~ "Ki") $3=$3*1024; if ($3 ~ "K") $3=$3*1000; SUM+=$3} END { print SUM/1024/1024/1024"Gi"}')
+# Pods Running
+POD_REQ=$(echo "$PODS" | wc -l)
+# Print CPU
+CPU_PERCENT=$(echo "$CPU_REQ / $CPU_CAP * 100" | bc -l | awk '{printf "%.2f",$0}')
+echo "$(datestamp) CPU Capacity: $CPU_REQ / $CPU_CAP = ${CPU_PERCENT}%"
+CPU_PERCENT=$(echo "$CPU_PERCENT" | awk '{printf "%.f",$0}')
+if [ "$CPU_PERCENT" -gt 85 ]
+then
+  echo "$(datestamp) ERROR: Cluster low on CPU capacity"
+fi
+# Print Memory
+MEM_PERCENT=$(echo "$MEM_REQ / $MEM_CAP * 100" | sed 's#Gi##g' | bc -l | awk '{printf "%.2f",$0}')
+echo "$(datestamp) Memory Capacity: $MEM_REQ / $MEM_CAP = ${MEM_PERCENT}%"
+MEM_PERCENT=$(echo "$MEM_PERCENT" | awk '{printf "%.f",$0}')
+if [ "$MEM_PERCENT" -gt 85 ]
+then
+  echo "$(datestamp) ERROR: Cluster low on Memory capacity"
+fi
+# Print Pods
+POD_PERCENT=$(echo "$POD_REQ / $POD_CAP * 100" | bc -l | awk '{printf "%.2f",$0}')
+echo "$(datestamp) Pod Capacity: $POD_REQ / $POD_CAP = ${POD_PERCENT}%"
+POD_PERCENT=$(echo "$POD_PERCENT" | awk '{printf "%.f",$0}')
+if [ "$POD_PERCENT" -gt 85 ]
+then
+  echo "$(datestamp) ERROR: Cluster low on Pod capacity"
+fi
