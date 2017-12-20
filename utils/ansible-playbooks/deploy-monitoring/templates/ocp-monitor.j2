@@ -13,6 +13,7 @@ set -o pipefail
 
 # Print a backtrace on error
 # https://github.com/ab/bin/blob/master/bash-backtrace.sh
+{% raw %}
 bash_backtrace() {
     # Return value of command that caused error
     local RET=$?
@@ -40,7 +41,7 @@ bash_backtrace() {
     echo "Exiting with status ${RET}"
     exit "${RET}"
 }
-
+{% endraw %}
 # Copy STDOUT and STDERR so they can be restored later
 exec 3>&1 4>&2
 # Trap script errors and print some helpful debug info
@@ -51,6 +52,8 @@ function datestamp () {
   date "+%F %H:%M:%S"
 }
 
+{% if ansible_fqdn == "ociopf-d-100.dmz" %}
+{% raw %}
 # Test that the API is responding
 echo -n "$(datestamp) OpenShift API Status: "
 if ! curl -s https://console.pathfinder.gov.bc.ca:8443/healthz | grep ok
@@ -212,3 +215,97 @@ if [ "$POD_PERCENT" -gt 85 ]
 then
   echo "$(datestamp) ERROR: Cluster low on Pod capacity"
 fi
+{% endraw %}
+{% endif %}
+
+{% if ansible_fqdn in groups['master'] %}
+{% raw %}
+# Verify ETCD is running
+echo -n "$(datestamp) ETCD Deamon Status: "
+if ! systemctl is-active etcd.service
+then
+  echo "$(datestamp) ERROR: ETCD is not running"
+fi
+
+# Verify API service is running
+echo -n "$(datestamp) OpenShift API Deamon Status: "
+if ! systemctl is-active atomic-openshift-master-api.service
+then
+  echo "$(datestamp) ERROR: OpenShift API is not running"
+fi
+
+# Verify Controller service is running
+echo -n "$(datestamp) OpenShift Controller Deamon Status: "
+if ! systemctl is-active atomic-openshift-master-controllers.service
+then
+  echo "$(datestamp) ERROR: OpenShift Controller is not running"
+fi
+{% endraw %}
+{% endif %}
+
+{% if ansible_fqdn in groups['storage'] %}
+{% raw %}
+{% endraw %}
+{% endif %}
+
+# Checks for all nodes
+
+# Check Docekr is running
+echo -n "$(datestamp) Docker Deamon Status: "
+if ! systemctl is-active docker.service
+then
+  echo "$(datestamp) ERROR: Docker is not running"
+  # Other checks depend on Docker running, exit out
+  exit 1
+fi
+
+# Check Docker Data usage
+echo -n "$(datestamp) Docker Data Space is: "
+SPACE=$(echo $(echo \"$(docker info 2>/dev/null | awk '/Data Space Available/ {print $4}') / $(docker info 2>/dev/null | awk '/Data Space Total/ {print $4}')\" | bc -l))
+echo "$SPACE = $(echo $SPACE '*' 100 | bc -l | awk '{printf "%.2f",$0}')% free"
+FREE=$(echo $SPACE '>' 0.15 | bc -l)
+if [ "$FREE" -lt 1 ]
+then
+  echo "$(datestamp) ERROR: Low Docker Data Space"
+fi
+
+# Check Docker Metadata Usage
+echo -n "$(datestamp) Docker Metadata Space is: "
+SPACE=$(echo $(echo \"$(docker info 2>/dev/null | awk '/Metadata Space Available/ {print $4}') / $(docker info 2>/dev/null | awk '/Metadata Space Total/ {print $4}')\" | bc -l))
+echo "$SPACE = $(echo $SPACE '*' 100 | bc -l | awk '{printf "%.2f",$0}')% free"
+FREE=$(echo $SPACE '>' 0.15 | bc -l)
+if [ "$FREE" -lt 1 ]
+then
+  echo "$(datestamp) ERROR: Low Docker Metadata Space"
+fi
+
+# Check for local volume count
+# May fail on masters that have zero, so ||true
+VOLS=$(mount|grep -c openshift.local.volumes||true)
+echo "$(datestamp) Pod volumes: $VOLS"
+if [ "$VOLS" -gt "1000" ]
+then
+  echo "$(datestamp) ERROR: Too many volumes"
+fi
+
+# Check Node service
+echo -n "$(datestamp) OpenShift Node Deamon Status: "
+if ! systemctl is-active atomic-openshift-node.service
+then
+  echo "$(datestamp) ERROR: OpenShift Node is not running"
+fi
+
+# Check OpenVSwitch service
+echo -n "$(datestamp) OpenVSwitch Deamon Status: "
+if ! systemctl is-active openvswitch.service
+then
+  echo "$(datestamp) ERROR: OpenVSwitch is not running"
+fi
+
+# Test that the API is responding
+echo -n "$(datestamp) OpenShift API Status: "
+if ! curl -s https://console.pathfinder.gov.bc.ca:8443/healthz | grep ok
+then
+  echo "$(datestamp) ERROR: curl of API https://console.pathfinder.gov.bc.ca:8443/healthz failed"
+fi
+

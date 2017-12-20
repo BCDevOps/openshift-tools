@@ -1,57 +1,27 @@
 ---
-- name: Node Monitoring
-  hosts: nodes
+- name: OCP Monitoring
+  hosts: all
   tasks:
     - name: Logrotate
       copy:
         src: files/logrotate.conf
         dest: /etc/logrotate.d/ocp-monitor
-    - name: Node script
-      copy:
-        src: files/node
-        dest: /usr/local/bin/node
-        mode: 0700
-    - name: Node cron
-      cron:
-        name: Node Monitor
-        cron_file: /etc/cron.d/ocp-monitor
-        user: root
-        minute: "*/5"
-        job: /usr/local/bin/node 2>&1 >> /var/log/ocp-monitor.log
-
-- name: Master Monitoring
-  hosts: masters
-  tasks:
-    - name: Master script
-      copy:
-        src: files/master
-        dest: /usr/local/bin/master
-        mode: 0700
-    - name: Master cron
-      cron:
-        name: Master Monitor
-        cron_file: /etc/cron.d/ocp-monitor
-        user: root
-        minute: "1,6,11,16,21,26,31,36,41,46,51,56"
-        job: /usr/local/bin/master 2>&1 >> /var/log/ocp-monitor.log
-
-- name: Cluster Monitoring
-  hosts: ociopf-d-100.dmz
-  tasks:
-    - name: Cluster script
-      copy:
-        src: files/cluster
-        dest: /usr/local/bin/cluster
+    - name: OCP Script
+      template:
+        src: templates/ocp-monitor.j2
+        dest: /usr/local/bin/ocp-monitor
         mode: 0700
     - name: Metrics script
       copy:
         src: files/metrics-health-check
         dest: /usr/local/bin/metrics-health-check
         mode: 0700
-    - name: Cluster cron
+      when: ansible_fqdn == "ociopf-d-100.dmz"
+    - name: OCP Monitor Ccron
       cron:
-        name: Cluster Monitor
+        name: OCP Monitor
         cron_file: /etc/cron.d/ocp-monitor
         user: root
-        minute: "2,7,12,17,22,27,32,37,42,47,52,57"
-        job: /usr/local/bin/cluster 2>&1 >> /var/log/ocp-monitor.log
+        minute: "*/5"
+        job: /usr/local/bin/ocp-monitor 2>&1 >> /var/log/ocp-monitor.log
+
