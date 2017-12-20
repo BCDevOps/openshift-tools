@@ -63,7 +63,7 @@ fi
 # Check Docker Data usage
 echo -n "$(datestamp) Docker Data Space is: "
 SPACE=$(echo $(echo \"$(docker info 2>/dev/null | awk '/Data Space Available/ {print $4}') / $(docker info 2>/dev/null | awk '/Data Space Total/ {print $4}')\" | bc -l))
-echo "$SPACE = $(echo 'scale=2;' $SPACE '*' 100 | bc -l)% free"
+echo "$SPACE = $(echo $SPACE '*' 100 | bc -l | awk '{printf "%.2f",$0}')% free"
 FREE=$(echo $SPACE '>' 0.15 | bc -l)
 if [ "$FREE" -lt 1 ]
 then
@@ -73,7 +73,7 @@ fi
 # Check Docker Metadata Usage
 echo -n "$(datestamp) Docker Metadata Space is: "
 SPACE=$(echo $(echo \"$(docker info 2>/dev/null | awk '/Metadata Space Available/ {print $4}') / $(docker info 2>/dev/null | awk '/Metadata Space Total/ {print $4}')\" | bc -l))
-echo "$SPACE = $(echo 'scale=2;' $SPACE '*' 100 | bc -l)% free"
+echo "$SPACE = $(echo $SPACE '*' 100 | bc -l | awk '{printf "%.2f",$0}')% free"
 FREE=$(echo $SPACE '>' 0.15 | bc -l)
 if [ "$FREE" -lt 1 ]
 then
