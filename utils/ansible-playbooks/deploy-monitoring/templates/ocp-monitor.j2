@@ -245,6 +245,26 @@ fi
 
 {% if ansible_fqdn in groups['storage'] %}
 {% raw %}
+# Check Gluster disk usage
+export LVM_SUPPRESS_FD_WARNINGS=1
+echo "$(datestamp) Checking Gluster Disks"
+# Find the volume groups
+PVS=$(pvs /dev/sdb /dev/sdc -o vg_name --noheadings)
+for PV in $PVS
+do
+  VG_STATS=$(vgs --units g --nosuffix --separator " " --readonly --options pv_name,vg_size,vg_free --noheadings $PV )
+  PV_NAME=$(echo $VG_STATS | awk '{print $1}')
+  SIZE=$(echo $VG_STATS | awk '{print $2}')
+  FREE=$(echo $VG_STATS | awk '{print $3}')
+  USED=$(echo "$SIZE - $FREE" | bc -l)
+  PERCENT=$(echo "$USED / $SIZE * 100" | bc -l | awk '{printf "%.2f",$0}')
+  echo "$(datestamp) $PV_NAME = ${USED}G / ${SIZE}G = $PERCENT%"
+  PERCENT=$(echo "$PERCENT" | awk '{printf "%.f",$0}')
+  if [ "$PERCENT" -gt 85 ]
+  then
+    echo "$(datestamp) ERROR: $PV_NAME low on space"
+  fi
+done
 {% endraw %}
 {% endif %}
 
