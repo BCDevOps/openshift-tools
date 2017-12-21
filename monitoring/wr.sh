@@ -43,7 +43,7 @@ function resources {
 }
 
 function post2slack {
-slackUrl="https://hooks.slack.com/services/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"
+slackUrl="https://hooks.slack.com/ZZZINSERTHEREZZZ"
 SLACKMSG=$( echo "\n$MSG\n" | sed 's/\\/\\\\/g')
 SLACKMSG="\`\`\`$SLACKMSG\`\`\`"
 
