@@ -16,7 +16,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="8080:http" \
       io.openshift.tags="builder,jenkins-jnlp-owasp-zap,jenkins-jnlp" \
       release="1"
-
+      
 # NOTES:
 # We need to call 2 (!) yum commands before being able to enable repositories properly
 # This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1479388
@@ -26,7 +26,7 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --disable \* &> /dev/null && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-rpms && \
-    yum-config-manager --enable redhat-rpm-config && \
+    yum-config-manager --enable rhel-7-server-extras-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
     INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel xmlstarlet x11vnc xorg-x11-server-Xvfb openbox xterm net-tools python-pip curl wget firefox nss_wrapper" && \
