@@ -28,8 +28,12 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-rpms && \
     yum-config-manager --enable rhel-7-server-extras-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
-    yum-config-manager --enable rhel-7-server-fastrack-rpms && \
-    INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel xmlstarlet x11vnc xorg-x11-server-Xvfb openbox xterm net-tools python-pip curl wget firefox nss_wrapper" && \
+    yum-config-manager --enable rhel-7-server-fastrack-rpms && \ 
+    X11_INSTALL_PKGS="xorg-x11-server-Xorg xorg-x11-drv-intel xorg-x11-server-Xvfb xorg-x11-xinit terminus-fonts xterm" &&\
+    yum install -y --setopt=tsflags=nodocs $X11_INSTALL_PKGS && \
+    EXTRA_INSTALL_PKGS="xmlstarlet x11vnc openbox python-pip" &&\
+    yum install -y --setopt=tsflags=nodocs $EXTRA_INSTALL_PKGS && \
+    INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel net-tools curl wget firefox nss_wrapper" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all -y && \
