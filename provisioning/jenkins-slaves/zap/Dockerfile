@@ -38,7 +38,7 @@ RUN yum repolist > /dev/null && \
     yum list *xmlstar* && \
     yum list *x11vnc* && \
     yum list *openbox* && \   
-    PYTHON_INSTALL_PKG="rh-python36-python-pip"
+    PYTHON_INSTALL_PKGS="rh-python36 rh-python36-python-devel rh-python36-python-setuptools rh-python36-python-pip" && \
     yum install -y --setopt=tsflags=nodocs $PYTHON_INSTALL_PKGS && \/
     X11_INSTALL_PKGS="xorg-x11-server-Xorg xorg-x11-drv-intel xorg-x11-server-Xvfb xorg-x11-xinit terminus-fonts xterm" &&\
     yum install -y --setopt=tsflags=nodocs $X11_INSTALL_PKGS && \
