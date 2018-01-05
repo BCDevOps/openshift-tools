@@ -29,13 +29,15 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-extras-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
-    yum list *python-pip* &&\\
-    yum list *xmlstar* &&\\
-    yum list *x11vnc* &&\\
-    yum list *openbox* &&\\   
+    yum list *python-pip* && \
+    yum list *xmlstar* && \
+    yum list *x11vnc* && \
+    yum list *openbox* && \   
+    PYTHON_INSTALL_PKG="rh-python36-python-pip"
+    yum install -y --setopt=tsflags=nodocs $PYTHON_INSTALL_PKGS && \/
     X11_INSTALL_PKGS="xorg-x11-server-Xorg xorg-x11-drv-intel xorg-x11-server-Xvfb xorg-x11-xinit terminus-fonts xterm" &&\
     yum install -y --setopt=tsflags=nodocs $X11_INSTALL_PKGS && \
-    EXTRA_INSTALL_PKGS="xmlstarlet x11vnc openbox rh-python-pip" &&\
+    EXTRA_INSTALL_PKGS="xmlstarlet x11vnc openbox" &&\
     yum install -y --setopt=tsflags=nodocs $EXTRA_INSTALL_PKGS && \
     INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel net-tools curl wget firefox nss_wrapper" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
