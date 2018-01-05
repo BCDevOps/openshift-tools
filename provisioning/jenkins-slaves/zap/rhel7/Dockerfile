@@ -34,6 +34,8 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-extras-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
+    yum clean all -y && \
+    yum update -y && \
     yum list *xml* && \
     yum list *vnc* && \
     yum list *openbox* && \   
@@ -46,7 +48,6 @@ RUN yum repolist > /dev/null && \
     INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel net-tools curl wget firefox nss_wrapper" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    yum clean all -y && \
     pip install --upgrade pip &&\
     pip install zapcli &&\
     pip install python-owasp-zap-v2.4 &&\
