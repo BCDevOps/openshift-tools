@@ -36,9 +36,6 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
     yum clean all -y && \
     yum update -y && \
-    yum list *xml* && \
-    yum list *vnc* && \
-    yum list *openbox* && \   
     PYTHON_INSTALL_PKGS="rh-python36 rh-python36-python-devel rh-python36-python-setuptools rh-python36-python-pip" && \
     yum install -y --setopt=tsflags=nodocs $PYTHON_INSTALL_PKGS && \/
     X11_INSTALL_PKGS="xorg-x11-server-Xorg xorg-x11-drv-intel xorg-x11-server-Xvfb xorg-x11-xinit terminus-fonts xterm" &&\
