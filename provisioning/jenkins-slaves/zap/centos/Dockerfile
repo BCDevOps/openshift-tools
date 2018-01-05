@@ -21,7 +21,7 @@ RUN pip install zapcli
 RUN pip install python-owasp-zap-v2.4
 
 RUN mkdir -p /zap/wrk
-ADD zap /zap/
+#ADD zap /zap/
 
 RUN mkdir -p /var/lib/jenkins/.vnc
 
