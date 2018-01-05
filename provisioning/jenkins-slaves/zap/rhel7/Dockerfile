@@ -34,9 +34,8 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-extras-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
-    yum list *python-pip* && \
-    yum list *xmlstar* && \
-    yum list *x11vnc* && \
+    yum list *xml* && \
+    yum list *vnc* && \
     yum list *openbox* && \   
     PYTHON_INSTALL_PKGS="rh-python36 rh-python36-python-devel rh-python36-python-setuptools rh-python36-python-pip" && \
     yum install -y --setopt=tsflags=nodocs $PYTHON_INSTALL_PKGS && \/
