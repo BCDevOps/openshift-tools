@@ -4,7 +4,12 @@ EXPOSE 8080
 
 ENV PATH=$HOME/.local/bin/:$PATH \
     LC_ALL=en_US.UTF-8 \
-    LANG=en_US.UTF-8
+    LANG=en_US.UTF-8 \
+    PYTHON_VERSION=3.6 \
+    PATH=$HOME/.local/bin/:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONIOENCODING=UTF-8 \
+    PIP_NO_CACHE_DIR=off
    
 ENV SUMMARY="OWASP ZAP Jenkins slave." \
     DESCRIPTION="Jenkins pipeline slave with OWASP ZAP."
