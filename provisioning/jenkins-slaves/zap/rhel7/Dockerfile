@@ -38,6 +38,8 @@ RUN yum repolist > /dev/null && \
     yum update -y && \
     yum list
     
+RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
+    yum update    
     
 RUN PYTHON_INSTALL_PKGS="rh-python36 rh-python36-python-devel rh-python36-python-setuptools rh-python36-python-pip" && \
     yum install -y --setopt=tsflags=nodocs $PYTHON_INSTALL_PKGS
@@ -45,7 +47,7 @@ RUN PYTHON_INSTALL_PKGS="rh-python36 rh-python36-python-devel rh-python36-python
 RUN X11_INSTALL_PKGS="xorg-x11-server-Xorg xorg-x11-drv-intel xorg-x11-server-Xvfb xorg-x11-xinit terminus-fonts xterm" &&\
     yum install -y --setopt=tsflags=nodocs $X11_INSTALL_PKGS
 
-RUN EXTRA_INSTALL_PKGS="xmlstarlet x11vnc openbox" &&\
+RUN EXTRA_INSTALL_PKGS="xmlstarlet x11vnc openbox" && \
     yum install -y --setopt=tsflags=nodocs $EXTRA_INSTALL_PKGS
 
 RUN INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel net-tools curl wget firefox nss_wrapper" && \
