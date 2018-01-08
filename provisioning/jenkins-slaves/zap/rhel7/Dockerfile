@@ -55,6 +55,8 @@ RUN INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel n
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS
 
+RUN xml
+
 RUN pip install --upgrade pip
 RUN pip install zapcli
 RUN pip install python-owasp-zap-v2.4
