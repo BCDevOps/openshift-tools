@@ -54,11 +54,13 @@ RUN EXTRA_INSTALL_PKGS="vnc-server" && \
 RUN INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel net-tools curl wget firefox nss_wrapper" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS
 
-RUN rpm -V $INSTALL_PKGS && \
-    pip install --upgrade pip &&\
-    pip install zapcli &&\
-    pip install python-owasp-zap-v2.4 &&\
-    mkdir -p /zap/wrk
+RUN rpm -V $INSTALL_PKGS
+
+RUN pip install --upgrade pip
+RUN pip install zapcli
+RUN pip install python-owasp-zap-v2.4
+
+RUN mkdir -p /zap/wrk
 
 ADD zap /zap/
 ENV PATH /zap:$PATH
