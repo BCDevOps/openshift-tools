@@ -34,54 +34,57 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-extras-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
-    yum-config-manager --enable epel && \
+    yum-config-manager --enable epel-release && \
     yum clean all -y && \
     yum update -y
-    
-RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
-    yum update    
-    
-RUN PYTHON_INSTALL_PKGS="rh-python36 rh-python36-python-devel rh-python36-python-setuptools rh-python36-python-pip" && \
-    yum install -y --setopt=tsflags=nodocs $PYTHON_INSTALL_PKGS
 
-RUN X11_INSTALL_PKGS="xorg-x11-server-Xorg xorg-x11-drv-intel xorg-x11-server-Xvfb xorg-x11-xinit xorg-x11-xdm terminus-fonts xterm" &&\
-    yum install -y --setopt=tsflags=nodocs $X11_INSTALL_PKGS
+RUN yum install -y redhat-rpm-config \
+    make automake autoconf gcc gcc-c++ \
+    libstdc++ libstdc++-devel \
+    wget curl \
+    xmlstarlet x11vnc gettext tar \
+    xorg-x11-server-Xvfb openbox xterm \
+    net-tools python-pip \
+    firefox nss_wrapper  \
+    nss_wrapper git && \
+    yum clean all
 
-# RUN EXTRA_INSTALL_PKGS="xmlstarlet x11vnc openbox"
-
-RUN yum groupinstall -y 'X Window System'
-
-RUN INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel net-tools curl wget firefox nss_wrapper" && \
-    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
-    rpm -V $INSTALL_PKGS
-
-#RUN xml
-#RUN pip -h
-
-#RUN pip install --upgrade pip
-#RUN pip install zapcli
-#RUN pip install python-owasp-zap-v2.4
+RUN pip install --upgrade pip
+RUN pip install zapcli
+# Install latest dev version of the python API
+RUN pip install python-owasp-zap-v2.4
 
 RUN mkdir -p /zap/wrk
-
 ADD zap /zap/
+
+RUN mkdir -p /var/lib/jenkins/.vnc
+
+# Copy the entrypoint
+COPY configuration/* /var/lib/jenkins/
+COPY configuration/run-jnlp-client /usr/local/bin/run-jnlp-client
+
 ENV PATH /zap:$PATH
 ENV ZAP_PATH /zap/zap.sh
+ENV HOME /var/lib/jenkins
+
+# Default port for use with zapcli
 ENV ZAP_PORT 8080
+
 COPY policies /var/lib/jenkins/.ZAP/policies/
 COPY .xinitrc /var/lib/jenkins/
+
 WORKDIR /zap
-
 # Download and expand the latest stable release 
-# RUN curl -s https://raw.githubusercontent.com/zaproxy/zap-admin/master/ZapVersions-dev.xml | xmlstarlet sel -t -v //url |grep -i Linux | wget -q --content-disposition -i - -O - | tar zx --strip-components=1 && \
-#    curl -s -L https://bitbucket.org/meszarv/webswing/downloads/webswing-2.3-distribution.zip | jar -x && \
-#    touch AcceptedLicense
-
+RUN curl -s https://raw.githubusercontent.com/zaproxy/zap-admin/master/ZapVersions-dev.xml | xmlstarlet sel -t -v //url |grep -i Linux | wget -q --content-disposition -i - -O - | tar zx --strip-components=1 && \
+    curl -s -L https://bitbucket.org/meszarv/webswing/downloads/webswing-2.3-distribution.zip | jar -x && \
+    touch AcceptedLicense
 ADD webswing.config /zap/webswing-2.3/webswing.config
 
 RUN chown root:root /zap -R && \
     chmod 777 /zap -R
 
+WORKDIR /var/lib/jenkins
+
 ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
 
-#USER 1001
+USER 1001
