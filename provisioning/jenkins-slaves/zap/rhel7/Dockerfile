@@ -34,9 +34,9 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-extras-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
+    yum-config-manager --enable epel && \
     yum clean all -y && \
-    yum update -y && \
-    yum list
+    yum update -y
     
 RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm && \
     yum update    
