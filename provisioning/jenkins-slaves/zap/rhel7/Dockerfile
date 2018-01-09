@@ -83,8 +83,6 @@ ADD webswing.config /zap/webswing-2.3/webswing.config
 RUN chown root:root /zap -R && \
     chmod 777 /zap -R
 
-WORKDIR /var/lib/jenkins
-
 ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
 
 USER 1001
