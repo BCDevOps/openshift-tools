@@ -55,12 +55,12 @@ RUN INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel n
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS
 
-RUN xml
-RUN pip -h
+#RUN xml
+#RUN pip -h
 
-RUN pip install --upgrade pip
-RUN pip install zapcli
-RUN pip install python-owasp-zap-v2.4
+#RUN pip install --upgrade pip
+#RUN pip install zapcli
+#RUN pip install python-owasp-zap-v2.4
 
 RUN mkdir -p /zap/wrk
 
@@ -73,9 +73,10 @@ COPY .xinitrc /var/lib/jenkins/
 WORKDIR /zap
 
 # Download and expand the latest stable release 
-RUN curl -s https://raw.githubusercontent.com/zaproxy/zap-admin/master/ZapVersions-dev.xml | xmlstarlet sel -t -v //url |grep -i Linux | wget -q --content-disposition -i - -O - | tar zx --strip-components=1 && \
-    curl -s -L https://bitbucket.org/meszarv/webswing/downloads/webswing-2.3-distribution.zip | jar -x && \
-    touch AcceptedLicense
+# RUN curl -s https://raw.githubusercontent.com/zaproxy/zap-admin/master/ZapVersions-dev.xml | xmlstarlet sel -t -v //url |grep -i Linux | wget -q --content-disposition -i - -O - | tar zx --strip-components=1 && \
+#    curl -s -L https://bitbucket.org/meszarv/webswing/downloads/webswing-2.3-distribution.zip | jar -x && \
+#    touch AcceptedLicense
+
 ADD webswing.config /zap/webswing-2.3/webswing.config
 
 RUN chown root:root /zap -R && \
@@ -83,4 +84,4 @@ RUN chown root:root /zap -R && \
 
 ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
 
-USER 1001
+#USER 1001
