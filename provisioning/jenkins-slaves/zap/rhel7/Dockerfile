@@ -29,7 +29,7 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-extras-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
-    yum-config-manager --enable epel-release && \
+    yum-config-manager --enable epel && \
     yum clean all -y && \
     yum update -y
 
@@ -39,7 +39,7 @@ RUN yum install -y redhat-rpm-config \
     wget curl \
     xmlstarlet x11vnc gettext tar \
     xorg-x11-server-Xvfb openbox xterm \
-    net-tools python-pip \
+    net-tools python27-python-pip\
     firefox nss_wrapper  \
     nss_wrapper git && \
     yum clean all
