@@ -56,6 +56,7 @@ RUN INSTALL_PKGS="make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel n
     rpm -V $INSTALL_PKGS
 
 RUN xml
+RUN pip -h
 
 RUN pip install --upgrade pip
 RUN pip install zapcli
