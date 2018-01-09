@@ -21,6 +21,6 @@
   shell: oc get nodes {{ inventory_hostname }} | awk 'NR>1 {print $2}'
   register: result
   until: result.stdout == "Ready,SchedulingDisabled"
-  retries: 25
+  retries: 40
   delay: 15
   delegate_to: localhost

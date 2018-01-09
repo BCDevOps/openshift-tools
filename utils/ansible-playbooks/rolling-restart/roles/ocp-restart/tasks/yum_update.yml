@@ -6,4 +6,4 @@
     - "atomic-openshift-docker-excluder exclude"
 
 - name: Yum update {{ inventory_hostname }}
-  yum: update_cache=yes name=* state=latest
+  yum: update_cache=yes name=* state=latest skip_broken=yes

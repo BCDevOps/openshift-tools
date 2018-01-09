@@ -5,12 +5,21 @@
   delegate_to: localhost
   delay: 60
 
-
 - name: Wait for {{ inventory_hostname | lower }} to have a running router
-  shell: oc get pods -n default -o wide | grep {{ inventory_hostname | lower }} | grep router | awk '{print $3}'
+  shell: oc get pods -n default -o wide | grep {{ inventory_hostname | lower }} | grep ^router | awk '{print $2}'
   register: result
-  until: result.stdout.find("Running") != -1
+  until: result.stdout.find("2/2") != -1
   retries: 25
   delay: 15
   delegate_to: localhost
   when: inventory_hostname in groups['infra']
+
+- name: Wait for {{ inventory_hostname | lower }} to have a running Gluster pod
+  shell: oc get pods -n cns -o wide | grep {{ inventory_hostname | lower }} | grep ^glusterfs | awk '{print $2}'
+  register: result
+  until: result.stdout.find("1/1") != -1
+  retries: 25
+  delay: 15
+  delegate_to: localhost
+  when: inventory_hostname in groups['storage']
+
