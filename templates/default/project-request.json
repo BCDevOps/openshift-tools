@@ -166,7 +166,10 @@
                 "hard": {
                     "limits.cpu": "8",
                     "limits.memory": "32Gi",
-                    "gluster-file.storageclass.storage.k8s.io/persistentvolumeclaims": "0"
+                    "gluster-block.storageclass.storage.k8s.io/persistentvolumeclaims": "5",
+                    "gluster-block.storageclass.storage.k8s.io/requests.storage": "200Gi",
+                    "gluster-file.storageclass.storage.k8s.io/persistentvolumeclaims": "10",
+                    "gluster-file.storageclass.storage.k8s.io/requests.storage": "200Gi"
                 }
             }
         },
