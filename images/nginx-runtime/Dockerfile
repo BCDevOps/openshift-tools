@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install openssl
 COPY ./s2i/bin/ /usr/libexec/s2i/
 
 # Expose this variable to OpenShift
-LABEL io.openshift.s2i.scripts-url=image:///usr/libexec/s2i
+LABEL io.openshift.s2i.scripts-url=image:///usr/libexec/s2i \
+  io.openshift.tags="builder,html,nginx"
 
 # Copy config from source to container
 COPY nginx.conf.template /tmp/
