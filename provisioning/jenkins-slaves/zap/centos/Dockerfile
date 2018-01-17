@@ -50,7 +50,9 @@ ADD webswing.config /zap/webswing-2.3/webswing.config
 RUN chown root:root /zap -R && \
     chown root:root -R /var/lib/jenkins && \
     chmod 777 /var/lib/jenkins -R && \
-    chmod 777 /zap -R
+    chmod 777 /zap -R && \
+    chmod 777 /
+    
 
 WORKDIR /var/lib/jenkins
 
