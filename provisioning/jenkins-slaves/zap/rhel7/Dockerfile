@@ -45,9 +45,11 @@ RUN yum install -y redhat-rpm-config \
 
 COPY *.rpm /tmp/
 
-RUN rpm -ivh /tmp/xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
-    rpm -ivh /tmp/xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
-    rpm -ivh /tmp/x11vnc-0.9.13-11.el7.x86_64.rpm
+RUN ls -al /tmp/*.rpm
+
+RUN yum -y localinstall /tmp/xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
+    yum -y localinstall/tmp/xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
+    yum -y localinstall /tmp/x11vnc-0.9.13-11.el7.x86_64.rpm
 
 RUN rm /tmp/*.rpm
 
