@@ -35,7 +35,7 @@ RUN yum repolist > /dev/null && \
 
 RUN yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
-    wget curl gettext tar xorg-x11-server-Xvfb xterm \
+    wget curl gettext tar xorg-x11-server-Xvfb xterm vnc-server \
     net-tools python27-python-pip firefox nss_wrapper  && \
     yum clean all
 
@@ -48,7 +48,7 @@ COPY rpms/*.rpm ./
 RUN ls -al ./*.rpm
 
 RUN yum -y localinstall xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
-    yum -y openbox-libs-3.5.2-6.el7.x86_64.rpm && \
+    yum -y localinstall openbox-libs-3.5.2-6.el7.x86_64.rpm && \
     yum -y localinstall openbox-3.5.2-6.2.x86_64.rpm && \
     yum -y localinstall x11vnc-0.9.13-11.el7.x86_64.rpm
 
