@@ -35,9 +35,23 @@ RUN yum repolist > /dev/null && \
 
 RUN yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
-    wget curl gettext tar xorg-x11-server-Xvfb xterm vnc-server \
+    wget curl gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
     net-tools python27-python-pip firefox nss_wrapper  && \
     yum clean all
+
+RUN wget https://pypi.python.org/packages/source/s/setuptools/setuptools-7.0.tar.gz --no-check-certificate && \
+    tar xzf setuptools-7.0.tar.gz && \
+    cd setuptools-7.0 && \
+    python setup.py install
+RUN wget https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py
+
+RUN pip --version
+RUN pip install --upgrade pip
+RUN pip install zapcli
+
+# Install latest dev version of the python API
+RUN pip install python-owasp-zap-v2.4
 
 #RUN wget ftp://ftp.pbone.net/mirror/download.fedora.redhat.com/pub/fedora/epel/7/x86_64/Packages/x/xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
 #    wget ftp://ftp.pbone.net/mirror/ftp5.gwdg.de/pub/opensuse/repositories/home:/TheIndifferent:/rhel7-openbox/rhel7-shared/x86_64/openbox-3.5.2-6.2.x86_64.rpm && \
