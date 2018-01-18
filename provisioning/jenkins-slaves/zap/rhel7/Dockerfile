@@ -67,7 +67,6 @@ ADD zap /zap/
 
 # Copy the entrypoint
 COPY configuration/* /var/lib/jenkins/
-COPY configuration/run-jnlp-client /usr/local/bin/run-jnlp-client
 
 ENV PATH /zap:$PATH
 ENV ZAP_PATH /zap/zap.sh
