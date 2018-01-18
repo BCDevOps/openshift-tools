@@ -87,11 +87,11 @@ RUN curl -s https://raw.githubusercontent.com/zaproxy/zap-admin/master/ZapVersio
 
 ADD webswing.config /zap/webswing-2.3/webswing.config
 
-RUN chown root:root /zap -R && \
-    chown root:root -R /var/lib/jenkins && \
-    chmod 777 /var/lib/jenkins -R && \
-    chmod 777 /zap -R && \
-    chmod 777 /
+RUN chown -v -R root:root /zap && \
+    chown -v -R root:root /var/lib/jenkins && \
+    chmod -v -R 777 /var/lib/jenkins && \
+    chmod -v -R 777 /zap && \
+    chmod -v 777 /
 
 WORKDIR /var/lib/jenkins
 
