@@ -36,7 +36,7 @@ RUN yum repolist > /dev/null && \
 RUN yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
     wget curl gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
-    net-tools python27-python-pip pyxdg firefox nss_wrapper  && \
+    net-tools python27-pip python27-python-pip firefox nss_wrapper  && \
     yum clean all
 
 RUN wget https://pypi.python.org/packages/source/s/setuptools/setuptools-7.0.tar.gz --no-check-certificate && \
@@ -64,7 +64,7 @@ RUN ls -al ./*.rpm
 RUN yum -y localinstall xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
     yum -y localinstall imlib2-1.4.5-9.el7.x86_64.rpm && \
     yum -y localinstall pyxdg-0.25-2.el7.nux.noarch.rpm && \
-    yum -y localinstall openbox-libs-3.5.2-6.el7.x86_64.rpm && \
+    yum -y localinstall openbox-libs-3.5.2-6.2.x86_64.rpm && \
     yum -y localinstall openbox-3.5.2-6.2.x86_64.rpm && \
     yum -y localinstall x11vnc-0.9.13-11.el7.x86_64.rpm
 
