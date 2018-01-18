@@ -47,10 +47,10 @@ RUN curl -s https://raw.githubusercontent.com/zaproxy/zap-admin/master/ZapVersio
     touch AcceptedLicense
 ADD webswing.config /zap/webswing-2.3/webswing.config
 
-RUN chown root:root /zap -R && \
-    chown root:root -R /var/lib/jenkins && \
-    chmod 777 /var/lib/jenkins -R && \
-    chmod 777 /zap -R && \
+RUN chown -R root:root /zap && \
+    chown -R root:root /var/lib/jenkins && \
+    chmod -R 777 /var/lib/jenkins && \
+    chmod -R 777 /zap && \
     chmod 777 /
     
 
