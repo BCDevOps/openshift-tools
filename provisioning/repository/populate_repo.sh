@@ -27,7 +27,7 @@ mirror_push() {
     git push --mirror $PUSH_TARGET_REPO
 }
 
-while getopts ":srtd:h" opt; do
+while getopts ":s:r:t:d:h" opt; do
   case $opt in
     s)
       SOURCE_USER_OR_ORG=$OPTARG
