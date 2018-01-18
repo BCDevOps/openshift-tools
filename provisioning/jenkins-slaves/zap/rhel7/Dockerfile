@@ -65,6 +65,9 @@ RUN yum -y localinstall xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
 
 ADD zap /zap/
 
+RUN mkdir /zap@tmp && \
+    chmod -v -R 777 /zap@tmp
+
 # Copy the entrypoint
 COPY configuration/* /var/lib/jenkins/
 
@@ -89,8 +92,7 @@ ADD webswing.config /zap/webswing-2.3/webswing.config
 RUN chown -v -R root:root /zap && \
     chown -v -R root:root /var/lib/jenkins && \
     chmod -v -R 777 /var/lib/jenkins && \
-    chmod -v -R 777 /zap && \
-    chmod -v 777 /
+    chmod -v -R 777 /zap
 
 WORKDIR /var/lib/jenkins
 
