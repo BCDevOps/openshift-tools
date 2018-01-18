@@ -36,7 +36,7 @@ RUN yum repolist > /dev/null && \
 RUN yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
     wget curl gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
-    net-tools python27-pip python27-python-pip firefox nss_wrapper  && \
+    net-tools python27-python-pip firefox nss_wrapper  && \
     yum clean all
 
 RUN wget https://pypi.python.org/packages/source/s/setuptools/setuptools-7.0.tar.gz --no-check-certificate && \
