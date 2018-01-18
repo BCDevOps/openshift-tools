@@ -35,7 +35,8 @@ RUN yum repolist > /dev/null && \
 
 RUN yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
-    wget curl gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
+    java-1.8.0-openjdk java-1.8.0-openjdk-headless java-1.8.0-openjdk-devel \
+    wget curl git gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
     net-tools python27-python-pip firefox nss_wrapper  && \
     yum clean all
 
