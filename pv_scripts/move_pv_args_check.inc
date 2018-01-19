@@ -61,12 +61,22 @@ then
   echo "ERROR: No pvc name provided!"
   exit 1
 fi 
+if [ -z ${PVC_NAME_NEW+x} ]
+then
+  echo -n "Enter the name of the new pvc: "
+  read PVC_NAME_NEW
+fi
+if [ ${#PVC_NAME_NEW} -lt 1 ]
+then
+  echo "ERROR: No pvc name provided!"
+  exit 1
+fi
 if [ -z ${PVC_SIZE+x} ]
 then
   echo -n "Enter the size of the new pvc: "
   read PVC_SIZE
 fi
-if [ "$PVC_SIZE" -eq "$PVC_SIZE" ]
+if [ ! "$PVC_SIZE" -eq "$PVC_SIZE" ]
 then
     echo "Sorry integers only"
     exit 1
@@ -116,7 +126,7 @@ then
   exit 1
 fi 
 deploys=$(oc get dc|awk 'NR>1 {print $1}')
-for d in deploys 
+for d in $deploys 
 do
   if [ "$d" == "$DEPLOY_CONFIG" ] 
   then

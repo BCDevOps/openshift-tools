@@ -40,7 +40,7 @@ echo "PROJECT:        $PROJECT_NAMESPACE"
 echo "DEPLOY_CONFIG:  $DEPLOY_CONFIG"
 echo "PVC_NAME:       $PVC_NAME"
 echo "PVC_NAME_NEW:   $PVC_NAME_NEW"
-echo "PVC_SIZE:       $PVC_SIZE_NEW"
+echo "PVC_SIZE:       $PVC_SIZE"
 echo "ACCESS_MODE:    $ACCESS_MODE"
 echo "VOLUME_NAME:    $VOLUME_NAME"
 echo "MOUNT_PATH:     $MOUNT_PATH"
@@ -109,6 +109,9 @@ oc volume dc/pvcmigrator --add -t pvc --name=$PVC_NAME_NEW --claim-name=$PVC_NAM
 
 # rsh into the container
 # Migrate data to the new storage
+oc exec $POD_NAME -- df
+oc exec $POD_NAME -- ls -alr /new
+oc exec $POD_NAME -- ls -alr /old
 oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}
 
 # The last step, you need to switch to the new storage volume in <container>:
@@ -119,5 +122,5 @@ oc volume dc/$DEPLOY_CONFIG --add -t pvc --name=$VOLUME_NAME --claim-name=$PVC_N
 oc scale dc $DEPLOY_CONFIG --replicas=1
 
 # Clean up
-oc scale dc/pvcmigrator --replicas=0
-oc delete  dc pvcmigrator
+#oc scale dc/pvcmigrator --replicas=0
+#oc delete  dc pvcmigrator
