@@ -13,7 +13,7 @@
 # PVC ACTUAL SIZE: PVC_SIZE=oc get pvc/<PVC_NAME> -o template --template="{{.status.capacity.storage}}"
 # VOLUME NAME: oc get dc/<DEPLOY_CONFIG> -o template --template="{{.spec.template.spec.volumes}}"
 # VOLUME MOUNT PATH: oc get dc/<DEPLOY_CONFIG> -o template --template="{{.spec.template.spec.containers}}" or oc volume dc/mysql
-# STORAGE_CLASS: storage class of new pvc [gluster_file|gluster_block]
+# STORAGE_CLASS: storage class of new pvc [gluster-file|gluster-block]
 # PVC_NAME_NEW: name of new pvc 
 
 source move_pv_usage.inc
@@ -60,8 +60,21 @@ fi
 
 # Spawn container for the storage maintenance
 oc run pvcmigrator --image=registry.access.redhat.com/rhel7 -- tail -f /dev/null
-POD_NAME="NONE"
+
+# scale down application container accessing pvc
+oc scale dc $DEPLOY_CONFIG --replicas=0
+
+oc scale dc pvcmigrator --replicas=0
+# Mount old PVC to that container
+oc volume dc/pvcmigrator --add -t pvc --name=$PVC_NAME --claim-name=$PVC_NAME --mount-path=/old${MOUNT_PATH}
+
+# Create and mount new PV/PVC to that container
+oc volume dc/pvcmigrator --add -t pvc --name=$PVC_NAME_NEW --claim-name=$PVC_NAME_NEW --mount-path=/new${MOUNT_PATH} --claim-class=$STORAGE_CLASS --claim-mode=$ACCESS_MODE --claim-size=${PVC_SIZE}Gi
+oc scale dc pvcmigrator --replicas=1
+
 sleep 15
+
+POD_NAME="NONE"
 myPods=$(oc get pods|awk 'NR>1 {print $1}')
 for pod in $myPods
 do
@@ -98,29 +111,20 @@ then
   exit 1
 fi
 
-# scale down application container accessing pvc
-oc scale dc $DEPLOY_CONFIG --replicas=0
-
-# Mount old PVC to that container
-oc volume dc/pvcmigrator --add -t pvc --name=$PVC_NAME --claim-name=$PVC_NAME --mount-path=/old${MOUNT_PATH}
-
-# Create and mount new PV/PVC to that container
-oc volume dc/pvcmigrator --add -t pvc --name=$PVC_NAME_NEW --claim-name=$PVC_NAME_NEW --mount-path=/new${MOUNT_PATH} --claim-class=$STORAGE_CLASS --claim-mode=$ACCESS_MODE --claim-size=${PVC_SIZE}Gi
-
 # rsh into the container
 # Migrate data to the new storage
 oc exec $POD_NAME -- df
 oc exec $POD_NAME -- ls -alr /new
 oc exec $POD_NAME -- ls -alr /old
-oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}
+oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}/../
 
 # The last step, you need to switch to the new storage volume in <container>:
 oc volume dc/$DEPLOY_CONFIG --remove --name=$VOLUME_NAME
 oc volume dc/$DEPLOY_CONFIG --add -t pvc --name=$VOLUME_NAME --claim-name=$PVC_NAME_NEW --mount-path=$MOUNT_PATH
 
 # Restart application container
-oc scale dc $DEPLOY_CONFIG --replicas=1
+oc scale dc $DEPLOY_CONFIG --replicas=$CURRENT_REPLICA_CNT
 
 # Clean up
-#oc scale dc/pvcmigrator --replicas=0
-#oc delete  dc pvcmigrator
+oc scale dc/pvcmigrator --replicas=0
+oc delete  dc pvcmigrator

@@ -1,23 +1,20 @@
-DEBUG=0
 CONFIRM=1
-
-while getopts p:pvc:npvc:dc:vol:path:mode:class:s:v:y:h FLAG; do
+while getopts p:d:v:l:m:c:S:D:s:y:h FLAG; do
   case $FLAG in
     p ) PROJECT_NAMESPACE=$OPTARG ;;
-    dc ) DEPLOY_CONFIG=$OPTARG ;;
-    vol ) VOLUME_NAME=$OPTARG ;;
-    path ) MOUNT_PATH=$OPTARG ;;
-    mode ) ACCESS_MODE=$OPTARG ;;
-    class ) STORAGE_CLASS=$OPTARG ;;
-    pvc ) PVC_NAME=$OPTARG ;;
-    npvc ) PVC_NAME_NEW=$OPTARG ;;
-    s ) PVC_SIZE_NEW=$OPTARG ;;
-    v ) export DEBUG=1 ;;
+    d ) DEPLOY_CONFIG=$OPTARG ;;
+    v ) VOLUME_NAME=$OPTARG ;;
+    l ) MOUNT_PATH=$OPTARG ;;
+    m ) ACCESS_MODE=$OPTARG ;;
+    c ) STORAGE_CLASS=$OPTARG ;;
+    S ) PVC_NAME=$OPTARG ;;
+    D ) PVC_NAME_NEW=$OPTARG ;;
+    s ) PVC_SIZE=$OPTARG ;;
     y ) export CONFIRM=0 ;;
     h ) usage ;;
     \? ) usage ;;
     * ) #unrecognized option - show help
-      echo -e \\n"Invalid script option"\\n
+      echo -e \\n"$FLAG - Invalid script option"\\n
       usage
       ;;
   esac
@@ -177,8 +174,10 @@ fi
 accessModeOK=0
 case $ACCESS_MODE in
     ReadWriteOnce|ReadOnlyMany|ReadWriteMany) accessModeOK=1;;
-    RWO|RWX|ROX) accessModeOK=1;;
-    *)           accessModeOK=0;;
+    RWO) ACCESS_MODE="ReadWriteOnce"; accessModeOK=1;;
+    RWX) ACCESS_MODE="ReadWriteMany"; accessModeOK=1;;
+    ROX) ACCESS_MODE="ReadOnlyMany"; accessModeOK=1;;
+    *) accessModeOK=0;;
 esac
 if [ $accessModeOK -lt 1 ] 
 then
@@ -201,7 +200,9 @@ fi
 storageClassOK=0
 case $STORAGE_CLASS in
     gluster-block|gluster-file) storageClassOK=1;;
-    *)                          storageClassOK=0;;
+    block) STORAGE_CLASS="gluster-block"; storageClassOK=1;;
+    file) STORAGE_CLASS="gluster-file"; storageClassOK=1;;
+    *) storageClassOK=0;;
 esac
 if [ $storageClassOK -lt 1 ] 
 then
