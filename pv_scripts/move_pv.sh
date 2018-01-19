@@ -114,9 +114,14 @@ fi
 # rsh into the container
 # Migrate data to the new storage
 oc exec $POD_NAME -- df
-oc exec $POD_NAME -- ls -alr /new
-oc exec $POD_NAME -- ls -alr /old
+#oc exec $POD_NAME -- ls -alr /new
+#oc exec $POD_NAME -- ls -alr /old
 oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}/../
+if [ $? -gt 0]
+then 
+  echo "ERROR: Copy failed!"
+  exit 1
+fi
 
 # The last step, you need to switch to the new storage volume in <container>:
 oc volume dc/$DEPLOY_CONFIG --remove --name=$VOLUME_NAME
