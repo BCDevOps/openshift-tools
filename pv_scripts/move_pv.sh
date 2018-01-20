@@ -59,7 +59,7 @@ fi
 
 
 # Spawn container for the storage maintenance
-oc run pvcmigrator --image=registry.access.redhat.com/rhel7 -- tail -f /dev/null
+oc run pvcmigrator --image=registry.access.redhat.com/rhel7/rhel-tools -- tail -f /dev/null
 
 # scale down application container accessing pvc
 oc scale dc $DEPLOY_CONFIG --replicas=0
@@ -116,8 +116,11 @@ fi
 oc exec $POD_NAME -- df
 #oc exec $POD_NAME -- ls -alr /new
 #oc exec $POD_NAME -- ls -alr /old
-oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}/../
-if [ $? -gt 0]
+# oc exec $POD_NAME -- tar -c
+oc exec $POD_NAME -- rsync -rHAXEo /old${MOUNT_PATH}/ /new${MOUNT_PATH}/
+#oc exec $POD_NAME -- rsync -raxHAXEogtp /old${MOUNT_PATH}/ /new${MOUNT_PATH}/
+#oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}/../
+if [ $? -gt 0 ]
 then 
   echo "ERROR: Copy failed!"
   exit 1
@@ -132,4 +135,5 @@ oc scale dc $DEPLOY_CONFIG --replicas=$CURRENT_REPLICA_CNT
 
 # Clean up
 oc scale dc/pvcmigrator --replicas=0
+sleep 10
 oc delete  dc pvcmigrator
