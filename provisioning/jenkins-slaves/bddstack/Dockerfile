@@ -37,7 +37,7 @@ RUN yum repolist > /dev/null && \
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm && \
     yum -y localinstall google-chrome-stable_current_x86_64.rpm && \
     rm google-chrome-stable_current_x86_64.rpm && \
-    mkdir /home/jenkins/.pki && \
+    if [ ! -d /home/jenkins/.pki ] ; then mkdir /home/jenkins/.pki; fi && \
     chmod 777 /home/jenkins/.pki
 
 ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
