@@ -113,13 +113,12 @@ fi
 
 # rsh into the container
 # Migrate data to the new storage
-oc exec $POD_NAME -- df
+#oc exec $POD_NAME -- df
 #oc exec $POD_NAME -- ls -alr /new
 #oc exec $POD_NAME -- ls -alr /old
-# oc exec $POD_NAME -- tar -c
-oc exec $POD_NAME -- rsync -rHAXEo /old${MOUNT_PATH}/ /new${MOUNT_PATH}/
+#oc exec $POD_NAME -- rsync -rHAXEo /old${MOUNT_PATH}/ /new${MOUNT_PATH}/
 #oc exec $POD_NAME -- rsync -raxHAXEogtp /old${MOUNT_PATH}/ /new${MOUNT_PATH}/
-#oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}/../
+oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}/../
 if [ $? -gt 0 ]
 then 
   echo "ERROR: Copy failed!"

@@ -73,21 +73,20 @@ then
   echo -n "Enter the size of the new pvc: "
   read PVC_SIZE
 fi
-if [ ! "$PVC_SIZE" -eq "$PVC_SIZE" ]
+mySizeFormat='^[0-9]+$'
+if ! [[ $PVC_SIZE =~ $mySizeFormat ]] ; then
+  echo "ERROR: Invalid format! Sorry integers only."
+  exit 1
+fi
+if [ $PVC_SIZE -gt 200 ] 
 then
-    echo "Sorry integers only"
-    exit 1
-else 
-    if [ $PVC_SIZE -gt 200 ] 
-    then
-      echo "Max PVC size is 200!"
-      exit 1
-    fi
-    if [ $PVC_SIZE -lt 1 ] 
-    then
-      echo "Min PVC size is 1, using 1GiB."
-      PVC_SIZE=1
-    fi
+  echo "Max PVC size is 200!"
+  exit 1
+fi
+if [ $PVC_SIZE -lt 1 ] 
+then
+  echo "Min PVC size is 1, using 1GiB."
+  PVC_SIZE=1
 fi
 
 # Check pvc (old one exists, new one does not exist)
