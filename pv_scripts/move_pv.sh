@@ -32,7 +32,7 @@ fi
 CURRENT_REPLICA_CNT=`oc get dc/$DEPLOY_CONFIG -o template --template="{{.status.availableReplicas}}"`
 if [ ${#CURRENT_REPLICA_CNT} -lt 1 ]
 then
-  echo "ERROR: Could not retrieve replica count for $DEPLOY_CONFIG!"
+  echo "ERROR: Could not retrieve replica count for $DEPLOY_CONFIG"
   exit 1
 fi
 
@@ -51,7 +51,7 @@ then
   read PARAM_CONFIRMED
   if [[ "$PARAM_CONFIRMED" == "y" || "$PARAM_CONFIRMED" == "Y" ]]
   then
-    echo "PARAMETERS CONFIRMED!"    
+    echo "PARAMETERS CONFIRMED"    
   else 
     exit 1
   fi 
@@ -88,7 +88,7 @@ do
 done
 if [ "$POD_NAME" == "NONE" ]
 then
-  echo "ERROR RHL7 POD for copying PVC content did not start up!"
+  echo "ERROR: RHL7 POD for copying PVC content did not start up"
 fi
 myPodStatus="none"
 for i in `seq 1 10`;
@@ -102,12 +102,12 @@ do
 done
 if [ "$POD_NAME" == "NONE" ]
 then
-  echo "ERROR RHL7 POD for copying PVC content was not created!"
+  echo "ERROR RHL7 POD for copying PVC content was not created"
   exit 1
 fi
 if [ ! "$myPodStatus" == "Running" ]
 then
-  echo "ERROR RHL7 POD for copying PVC content did not start up!"
+  echo "ERROR RHL7 POD for copying PVC content did not start up"
   exit 1
 fi
 
@@ -117,13 +117,13 @@ fi
 #oc exec $POD_NAME -- ls -alr /new
 #oc exec $POD_NAME -- ls -alr /old
 #oc exec $POD_NAME -- rsync -rHAXEo /old${MOUNT_PATH}/ /new${MOUNT_PATH}/
-#oc exec $POD_NAME -- rsync -raxHAXEogtp /old${MOUNT_PATH}/ /new${MOUNT_PATH}/
-oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}/../
-if [ $? -gt 0 ]
-then 
-  echo "ERROR: Copy failed!"
-  exit 1
-fi
+oc exec $POD_NAME -- rsync -raxHAXEogtp --exclude="/old${MOUNT_PATH}/.trashcan:/old${MOUNT_PATH}/.:/old${MOUNT_PATH}/.." /old${MOUNT_PATH}/ /new${MOUNT_PATH}/
+#oc exec $POD_NAME -- cp -Rp  /old${MOUNT_PATH}/ /new${MOUNT_PATH}/../
+#if [ $? -gt 0 ]
+#then 
+#  echo "ERROR: Copy failed"
+#  exit 1
+#fi
 
 # The last step, you need to switch to the new storage volume in <container>:
 oc volume dc/$DEPLOY_CONFIG --remove --name=$VOLUME_NAME
