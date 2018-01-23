@@ -75,6 +75,8 @@ RUN mkdir /zap@tmp && \
 # Copy the entrypoint
 COPY configuration/* /var/lib/jenkins/
 
+#ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+#ENV PATH $JAVA_HOME/bin:/zap:$PATH
 ENV PATH /zap:$PATH
 ENV ZAP_PATH /zap/zap.sh
 ENV HOME /var/lib/jenkins
