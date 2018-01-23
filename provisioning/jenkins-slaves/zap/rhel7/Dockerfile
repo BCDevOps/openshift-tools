@@ -63,6 +63,7 @@ RUN yum -y localinstall xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
     yum -y localinstall x11vnc-0.9.13-11.el7.x86_64.rpm && \
     yum -y clean all && \
     rm ./*.rpm && \
+    if [ ! -d /tmp/.X11-unix ] ; then mkdir /tmp/.X11-unix; fi && \
     mkdir -p /zap/wrk && \
     mkdir /zap@tmp && \
     mkdir -p /var/lib/jenkins/.vnc
