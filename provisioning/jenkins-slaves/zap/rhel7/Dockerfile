@@ -34,9 +34,8 @@ RUN yum repolist > /dev/null && \
     # yum update -y
 
 RUN UNINSTALL_PKGS="java-1.8.0-openjdk-headless.i686" &&\
-    yum remove -y $UNINSTALL_PKGS
-
-RUN yum install -y redhat-rpm-config \
+    yum remove -y $UNINSTALL_PKGS && \
+    yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
     java-1.8.0-openjdk.x86_64 java-1.8.0-openjdk-headless.x86_64 java-1.8.0-openjdk-devel.x86_64 \
     wget nano curl git gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
@@ -46,8 +45,8 @@ RUN yum install -y redhat-rpm-config \
 RUN wget https://pypi.python.org/packages/source/s/setuptools/setuptools-7.0.tar.gz --no-check-certificate && \
     tar xzf setuptools-7.0.tar.gz && \
     cd setuptools-7.0 && \
-    python setup.py install
-RUN wget https://bootstrap.pypa.io/get-pip.py && \
+    python setup.py install && \
+    wget https://bootstrap.pypa.io/get-pip.py && \
     python get-pip.py
 
 RUN pip install --upgrade pip && \
@@ -65,18 +64,14 @@ RUN yum -y localinstall xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
     yum -y clean all && \
     rm ./*.rpm && \
     mkdir -p /zap/wrk && \
+    mkdir /zap@tmp && \
     mkdir -p /var/lib/jenkins/.vnc
 
 ADD zap /zap/
 
-RUN mkdir /zap@tmp && \
-    chmod -v -R 777 /zap@tmp
-
 # Copy the entrypoint
 COPY configuration/* /var/lib/jenkins/
 
-#ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
-#ENV PATH $JAVA_HOME/bin:/zap:$PATH
 ENV PATH /zap:$PATH
 ENV ZAP_PATH /zap/zap.sh
 ENV HOME /var/lib/jenkins
@@ -92,14 +87,14 @@ WORKDIR /zap
 RUN curl -s https://raw.githubusercontent.com/zaproxy/zap-admin/master/ZapVersions-dev.xml | xmlstarlet sel -t -v //url |grep -i Linux | wget -q --content-disposition -i - -O - | tar zx --strip-components=1 && \
     curl -s -L https://bitbucket.org/meszarv/webswing/downloads/webswing-2.3-distribution.zip | jar -x && \
     touch AcceptedLicense
-RUN curl -s https://github.com/zaproxy/zaproxy/releases/download/2.7.0/ZAP_2.7.0_Linux.tar.gz
-
+    
 ADD webswing.config /zap/webswing-2.3/webswing.config
 
 RUN chown -v -R root:root /zap && \
     chown -v -R root:root /var/lib/jenkins && \
     chmod -v -R 777 /var/lib/jenkins && \
-    chmod -v -R 777 /zap
+    chmod -v -R 777 /zap && \
+    chmod -v -R 777 /zap@tmp
 
 WORKDIR /var/lib/jenkins
 
