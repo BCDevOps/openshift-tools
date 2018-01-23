@@ -33,7 +33,7 @@ RUN yum repolist > /dev/null && \
     yum clean all -y
     # yum update -y
 
-RUN UNINSTALL_PKGS="java-1.8.0-openjdk-headless.i686" &&\
+RUN UNINSTALL_PKGS="java-1.8.0-openjdk-headless.i686 libstdc++-4.8.5-16.el7.i686" &&\
     yum remove -y $UNINSTALL_PKGS && \
     yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
