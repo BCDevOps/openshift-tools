@@ -16,7 +16,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="8080:http" \
       io.openshift.tags="builder,jenkins-jnlp-owasp-zap,jenkins-jnlp" \
       release="1"
-
+      
 # NOTES:
 # We need to call 2 (!) yum commands before being able to enable repositories properly
 # This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1479388
@@ -35,7 +35,7 @@ RUN yum repolist > /dev/null && \
 
 RUN yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
-    java-1.8.0-openjdk java-1.8.0-openjdk-headless java-1.8.0-openjdk-devel \
+    # java-1.8.0-openjdk java-1.8.0-openjdk-headless java-1.8.0-openjdk-devel \
     wget curl git gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
     net-tools python27-python-pip firefox nss_wrapper  && \
     yum clean all
@@ -70,9 +70,8 @@ RUN mkdir /zap@tmp && \
 
 # Copy the entrypoint
 COPY configuration/* /var/lib/jenkins/
-COPY configuration/run-jnlp-client /usr/local/bin/run-jnlp-client
 
-ENV PATH $JAVA_HOME/bin:/zap:$PATH
+ENV PATH /zap:$PATH
 ENV ZAP_PATH /zap/zap.sh
 ENV HOME /var/lib/jenkins
 
