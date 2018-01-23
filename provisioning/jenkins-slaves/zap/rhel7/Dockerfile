@@ -1,7 +1,6 @@
 FROM registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7
 
 EXPOSE 8080
-EXPOSE 8090
 
 ENV PATH=$HOME/.local/bin/:$PATH \
     LC_ALL=en_US.UTF-8 \
@@ -17,8 +16,6 @@ LABEL summary="$SUMMARY" \
       io.openshift.expose-services="8080:http" \
       io.openshift.tags="builder,jenkins-jnlp-owasp-zap,jenkins-jnlp" \
       release="1"
-
-USER root
 
 # NOTES:
 # We need to call 2 (!) yum commands before being able to enable repositories properly
@@ -75,7 +72,6 @@ RUN mkdir /zap@tmp && \
 COPY configuration/* /var/lib/jenkins/
 COPY configuration/run-jnlp-client /usr/local/bin/run-jnlp-client
 
-ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 ENV PATH $JAVA_HOME/bin:/zap:$PATH
 ENV ZAP_PATH /zap/zap.sh
 ENV HOME /var/lib/jenkins
@@ -102,6 +98,5 @@ RUN chown -v -R root:root /zap && \
 WORKDIR /var/lib/jenkins
 
 ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
-# Run the Jenkins JNLP client
-ENTRYPOINT ["/usr/local/bin/run-jnlp-client"]
+
 USER 1001
