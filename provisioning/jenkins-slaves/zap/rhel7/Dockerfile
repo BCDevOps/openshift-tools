@@ -65,8 +65,7 @@ RUN yum -y localinstall xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
     rm ./*.rpm && \
     mkdir -p /zap/wrk && \
     mkdir /zap@tmp && \
-    mkdir -p /var/lib/jenkins/.vnc && \
-    mkdir /tmp/.X11-unix
+    mkdir -p /var/lib/jenkins/.vnc
 
 ADD zap /zap/
 
