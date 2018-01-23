@@ -30,15 +30,16 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
     yum-config-manager --enable epel && \
-    yum clean all -y && \
-    yum update -y
+    yum clean all -y
+    # yum update -y
 
 RUN yum install -y redhat-rpm-config \
     make automake autoconf gcc gcc-c++ libstdc++ libstdc++-devel \
     # java-1.8.0-openjdk java-1.8.0-openjdk-headless java-1.8.0-openjdk-devel \
-    wget curl git gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
+    java-1.8.0-openjdk-devel \
+    wget nano curl git gzip gettext tar xorg-x11-server-Xvfb xterm vnc-server \
     net-tools python27-python-pip firefox nss_wrapper  && \
-    yum clean all
+    yum -y clean all
 
 RUN wget https://pypi.python.org/packages/source/s/setuptools/setuptools-7.0.tar.gz --no-check-certificate && \
     tar xzf setuptools-7.0.tar.gz && \
@@ -59,6 +60,7 @@ RUN yum -y localinstall xmlstarlet-1.6.1-1.el7.x86_64.rpm && \
     yum -y localinstall openbox-libs-3.5.2-6.2.x86_64.rpm && \
     yum -y localinstall openbox-3.5.2-6.2.x86_64.rpm && \
     yum -y localinstall x11vnc-0.9.13-11.el7.x86_64.rpm && \
+    yum -y clean all && \
     rm ./*.rpm && \
     mkdir -p /zap/wrk && \
     mkdir -p /var/lib/jenkins/.vnc
