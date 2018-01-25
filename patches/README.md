@@ -1,8 +1,8 @@
-#Extended Build Replacement
+# Extended Build Replacement
 
 The steps below describe how to port build processes in OpenShift that use the now-unavailable "Extended Builds" feature to a functionally equivalent configuration.
 
-#What are Extended Builds?
+# What are Extended Builds?
 
 Extended Builds were a feature available in OpenShift up to and including version 3.6.
 
@@ -12,7 +12,7 @@ The most common use case is where an application's build-time requirements are d
 
 Extended Builds are no longer supported, but there are alternative ways to achieve the same functionality via "Chained Builds".  This document describes the process of migrating from using Extended Builds to Chained Builds.   
 
-##Create a new Build Configuration
+## Create a new Build Configuration
 
 First, we need to create a *new* Build Configuration that will perform the work previously done as one of the stages of the Extended Build.
 
@@ -26,7 +26,7 @@ After creating this Build config, you should run it to make sure that it works a
 
 Note: you should capture the resulting BuildConfiguration and store alongside your code in GitHub.   
 
-##Patch your existing Build Configuration that uses Extended Builds
+## Patch your existing Build Configuration that uses Extended Builds
 
 Next, we need to change your existing Build Configuration so it no longer attempts to use Extended Builds syntax.  This can be done manually or via `oc patch`.
 
@@ -122,7 +122,7 @@ It needs to be updated to look like:
 
 Once you've executed the above, you should run the angular-on-nginx build, tag it for deployment (e.g `oc tag angular-on-nginx:latest angular-on-nginx:dev ), and confirm it deploys and functions as expected. 
 
-##Update Jenkinsfile to trigger *both* builds in turn
+## Update Jenkinsfile to trigger *both* builds in turn
 
 Because we now have 2 Build Configurations involved in building our deployable image, we need to update our Jenkinsfile to trigger both in turn, starting with the `angular-app-build`.
 
@@ -167,8 +167,3 @@ stage('build ' + BUILD_CONFIG) {
  openshiftBuild bldCfg: CHAINED_BUILD_CONFIG, showBuildLogs: 'true'
 ...
 ```
-
-
-
-
- 
