@@ -114,13 +114,16 @@ It needs to be updated to look like:
 ...
 ```
 
-*Note:* You should check the content above to ensure that it matches the image stream names you are using, etc.  Assuming it does, the following command will apply the change in a single shot.  If the image stream names don't line pup with your project, adjust in the command below as appropriate prior to running the command. 
+*Note:* You should check the content above to ensure that it matches the image stream names you are using, etc.  Assuming it does, the following command will apply the change in a single shot (backing up the current BuildConfig first).  If the image stream names don't line pup with your project, adjust in the command below as appropriate prior to running the command. 
 
 ``` 
+oc export bc/angular-on-nginx-build -o json > angular-on-nginx-build-backup.json
  oc patch bc/angular-on-nginx-build --patch='{  "spec": {    "source": {      "type": "Dockerfile",      "dockerfile": "FROM nginx-runtime:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",      "images": [        {          "from": {            "kind": "ImageStreamTag",            "name": "angular-app-build:latest"          },          "paths": [            {              "sourcePath": "/opt/app-root/src/dist/.",              "destinationDir": "tmp"            }          ]        }      ]    },    "strategy": {      "type": "Docker",      "dockerStrategy": {        "from": {          "kind": "ImageStreamTag",          "namespace": "openshift",          "name": "nginx-runtime:latest"        }      }    }  }}'
 ```
 
-Once you've executed the above, you should run the angular-on-nginx build, tag it for deployment (e.g `oc tag angular-on-nginx:latest angular-on-nginx:dev ), and confirm it deploys and functions as expected. 
+Once you've executed the above, you should run the angular-on-nginx build, tag it for deployment (e.g `oc tag angular-on-nginx:latest angular-on-nginx:dev ), and confirm it deploys and functions as expected.
+
+If you encouter problems with the patched build config, you can revert to the prior version using the backup you created above.  
 
 ## Update Jenkinsfile to trigger *both* builds in turn
 
