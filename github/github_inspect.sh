@@ -131,7 +131,7 @@ function org_inactive_members() {
             #Get users events  
             mevents=0
             myEDates=$(curl -s -H "Authorization: token ${gitToken}" ${githubApiUrl}/users/${mName}/events|grep -i created | sed s/\"created_at\"://g | sed s/[\",ZT\:\-]//g)
-            eventcn=${#myEDates}
+            eventcnt=${#myEDates}
             if [ $debug -gt 0 ]
             then
               echo ">> ${org} member ${mName} has ${eventcnt} event dates: ${myEDates}"
@@ -139,7 +139,7 @@ function org_inactive_members() {
             userIsActive=0
             if [ $eventcnt -lt 1 ] 
             then
-               echo "${org}/${mName} - NO Events for user"
+               echo "${org}/${mName} - NO Events for user, user created $myCDate"
             else
               for date in $myEdates
               do 
@@ -210,7 +210,7 @@ do
   echo "No of repos in ${org}: ${#repolist[@]}"
   for rp in "${repolist[@]}"
   do
-    hasLic=$(curl -s -H "Authorization: token $gitToken" ${githubApiUrl}/repos/${rp}/contents/|grep -i license|wc -l)
+    hasLic=$(curl -s -H "Authorization: token $gitToken" ${githubApiUrl}/repos/${rp}/contents|grep -i license|wc -l)
     if [ $debug -gt 0 ] 
     then
       echo ">> CURL LIC: $hasLic"
@@ -223,7 +223,7 @@ do
         open_license_issue $rp
       fi
     fi
-    hasRme=$(curl -s -H "Authorization: token $gitToken" ${githubApiUrl}/repos/${rpname}/contents/|grep -i readme|wc -l)
+    hasRme=$(curl -s -H "Authorization: token $gitToken" ${githubApiUrl}/repos/${rp}/contents|grep -i readme|wc -l)
     if [ $debug -gt 0 ] 
     then
       echo ">>CURL RME: $hasRme"
