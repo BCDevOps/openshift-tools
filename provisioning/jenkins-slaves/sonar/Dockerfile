@@ -49,6 +49,7 @@ RUN  rm -R /opt/rh/rh-nodejs6 \
     && nvm alias default $NODE_VERSION \
     && nvm use default \
     && npm install -g snyk \
+    && npm install -g snyk-to-html \
     && chmod -R a+rwx /usr/local/nvm \
     && yum clean all -y \
     && mkdir -p /opt/app-root \
