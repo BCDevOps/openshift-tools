@@ -53,7 +53,7 @@ RUN  rm -R /opt/rh/rh-nodejs6 \
     && yum clean all -y \
     && mkdir -p /opt/app-root \
     && chmod -R a+rwx /opt/app-root \
-    && chown -R 1001:0 /opt/app-root && fix-permissions /opt/app-root    
+    && chown -R 1001:0 /opt/app-root 
 
 ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
 ENV PATH "$PATH:/usr/lib/sonar-scanner/" 
