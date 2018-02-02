@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+oc export bc/{{ build_config_name }} -o json -n {{  project_name }} > {{ build_config_name }}-backup.json
+oc patch --local=true -f {{ build_config_name }}-backup.json -o json --patch='{  "spec": {    "source": {      "type": "Dockerfile",      "dockerfile": "FROM {{ runtime_image }}\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",      "images": [        {          "from": {            "kind": "ImageStreamTag",            "name": "{{  app_build_name }}:latest"          },          "paths": [            {              "sourcePath": "/opt/app-root/src/dist/.",              "destinationDir": "tmp"            }          ]        }      ]    },    "strategy": {      "type": "Docker",      "dockerStrategy": {        "from": {          "kind": "ImageStreamTag",          "namespace": "openshift",          "name": "{{ runtime_image }}"        }      }    }  }}' > {{ build_config_name }}-patched.json
