@@ -58,4 +58,6 @@ RUN chown -R 1001:0 $HOME && \
     
 RUN chmod -R 777 /opt/android
 
+RUN find / | grep tools.jar
+
 USER 1001
