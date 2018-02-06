@@ -25,10 +25,6 @@ ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
 ENV ANDROID_HOME=/opt/android
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.151-1.b12.el7_4.i386/jre 
 
-RUN find / | grep tools.jar
-RUN JAVA_HOME=$(dirname $( readlink -f $(which java) )); JAVA_HOME=$(realpath "$JAVA_HOME"/../); export JAVA_HOME
-RUN echo $JAVA_HOME
-
 # Create an ANDROID_HOME and install the SDK tools
 RUN cd /tmp && \
     curl -s https://dl.google.com/android/repository/sdk-tools-linux-3859397.zip -O && \
