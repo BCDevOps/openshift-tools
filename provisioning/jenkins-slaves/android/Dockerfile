@@ -17,8 +17,8 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="builder,jenkins-jnlp" \
       release="1"
 
-RUN yum install -y --setopt=tsflags=nodocs wget curl && \
-    rpm -V $INSTALL_PKGS && \
+RUN yum install -y --setopt=tsflags=nodocs wget curl openssl&& \
+    rpm -V wget curl openssl && \
     yum clean all -y
 
 ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
