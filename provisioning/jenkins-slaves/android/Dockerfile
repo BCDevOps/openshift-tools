@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/openshift3/jenkins-slave-maven-rhel7
 
-EXPOSE 8080
+USER 0
 
 ENV PATH=$HOME/.local/bin/:$PATH \
     LC_ALL=en_US.UTF-8 \
@@ -49,5 +49,7 @@ RUN chown -R 1001:0 $HOME && \
 RUN chmod -R 777 /opt/android
 
 RUN find / | grep tools.jar
+
+EXPOSE 8080
 
 USER 1001
