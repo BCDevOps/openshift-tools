@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7
+FROM registry.access.redhat.com/openshift3/jenkins-slave-maven-rhel7
 
 EXPOSE 8080
 
@@ -17,27 +17,17 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="builder,jenkins-jnlp" \
       release="1"
 
-# NOTES:
-# We need to call 2 (!) yum commands before being able to enable repositories properly
-# This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1479388
-# Chrome install info: https://access.redhat.com/discussions/917293
-RUN yum repolist > /dev/null && \
-    yum install -y yum-utils && \
-    yum-config-manager --disable \* &> /dev/null && \
-    yum-config-manager --enable rhel-server-rhscl-7-rpms && \
-    yum-config-manager --enable rhel-7-server-rpms && \
-    yum-config-manager --enable rhel-7-server-optional-rpms && \
-    yum-config-manager --enable rhel-7-server-fastrack-rpms && \
-    INSTALL_PKGS="wget curl" && \
-    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
+RUN yum install -y --setopt=tsflags=nodocs wget curl openssl && \
     rpm -V $INSTALL_PKGS && \
-    yum clean all -y && \
-    if [ ! -d /home/jenkins/.pki ] ; then mkdir /home/jenkins/.pki; fi && \
-    chmod 777 /home/jenkins/.pki
+    yum clean all -y
 
 ENV OPENSHIFT_JENKINS_JVM_ARCH=x86_64
 ENV ANDROID_HOME=/opt/android
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.151-1.b12.el7_4.i386/jre 
+
+RUN find / | grep tools.jar
+RUN JAVA_HOME=$(dirname $( readlink -f $(which java) )); JAVA_HOME=$(realpath "$JAVA_HOME"/../); export JAVA_HOME
+RUN echo $JAVA_HOME
 
 # Create an ANDROID_HOME and install the SDK tools
 RUN cd /tmp && \
