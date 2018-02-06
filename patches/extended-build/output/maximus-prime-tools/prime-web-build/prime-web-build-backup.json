@@ -1,0 +1,67 @@
+{
+    "kind": "BuildConfig",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "prime-web-build",
+        "creationTimestamp": null,
+        "labels": {
+            "app": "prime-web"
+        }
+    },
+    "spec": {
+        "triggers": [
+            {
+                "type": "ImageChange",
+                "imageChange": {}
+            }
+        ],
+        "runPolicy": "Parallel",
+        "source": {
+            "type": "Git",
+            "git": {
+                "uri": "https://github.com/bcgov/prime-web"
+            }
+        },
+        "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+                "from": {
+                    "kind": "ImageStreamTag",
+                    "name": "angular-builder:latest"
+                },
+                "runtimeImage": {
+                    "kind": "ImageStreamTag",
+                    "name": "nginx-runtime:latest"
+                },
+                "runtimeArtifacts": [
+                    {
+                        "sourcePath": "/opt/app-root/src/dist/",
+                        "destinationDir": "tmp/app"
+                    }
+                ]
+            }
+        },
+        "output": {
+            "to": {
+                "kind": "ImageStreamTag",
+                "name": "prime-web:latest"
+            }
+        },
+        "resources": {
+            "limits": {
+                "cpu": "1",
+                "memory": "4Gi"
+            },
+            "requests": {
+                "cpu": "100m",
+                "memory": "2Gi"
+            }
+        },
+        "postCommit": {},
+        "completionDeadlineSeconds": 1800,
+        "nodeSelector": null
+    },
+    "status": {
+        "lastVersion": 0
+    }
+}

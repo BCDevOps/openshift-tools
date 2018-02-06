@@ -1,0 +1,70 @@
+{
+    "kind": "BuildConfig",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "frontend-build",
+        "creationTimestamp": null,
+        "labels": {
+            "app": "shuber-frontend"
+        }
+    },
+    "spec": {
+        "triggers": [
+            {
+                "type": "ImageChange",
+                "imageChange": {}
+            }
+        ],
+        "runPolicy": "Parallel",
+        "source": {
+            "type": "Git",
+            "git": {
+                "uri": "https://github.com/bcgov/jag-shuber-frontend",
+                "ref": "master"
+            }
+        },
+        "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+                "from": {
+                    "kind": "ImageStreamTag",
+                    "namespace": "openshift",
+                    "name": "nodejs:6"
+                },
+                "env": [
+                    {
+                        "name": "NPM_MIRROR"
+                    }
+                ],
+                "runtimeImage": {
+                    "kind": "ImageStreamTag",
+                    "name": "nginx-runtime:latest"
+                },
+                "runtimeArtifacts": [
+                    {
+                        "sourcePath": "/opt/app-root/src/dist/",
+                        "destinationDir": "app"
+                    }
+                ]
+            }
+        },
+        "output": {
+            "to": {
+                "kind": "ImageStreamTag",
+                "name": "frontend:latest"
+            }
+        },
+        "resources": {
+            "limits": {
+                "cpu": "500m",
+                "memory": "4Gi"
+            }
+        },
+        "postCommit": {},
+        "completionDeadlineSeconds": 1800,
+        "nodeSelector": null
+    },
+    "status": {
+        "lastVersion": 0
+    }
+}

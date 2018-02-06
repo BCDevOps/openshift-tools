@@ -1,0 +1,69 @@
+{
+    "kind": "BuildConfig",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "admin-angular-on-nginx-build",
+        "creationTimestamp": null,
+        "labels": {
+            "app": "admin-angular-on-nginx"
+        }
+    },
+    "spec": {
+        "triggers": [
+            {
+                "type": "GitHub",
+                "github": {
+                    "secret": "b9222f28dcb49e6b"
+                }
+            }
+        ],
+        "runPolicy": "Serial",
+        "source": {
+            "type": "Git",
+            "git": {
+                "uri": "https://github.com/bcgov/nrts-prc-admin"
+            }
+        },
+        "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+                "from": {
+                    "kind": "ImageStreamTag",
+                    "name": "admin-angular-builder:latest"
+                },
+                "runtimeImage": {
+                    "kind": "ImageStreamTag",
+                    "name": "admin-nginx-runtime:latest"
+                },
+                "runtimeArtifacts": [
+                    {
+                        "sourcePath": "/opt/app-root/src/dist/",
+                        "destinationDir": "tmp/app"
+                    }
+                ]
+            }
+        },
+        "output": {
+            "to": {
+                "kind": "ImageStreamTag",
+                "name": "admin-angular-on-nginx:latest"
+            }
+        },
+        "resources": {
+            "limits": {
+                "cpu": "1",
+                "memory": "4Gi"
+            },
+            "requests": {
+                "cpu": "100m",
+                "memory": "2Gi"
+            }
+        },
+        "postCommit": {},
+        "completionDeadlineSeconds": 1800,
+        "nodeSelector": null
+    },
+    "status": {
+        "lastVersion": 0
+    }
+}

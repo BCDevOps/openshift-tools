@@ -125,6 +125,8 @@ def summarize_builds(project_name):
                 if not os.path.exists(build_config_dir):
                     os.makedirs(build_config_dir)
 
+                build_config_dir_abspath = os.path.abspath(build_config_dir)
+
                 print("===============================================")
                 print("{1}/{0}".format(build_config_name, project_name))
                 print("===============================================")
@@ -152,21 +154,30 @@ def summarize_builds(project_name):
                 app_build_name = 'angular-app'
                 new_app_text = new_app_template.render(project_name=project_name,app_build_name=app_build_name, git_source=git_source,
                                                  git_branch=git_branch, context_dir=context_dir)
-                new_app_output_filename = "{0}/new_app.sh".format(build_config_dir)
-                fh = open(new_app_output_filename, "w")
+
+                new_app_script_name = "new_app.sh"
+                new_app_output_file_full_path = "{0}/{1}".format(build_config_dir_abspath, new_app_script_name)
+                fh = open(new_app_output_file_full_path, "w")
                 fh.writelines(new_app_text)
                 fh.close()
-                os.chmod(new_app_output_filename, 0o777)
+                os.chmod(new_app_output_file_full_path, 0o777)
 
+                # execute the script we just created
+                subprocess.run([new_app_output_file_full_path], stdout=subprocess.PIPE, cwd=build_config_dir_abspath)
 
                 template = env.get_template('patch.tmpl')
                 app_build_output_imagestream = "{0}:latest".format(app_build_name)
                 patch_text = template.render(project_name=project_name, build_config_name=build_config_name, app_build_output_imagestream=app_build_output_imagestream, runtime_image=runtime_image, output_image=output_image)
-                patch_output_filename = "{0}/patch.sh".format(build_config_dir)
-                fh = open(patch_output_filename, "w")
+
+                patch_script_file_name = "patch.sh"
+                patch_output_file_full_path = "{0}/{1}".format(build_config_dir_abspath, patch_script_file_name)
+                fh = open(patch_output_file_full_path, "w")
                 fh.writelines(patch_text)
                 fh.close()
-                os.chmod(patch_output_filename, 0o777)
+                os.chmod(patch_output_file_full_path, 0o777)
+
+                # execute the script we just created
+                subprocess.run([patch_output_file_full_path], stdout=subprocess.PIPE, cwd=build_config_dir_abspath)
 
 
 def summarize_pvcs(project_name):

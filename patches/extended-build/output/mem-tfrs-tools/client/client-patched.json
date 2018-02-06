@@ -1,0 +1,69 @@
+{
+    "apiVersion": "v1",
+    "kind": "BuildConfig",
+    "metadata": {
+        "annotations": {
+            "description": "Defines how to build the client / front end image"
+        },
+        "creationTimestamp": null,
+        "name": "client",
+        "namespace": "jag-csb-jes-family-protection-order-tools"
+    },
+    "spec": {
+        "nodeSelector": null,
+        "output": {
+            "to": {
+                "kind": "ImageStreamTag",
+                "name": "client:latest"
+            }
+        },
+        "postCommit": {},
+        "resources": {
+            "limits": {
+                "cpu": "2",
+                "memory": "4Gi"
+            }
+        },
+        "runPolicy": "Serial",
+        "source": {
+            "dockerfile": "FROM angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
+            "images": [
+                {
+                    "from": {
+                        "kind": "ImageStreamTag",
+                        "name": "angular-app:latest"
+                    },
+                    "paths": [
+                        {
+                            "destinationDir": "tmp",
+                            "sourcePath": "/opt/app-root/src/dist/."
+                        }
+                    ]
+                }
+            ],
+            "type": "Dockerfile"
+        },
+        "strategy": {
+            "dockerStrategy": {
+                "from": {
+                    "kind": "ImageStreamTag",
+                    "name": "nginx-runtime:latest",
+                    "namespace": "openshift"
+                }
+            },
+            "type": "Docker"
+        },
+        "triggers": [
+            {
+                "imageChange": {},
+                "type": "ImageChange"
+            },
+            {
+                "type": "ConfigChange"
+            }
+        ]
+    },
+    "status": {
+        "lastVersion": 0
+    }
+}

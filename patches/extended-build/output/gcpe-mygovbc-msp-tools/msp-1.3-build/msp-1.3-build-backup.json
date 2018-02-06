@@ -1,0 +1,68 @@
+{
+    "kind": "BuildConfig",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "msp-1.3-build",
+        "creationTimestamp": null,
+        "labels": {
+            "app": "msp-1.3"
+        }
+    },
+    "spec": {
+        "triggers": [
+            {
+                "type": "ImageChange",
+                "imageChange": {}
+            }
+        ],
+        "runPolicy": "Parallel",
+        "source": {
+            "type": "Git",
+            "git": {
+                "uri": "https://github.com/bcgov/MyGovBC-MSP.git",
+                "ref": "1.3"
+            }
+        },
+        "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+                "from": {
+                    "kind": "ImageStreamTag",
+                    "name": "angular-builder-1.3:latest"
+                },
+                "runtimeImage": {
+                    "kind": "ImageStreamTag",
+                    "name": "nginx-runtime:latest"
+                },
+                "runtimeArtifacts": [
+                    {
+                        "sourcePath": "/opt/app-root/src/dist/",
+                        "destinationDir": "tmp/app"
+                    }
+                ]
+            }
+        },
+        "output": {
+            "to": {
+                "kind": "ImageStreamTag",
+                "name": "msp-1.3:latest"
+            }
+        },
+        "resources": {
+            "limits": {
+                "cpu": "1",
+                "memory": "4Gi"
+            },
+            "requests": {
+                "cpu": "100m",
+                "memory": "2Gi"
+            }
+        },
+        "postCommit": {},
+        "completionDeadlineSeconds": 1800,
+        "nodeSelector": null
+    },
+    "status": {
+        "lastVersion": 0
+    }
+}

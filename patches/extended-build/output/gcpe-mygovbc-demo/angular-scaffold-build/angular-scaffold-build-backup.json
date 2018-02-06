@@ -1,0 +1,69 @@
+{
+    "kind": "BuildConfig",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "angular-scaffold-build",
+        "creationTimestamp": null,
+        "labels": {
+            "app": "angular-on-nginx"
+        }
+    },
+    "spec": {
+        "triggers": [
+            {
+                "type": "ImageChange",
+                "imageChange": {}
+            }
+        ],
+        "runPolicy": "Parallel",
+        "source": {
+            "type": "Git",
+            "git": {
+                "uri": "https://github.com/bcgov/angular-scaffold"
+            }
+        },
+        "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+                "from": {
+                    "kind": "ImageStreamTag",
+                    "namespace": "gcpe-mygovbc-demo",
+                    "name": "angular-builder:latest"
+                },
+                "runtimeImage": {
+                    "kind": "ImageStreamTag",
+                    "name": "nginx-runtime:latest"
+                },
+                "runtimeArtifacts": [
+                    {
+                        "sourcePath": "/opt/app-root/src/dist/",
+                        "destinationDir": "tmp/app"
+                    }
+                ]
+            }
+        },
+        "output": {
+            "to": {
+                "kind": "ImageStreamTag",
+                "namespace": "gcpe-mygovbc-demo",
+                "name": "angular-scaffold:latest"
+            }
+        },
+        "resources": {
+            "limits": {
+                "cpu": "1",
+                "memory": "4Gi"
+            },
+            "requests": {
+                "cpu": "100m",
+                "memory": "2Gi"
+            }
+        },
+        "postCommit": {},
+        "completionDeadlineSeconds": 1800,
+        "nodeSelector": null
+    },
+    "status": {
+        "lastVersion": 0
+    }
+}

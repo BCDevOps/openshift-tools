@@ -1,0 +1,73 @@
+{
+    "apiVersion": "v1",
+    "kind": "BuildConfig",
+    "metadata": {
+        "creationTimestamp": null,
+        "labels": {
+            "app": "admin-angular-on-nginx"
+        },
+        "name": "admin-angular-on-nginx-build",
+        "namespace": "jag-csb-jes-family-protection-order-tools"
+    },
+    "spec": {
+        "completionDeadlineSeconds": 1800,
+        "nodeSelector": null,
+        "output": {
+            "to": {
+                "kind": "ImageStreamTag",
+                "name": "admin-angular-on-nginx:latest"
+            }
+        },
+        "postCommit": {},
+        "resources": {
+            "limits": {
+                "cpu": "1",
+                "memory": "4Gi"
+            },
+            "requests": {
+                "cpu": "100m",
+                "memory": "2Gi"
+            }
+        },
+        "runPolicy": "Serial",
+        "source": {
+            "dockerfile": "FROM angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
+            "images": [
+                {
+                    "from": {
+                        "kind": "ImageStreamTag",
+                        "name": "angular-app:latest"
+                    },
+                    "paths": [
+                        {
+                            "destinationDir": "tmp",
+                            "sourcePath": "/opt/app-root/src/dist/."
+                        }
+                    ]
+                }
+            ],
+            "type": "Dockerfile"
+        },
+        "strategy": {
+            "dockerStrategy": {
+                "from": {
+                    "kind": "ImageStreamTag",
+                    "name": "admin-nginx-runtime:latest",
+                    "namespace": "openshift"
+                }
+            },
+            "type": "Docker"
+        },
+        "triggers": [
+            {
+                "github": {
+                    "secret": "b9222f28dcb49e6b"
+                },
+                "type": "GitHub"
+            }
+        ]
+    },
+    "status": {
+        "lastVersion": 0
+    }
+}

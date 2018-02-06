@@ -1,0 +1,77 @@
+{
+    "kind": "BuildConfig",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "client",
+        "creationTimestamp": null,
+        "annotations": {
+            "description": "Defines how to build the client / front end image"
+        }
+    },
+    "spec": {
+        "triggers": [
+            {
+                "type": "ImageChange",
+                "imageChange": {}
+            },
+            {
+                "type": "ConfigChange"
+            }
+        ],
+        "runPolicy": "Serial",
+        "source": {
+            "type": "Git",
+            "git": {
+                "uri": "https://github.com/bcgov/tfrs.git",
+                "ref": "master"
+            },
+            "contextDir": "frontend"
+        },
+        "strategy": {
+            "type": "Source",
+            "sourceStrategy": {
+                "from": {
+                    "kind": "ImageStreamTag",
+                    "namespace": "openshift",
+                    "name": "nodejs:latest"
+                },
+                "runtimeImage": {
+                    "kind": "ImageStreamTag",
+                    "namespace": "openshift",
+                    "name": "nginx-runtime:latest"
+                },
+                "runtimeArtifacts": [
+                    {
+                        "sourcePath": "/opt/app-root/src/public/index.html",
+                        "destinationDir": "tmp/app/dist"
+                    },
+                    {
+                        "sourcePath": "/opt/app-root/src/public/assets",
+                        "destinationDir": "tmp/app/dist"
+                    },
+                    {
+                        "sourcePath": "/opt/app-root/src/public/build",
+                        "destinationDir": "tmp/app/dist"
+                    }
+                ]
+            }
+        },
+        "output": {
+            "to": {
+                "kind": "ImageStreamTag",
+                "name": "client:latest"
+            }
+        },
+        "resources": {
+            "limits": {
+                "cpu": "2",
+                "memory": "4Gi"
+            }
+        },
+        "postCommit": {},
+        "nodeSelector": null
+    },
+    "status": {
+        "lastVersion": 0
+    }
+}
