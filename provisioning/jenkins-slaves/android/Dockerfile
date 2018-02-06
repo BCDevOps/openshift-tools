@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/openshift3/jenkins-slave-maven-rhel7
+FROM registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7
 
 EXPOSE 8080
 
@@ -28,7 +28,7 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-7-server-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
     yum-config-manager --enable rhel-7-server-fastrack-rpms && \
-    INSTALL_PKGS="wget curl openssl" && \
+    INSTALL_PKGS="wget curl" && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     yum clean all -y && \
