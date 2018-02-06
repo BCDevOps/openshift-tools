@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/openshift3/jenkins-slave-maven-rhel7
+FROM registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7
 
 EXPOSE 8080
 
