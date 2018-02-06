@@ -160,7 +160,8 @@ def summarize_builds(project_name):
 
 
                 template = env.get_template('patch.tmpl')
-                patch_text = template.render(project_name=project_name, build_config_name=build_config_name, app_build_name="{0}:latest".format(app_build_name),runtime_image=runtime_image, output_image=output_image)
+                app_build_output_imagestream = "{0}:latest".format(app_build_name)
+                patch_text = template.render(project_name=project_name, build_config_name=build_config_name, app_build_output_imagestream=app_build_output_imagestream, runtime_image=runtime_image, output_image=output_image)
                 patch_output_filename = "{0}/patch.sh".format(build_config_dir)
                 fh = open(patch_output_filename, "w")
                 fh.writelines(patch_text)
