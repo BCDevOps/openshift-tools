@@ -61,9 +61,6 @@
                         "type": "ImageChange"
                     }
                 ]
-            },
-            "status": {
-                "lastVersion": 0
             }
         },
         {
@@ -81,9 +78,6 @@
                 "lookupPolicy": {
                     "local": false
                 }
-            },
-            "status": {
-                "dockerImageRepository": ""
             }
         }
     ]
