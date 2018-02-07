@@ -9,9 +9,9 @@
             "metadata": {
                 "creationTimestamp": null,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "captcha-demo-build-angular-app-build"
                 },
-                "name": "angular-app-build"
+                "name": "captcha-demo-build-angular-app-build"
             },
             "spec": {
                 "failedBuildsHistoryLimit": 5,
@@ -19,7 +19,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "captcha-demo-build-angular-app:latest"
                     }
                 },
                 "postCommit": {},
@@ -37,7 +37,7 @@
                     "contextDir": "",
                     "git": {
                         "ref": "master",
-                        "uri": "https://github.com/bcgov/eao-public"
+                        "uri": "https://github.com/bcgov/angular-scaffold-captcha"
                     },
                     "type": "Git"
                 },
@@ -73,9 +73,9 @@
                 "creationTimestamp": null,
                 "generation": 1,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "captcha-demo-build-angular-app-build"
                 },
-                "name": "angular-app"
+                "name": "captcha-demo-build-angular-app"
             },
             "spec": {
                 "lookupPolicy": {

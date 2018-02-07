@@ -9,9 +9,9 @@
             "metadata": {
                 "creationTimestamp": null,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "prime-web-build-angular-app-build"
                 },
-                "name": "angular-app-build"
+                "name": "prime-web-build-angular-app-build"
             },
             "spec": {
                 "failedBuildsHistoryLimit": 5,
@@ -19,7 +19,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "prime-web-build-angular-app:latest"
                     }
                 },
                 "postCommit": {},
@@ -37,7 +37,7 @@
                     "contextDir": "",
                     "git": {
                         "ref": "master",
-                        "uri": "https://github.com/bcgov/mem-mmti-public"
+                        "uri": "https://github.com/bcgov/prime-web"
                     },
                     "type": "Git"
                 },
@@ -73,9 +73,9 @@
                 "creationTimestamp": null,
                 "generation": 1,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "prime-web-build-angular-app-build"
                 },
-                "name": "angular-app"
+                "name": "prime-web-build-angular-app"
             },
             "spec": {
                 "lookupPolicy": {

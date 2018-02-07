@@ -7,7 +7,7 @@
             "app": "msp-1.3-prototype"
         },
         "name": "msp-1.3-prototype-build",
-        "namespace": "jag-csb-jes-family-protection-order-tools"
+        "namespace": "gcpe-mygovbc-msp-tools"
     },
     "spec": {
         "completionDeadlineSeconds": 1800,
@@ -31,12 +31,12 @@
         },
         "runPolicy": "Parallel",
         "source": {
-            "dockerfile": "FROM angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
+            "dockerfile": "FROM msp-1.3-prototype-build-angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
             "images": [
                 {
                     "from": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "msp-1.3-prototype-build-angular-app:latest"
                     },
                     "paths": [
                         {
@@ -52,8 +52,7 @@
             "dockerStrategy": {
                 "from": {
                     "kind": "ImageStreamTag",
-                    "name": "nginx-runtime-1.3-prototype:latest",
-                    "namespace": "openshift"
+                    "name": "nginx-runtime-1.3-prototype:latest"
                 }
             },
             "type": "Docker"

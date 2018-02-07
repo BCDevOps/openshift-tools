@@ -7,7 +7,7 @@
         },
         "creationTimestamp": null,
         "name": "client",
-        "namespace": "jag-csb-jes-family-protection-order-tools"
+        "namespace": "mem-tfrs-tools"
     },
     "spec": {
         "nodeSelector": null,
@@ -26,12 +26,12 @@
         },
         "runPolicy": "Serial",
         "source": {
-            "dockerfile": "FROM angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
+            "dockerfile": "FROM client-angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
             "images": [
                 {
                     "from": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "client-angular-app:latest"
                     },
                     "paths": [
                         {

@@ -7,7 +7,7 @@
             "app": "admin-angular-on-nginx"
         },
         "name": "admin-angular-on-nginx-build",
-        "namespace": "jag-csb-jes-family-protection-order-tools"
+        "namespace": "nrts-prc-tools"
     },
     "spec": {
         "completionDeadlineSeconds": 1800,
@@ -31,12 +31,12 @@
         },
         "runPolicy": "Serial",
         "source": {
-            "dockerfile": "FROM angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
+            "dockerfile": "FROM admin-angular-on-nginx-build-angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
             "images": [
                 {
                     "from": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "admin-angular-on-nginx-build-angular-app:latest"
                     },
                     "paths": [
                         {
@@ -52,8 +52,7 @@
             "dockerStrategy": {
                 "from": {
                     "kind": "ImageStreamTag",
-                    "name": "admin-nginx-runtime:latest",
-                    "namespace": "openshift"
+                    "name": "admin-nginx-runtime:latest"
                 }
             },
             "type": "Docker"

@@ -7,7 +7,7 @@
             "app": "prime-web"
         },
         "name": "prime-web-build",
-        "namespace": "jag-csb-jes-family-protection-order-tools"
+        "namespace": "maximus-prime-tools"
     },
     "spec": {
         "completionDeadlineSeconds": 1800,
@@ -31,12 +31,12 @@
         },
         "runPolicy": "Parallel",
         "source": {
-            "dockerfile": "FROM angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
+            "dockerfile": "FROM prime-web-build-angular-app:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
             "images": [
                 {
                     "from": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "prime-web-build-angular-app:latest"
                     },
                     "paths": [
                         {
@@ -52,8 +52,7 @@
             "dockerStrategy": {
                 "from": {
                     "kind": "ImageStreamTag",
-                    "name": "nginx-runtime:latest",
-                    "namespace": "openshift"
+                    "name": "nginx-runtime:latest"
                 }
             },
             "type": "Docker"

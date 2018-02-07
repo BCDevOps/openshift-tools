@@ -9,9 +9,9 @@
             "metadata": {
                 "creationTimestamp": null,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "frontend-build-angular-app-build"
                 },
-                "name": "angular-app-build"
+                "name": "frontend-build-angular-app-build"
             },
             "spec": {
                 "failedBuildsHistoryLimit": 5,
@@ -19,7 +19,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "frontend-build-angular-app:latest"
                     }
                 },
                 "postCommit": {},
@@ -73,9 +73,9 @@
                 "creationTimestamp": null,
                 "generation": 1,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "frontend-build-angular-app-build"
                 },
-                "name": "angular-app"
+                "name": "frontend-build-angular-app"
             },
             "spec": {
                 "lookupPolicy": {

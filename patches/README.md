@@ -12,106 +12,35 @@ The most common use case is where an application's build-time requirements are d
 
 Extended Builds are no longer supported, but there are alternative ways to achieve the same functionality via "Chained Builds".  This document describes the process of migrating from using Extended Builds to Chained Builds.   
 
+## Patches/Missing Resources Available for Projects
+
+We have created patches/missing resources for gov projects that have used Extended Builds. These are located in the `output` directory of this repo, under the project name and name of the build config requiring fixing.
+
+The sections below describe the steps required to complete the changes.    
+
 ## Create a new Build Configuration
 
 First, we need to create a *new* Build Configuration that will perform the work previously done as one of the stages of the Extended Build.
 
-In the most common use of Extended Builds (`bcgov/angular-scaffold`), the needed Build Configuration will use a nodejs image to exectue the angular build steps. This build configuration can be created using the following command while "in" your `-tools` project, and adapting the parameter values for your project layout:
+In the most common use of Extended Builds (`bcgov/angular-scaffold`), the needed Build Configuration will use a nodejs image to execute the angular build steps. In output/<project name>/<build config name>, you'll see a file called `angular-app-bc.json`. You'll use this file to create a new build config as follows:
 
 ```bash
-oc process https://cdn.rawgit.com/bcgov/angular-scaffold/515fd8e5/openshift/templates/angular-app/angular-app.json -p NAME=<name> -p GIT_REPO_URL=<your_repo> -p GIT_REF=<branch> -p SOURCE_CONTEXT_DIR=<contex_dir> | oc create -f - 
+cd output/<project name>/<build config name> 
+oc create -f  angular-app-bc.json -n <project name>
 ```
 
 After creating this Build config, you should run it to make sure that it works as expected.   
 
-Note: you should capture the resulting BuildConfiguration and store alongside your code in GitHub.   
+Reminder: you should store the angular-app-bc.json alongside your code in GitHub in the openshift directory.   
 
 ## Patch your existing Build Configuration that uses Extended Builds
 
-Next, we need to change your existing Build Configuration so it no longer attempts to use Extended Builds syntax.  This can be done manually or via `oc patch`.
+Next, we need to change your existing Build Configuration so it no longer attempts to use Extended Builds syntax.  This can be done manually or via a "patched" build configuration in output/<project name>/<build config name> and will be called something like <build-config-name>-patched.json.  There will also be a backup of the existing buildconfig. To apply the  patched build config (which will replace the existing one), do the following: 
 
 The existing Build Configuration that is leveraging Extended Builds will have a section that looks like:
 
 ```json
-...
- "spec": {
-    "triggers": [
-      {
-        "type": "ImageChange",
-        "imageChange": {}
-      }
-    ],
-    "runPolicy": "Parallel",
-    "source": {
-      "type": "Git",
-      "git": {
-        "uri": "https://github.com/bcgov/yourrepo.git",
-        "ref": "1.3"
-      }
-    },
-    "strategy": {
-      "type": "Source",
-      "sourceStrategy": {
-        "from": {
-          "kind": "ImageStreamTag",
-          "name": "angular-builder:latest"
-        },
-        "runtimeImage": {
-          "kind": "ImageStreamTag",
-          "name": "nginx-runtime:latest"
-        },
-        "runtimeArtifacts": [
-          {
-            "sourcePath": "/opt/app-root/src/dist/",
-            "destinationDir": "tmp/app"
-          }
-        ]
-      }
-    }
-...
-```
-
-It needs to be updated to look like:
-
-```json
-...
-  "spec": {
-    "triggers": [
-      {
-        "type": "ImageChange",
-        "imageChange": {}
-      }
-    ],
-    "runPolicy": "Parallel",
-    "source": {
-      "type": "Dockerfile",
-      "dockerfile": "FROM nginx-runtime:latest\nCOPY * /tmp/app/dist/\nCMD  /usr/libexec/s2i/run",
-      "images": [
-        {
-          "from": {
-            "kind": "ImageStreamTag",
-            "name": "angular-app-build:latest"
-          },
-          "paths": [
-            {
-              "sourcePath": "/opt/app-root/src/dist/.",
-              "destinationDir": "tmp"
-            }
-          ]
-        }
-      ]
-    },
-    "strategy": {
-      "type": "Docker",
-      "dockerStrategy": {
-        "from": {
-          "kind": "ImageStreamTag",
-          "namespace": "openshift",
-          "name": "nginx-runtime:latest"
-        }
-      }
-    }
-...
+ 
 ```
 
 *Note:* You should check the content above to ensure that it matches the image stream names you are using, etc.  Assuming it does, the following command will apply the change in a single shot (backing up the current BuildConfig first).  If the image stream names don't line pup with your project, adjust in the command below as appropriate prior to running the command. 

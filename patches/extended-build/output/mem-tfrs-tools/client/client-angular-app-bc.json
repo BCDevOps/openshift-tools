@@ -9,9 +9,9 @@
             "metadata": {
                 "creationTimestamp": null,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "client-angular-app-build"
                 },
-                "name": "angular-app-build"
+                "name": "client-angular-app-build"
             },
             "spec": {
                 "failedBuildsHistoryLimit": 5,
@@ -19,7 +19,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "client-angular-app:latest"
                     }
                 },
                 "postCommit": {},
@@ -34,10 +34,10 @@
                 },
                 "runPolicy": "Serial",
                 "source": {
-                    "contextDir": "",
+                    "contextDir": "frontend",
                     "git": {
-                        "ref": "1.3-prototype",
-                        "uri": "https://github.com/bcgov/MyGovBC-MSP.git"
+                        "ref": "master",
+                        "uri": "https://github.com/bcgov/tfrs.git"
                     },
                     "type": "Git"
                 },
@@ -73,9 +73,9 @@
                 "creationTimestamp": null,
                 "generation": 1,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "client-angular-app-build"
                 },
-                "name": "angular-app"
+                "name": "client-angular-app"
             },
             "spec": {
                 "lookupPolicy": {

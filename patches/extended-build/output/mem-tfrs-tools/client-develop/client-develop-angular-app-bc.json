@@ -9,9 +9,9 @@
             "metadata": {
                 "creationTimestamp": null,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "client-develop-angular-app-build"
                 },
-                "name": "angular-app-build"
+                "name": "client-develop-angular-app-build"
             },
             "spec": {
                 "failedBuildsHistoryLimit": 5,
@@ -19,7 +19,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "angular-app:latest"
+                        "name": "client-develop-angular-app:latest"
                     }
                 },
                 "postCommit": {},
@@ -73,9 +73,9 @@
                 "creationTimestamp": null,
                 "generation": 1,
                 "labels": {
-                    "build": "angular-app-build"
+                    "build": "client-develop-angular-app-build"
                 },
-                "name": "angular-app"
+                "name": "client-develop-angular-app"
             },
             "spec": {
                 "lookupPolicy": {

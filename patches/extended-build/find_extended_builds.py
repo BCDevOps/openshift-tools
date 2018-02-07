@@ -139,6 +139,7 @@ def summarize_builds(project_name):
                 git_branch = spec['source']['git'].get('ref')
                 context_dir = spec['source'].get('contextDir')
                 runtime_image = spec['strategy']['sourceStrategy']['runtimeImage']['name']
+                runtime_image_namespace = spec['strategy']['sourceStrategy']['runtimeImage'].get('namespace')
                 output_image = spec['output']['to']['name']
                 print("repo: {0}".format(git_source))
                 if git_branch:
@@ -146,12 +147,14 @@ def summarize_builds(project_name):
                 if context_dir:
                     print("contextDir: {0}".format(context_dir))
                 print("runtimeImage: {0}".format(runtime_image))
+                if runtime_image_namespace:
+                    print("runtimeImage namespace: {0}".format(runtime_image_namespace))
                 print("outputImage: {0}".format(output_image))
 
                 env = Environment(loader=PackageLoader('find_extended_builds', 'templates'))
 
                 new_app_template = env.get_template('new_app.tmpl')
-                app_build_name = 'angular-app'
+                app_build_name = "{0}-angular-app".format(build_config_name )
                 new_app_text = new_app_template.render(project_name=project_name,app_build_name=app_build_name, git_source=git_source,
                                                  git_branch=git_branch, context_dir=context_dir)
 
@@ -167,7 +170,7 @@ def summarize_builds(project_name):
 
                 template = env.get_template('patch.tmpl')
                 app_build_output_imagestream = "{0}:latest".format(app_build_name)
-                patch_text = template.render(project_name=project_name, build_config_name=build_config_name, app_build_output_imagestream=app_build_output_imagestream, runtime_image=runtime_image, output_image=output_image)
+                patch_text = template.render(project_name=project_name, build_config_name=build_config_name, app_build_output_imagestream=app_build_output_imagestream, runtime_image=runtime_image, runtime_image_namespace=runtime_image_namespace, output_image=output_image)
 
                 patch_script_file_name = "patch.sh"
                 patch_output_file_full_path = "{0}/{1}".format(build_config_dir_abspath, patch_script_file_name)
