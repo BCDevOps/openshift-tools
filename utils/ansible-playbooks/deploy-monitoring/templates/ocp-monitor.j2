@@ -52,43 +52,42 @@ function datestamp () {
   date "+%F %H:%M:%S"
 }
 
-{% if ansible_fqdn == "ociopf-d-100.dmz" %}
-{% raw %}
 # Test that the API is responding
 echo -n "$(datestamp) OpenShift API Status: "
-if ! curl -s https://console.pathfinder.gov.bc.ca:8443/healthz | grep ok
+if ! curl -s {{ api_url }}/healthz | grep ok
 then
-  echo "$(datestamp) ERROR: curl of API https://console.pathfinder.gov.bc.ca:8443/healthz failed"
+  echo "$(datestamp) ERROR: curl of API {{ api_url }}/healthz failed"
 fi
 
+{% if ansible_fqdn == primary_master %}
 # Test that the Router service is responding
 # TODO switch to DNS name once server are using dnsmasq properly
 echo -n "$(datestamp) OpenShift Router Status: "
-if ! curl -s http://172.50.56.219:1936/healthz | grep 'Service ready'
+if ! curl -s {{ router_service }}/healthz | grep 'Service ready'
 then
-  echo "$(datestamp) ERROR: curl of router service http://172.50.56.219:1936/healthz failed"
+  echo "$(datestamp) ERROR: curl of router service {{ router_service }}/healthz failed"
 fi
 
 # Test that a sample route is working
-echo -n "$(datestamp) BCDevExchange Status: "
-if ! curl -Isk https://bcdevexchange.org/ | grep '200 OK'
+echo -n "$(datestamp) Canary Route Status: "
+if ! curl -Isk {{ canary_route }} | grep '200 OK'
 then
-  echo "$(datestamp) ERROR: curl of https://bcdevexchange.org/ failed"
+  echo "$(datestamp) ERROR: curl of {{ canary_route }} failed"
 fi
 
 # Test the Docker Registry is responding
 # TOD switch to DNS name once server is using dnsmasq properly
 echo -n "$(datestamp) Docker Registry Status: "
-if ! curl -Is http://172.50.0.2:5000/healthz | grep '200 OK'
+if ! curl -Is {{ registry_service }}/healthz | grep '200 OK'
 then
-  echo "$(datestamp) ERROR: curl of docker registry service http://172.50.0.2:5000/healthz failed"
+  echo "$(datestamp) ERROR: curl of docker registry service {{ registry_service }}/healthz failed"
 fi
 
 # Run provided metrics health check
 # Find the dir we are running in
 DIR=$(dirname $(readlink -f "$0"))
 echo -n "$(datestamp) Metrics status: "
-if ! /usr/local/bin/metrics-health-check https://hawkular-metrics.pathfinder.gov.bc.ca
+if ! /usr/local/bin/metrics-health-check {{ metrics_url }}
 then
   echo "$(datestamp) ERROR: Metrics health check failed"
 fi
@@ -115,6 +114,7 @@ then
   echo "$(datestamp) ERROR: Low Metrics Cassandra Space"
 fi
 
+{% raw %}
 # Check that all nodes are Ready
 echo "$(datestamp) Check for NodeNotReady"
 if oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}" | grep -v True
@@ -154,7 +154,10 @@ then
 fi
 
 # Verify the IP Failover is on 3 nodes
-NODES=$(oc -n default get pods -l deploymentconfig=ipf-ha-router-kamloops -o yaml -o go-template="{{range .items}}{{if eq .status.phase \"Running\"}}{{.spec.nodeName}}{{print \"\n\"}}{{end}}{{end}}")
+{% endraw %}
+ROUTER_DC="{{ router_dc }}"
+{% raw %}
+NODES=$(oc -n default get pods -l deploymentconfig="${ROUTER_DC}" -o yaml -o go-template="{{range .items}}{{if eq .status.phase \"Running\"}}{{.spec.nodeName}}{{print \"\n\"}}{{end}}{{end}}")
 POD_COUNT=$(echo "$NODES" | wc -l)
 UNIQ_NODES=$(echo "$NODES" | sort | uniq | wc -l)
 echo "$(datestamp) Check that IPF is scaled to 3: $POD_COUNT"
@@ -319,12 +322,5 @@ echo -n "$(datestamp) OpenVSwitch Deamon Status: "
 if ! systemctl is-active openvswitch.service
 then
   echo "$(datestamp) ERROR: OpenVSwitch is not running"
-fi
-
-# Test that the API is responding
-echo -n "$(datestamp) OpenShift API Status: "
-if ! curl -s https://console.pathfinder.gov.bc.ca:8443/healthz | grep ok
-then
-  echo "$(datestamp) ERROR: curl of API https://console.pathfinder.gov.bc.ca:8443/healthz failed"
 fi
 
