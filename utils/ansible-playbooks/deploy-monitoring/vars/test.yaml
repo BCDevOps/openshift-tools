@@ -4,5 +4,5 @@ api_url: https://console.lab.pathfinder.gov.bc.ca:8443
 router_service: http://10.131.7.73:1936
 router_dc: ipf-ha-router
 registry_service: http://10.131.6.232:5000
-canary_route: https://django-psql-persistent-canary.lab.pathfinder.gov.bc.ca/
+canary_route: https://canary.lab.pathfinder.gov.bc.ca/
 metrics_url: https://hawkular-metrics.lab.pathfinder.gov.bc.ca
