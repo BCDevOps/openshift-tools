@@ -54,7 +54,7 @@ function datestamp () {
 
 # Test that the API is responding
 echo -n "$(datestamp) OpenShift API Status: "
-if ! curl -s {{ api_url }}/healthz | grep ok
+if ! curl --silent --show-error {{ api_url }}/healthz | grep ok
 then
   echo "$(datestamp) ERROR: curl of API {{ api_url }}/healthz failed"
 fi
@@ -63,14 +63,14 @@ fi
 # Test that the Router service is responding
 # TODO switch to DNS name once server are using dnsmasq properly
 echo -n "$(datestamp) OpenShift Router Status: "
-if ! curl -s {{ router_service }}/healthz | grep 'Service ready'
+if ! curl --silent --show-error {{ router_service }}/healthz | grep 'Service ready'
 then
   echo "$(datestamp) ERROR: curl of router service {{ router_service }}/healthz failed"
 fi
 
 # Test that a sample route is working
 echo -n "$(datestamp) Canary Route Status: "
-if ! curl -Isk {{ canary_route }} | grep '200 OK'
+if ! curl --head --insecure --silent --show-error {{ canary_route }} | grep '200 OK'
 then
   echo "$(datestamp) ERROR: curl of {{ canary_route }} failed"
 fi
@@ -78,7 +78,7 @@ fi
 # Test the Docker Registry is responding
 # TOD switch to DNS name once server is using dnsmasq properly
 echo -n "$(datestamp) Docker Registry Status: "
-if ! curl -Is {{ registry_service }}/healthz | grep '200 OK'
+if ! curl --head --silent --show-error {{ registry_service }}/healthz | grep '200 OK'
 then
   echo "$(datestamp) ERROR: curl of docker registry service {{ registry_service }}/healthz failed"
 fi
