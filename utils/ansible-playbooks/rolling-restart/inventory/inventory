@@ -2,6 +2,7 @@
 masters
 infra
 app
+storage
 
 [all:vars]
 openshift_deployment_type=openshift-enterprise
@@ -10,8 +11,9 @@ yum_update=no
 #Exclude any master that is the ansible control node
 [masters]
 
-
 [infra]
 
-
 [app]
+
+[storage]
+
