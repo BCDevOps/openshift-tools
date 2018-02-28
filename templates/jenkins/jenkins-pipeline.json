@@ -7,8 +7,8 @@
         "annotations": {
             "description": "Jenkins service, with persistent storage.\n\nNOTE: You must have persistent volumes available in your cluster to use this template.",
             "iconClass": "icon-jenkins",
-            "openshift.io/display-name": "Jenkins (Persistent)",
-            "tags": "instant-app,jenkins",
+            "openshift.io/display-name": "BC Gov Pathfinder Jenkins (Persistent)",
+            "tags": "instant-app,jenkins,bcgov,pathfinder",
             "template.openshift.io/documentation-url": "https://docs.openshift.org/latest/using_images/other_images/jenkins.html",
             "template.openshift.io/long-description": "This template deploys a Jenkins server capable of managing OpenShift Pipeline builds and supporting OpenShift-based oauth login.",
             "template.openshift.io/provider-display-name": "Red Hat, Inc.",
@@ -133,8 +133,8 @@
                                 },
                                 "resources": {
                                     "limits": {
-                                        "memory": "${MEMORY_LIMIT}",
-                                        "cpu": "${CPU_LIMIT}"
+                                        "cpu": "${CPU_LIMIT}",
+                                        "memory": "${MEMORY_LIMIT}"
                                     }
                                 },
                                 "securityContext": {

@@ -1,22 +1,50 @@
 ---
+- name: Load Variables
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Check for cluster var
+      fail:
+        msg: "Please define cluster on the command line, to load the correct variable file"
+      when: "cluster is undefined"
+
 - name: OCP Monitoring
   hosts: all
+  vars_files:
+    - "vars/{{ cluster }}.yaml"
   tasks:
+    - name: Check for required variables
+      fail:
+        msg: "Please define {{ item }}"
+      when: item is undefined
+      run_once: True
+      with_items:
+      - primary_master
+      - api_url
+      - router_service
+      - router_dc
+      - registry_service
+      - canary_route
+      - metrics_url
+
     - name: Logrotate
       copy:
         src: files/logrotate.conf
         dest: /etc/logrotate.d/ocp-monitor
+
     - name: OCP Script
       template:
         src: templates/ocp-monitor.j2
         dest: /usr/local/bin/ocp-monitor
         mode: 0700
+
     - name: Metrics script
       copy:
         src: files/metrics-health-check
         dest: /usr/local/bin/metrics-health-check
         mode: 0700
-      when: ansible_fqdn == "ociopf-d-100.dmz"
+      when: ansible_fqdn == primary_master
+
     - name: OCP Monitor Ccron
       cron:
         name: OCP Monitor

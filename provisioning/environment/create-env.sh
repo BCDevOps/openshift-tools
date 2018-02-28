@@ -68,6 +68,14 @@ do
     echo "Labelling project..."
 
     /bin/bash project_label.sh $OS_PROJECT_NAME category=$CATEGORY team=$TEAM product=$PRODUCT environment=$ENVIRONMENT
+
+   # if tools project set cpu limit to 12
+   if [ $ENVIRONMENT == "tools" ] 
+   then
+     echo "Setting $OS_PROJECT_NAME ($ENVIRONMENT) cpu limit to 12"
+     oc -n $OS_PROJECT_NAME patch resourcequotas/compute-resources -p '{"spec":{"hard":{"limits.cpu": 12}}}'
+   fi
+
 done
 
 CONCATENATED_PROJECTS=$(concatenate_projects , ${PROJECTS[@]})
