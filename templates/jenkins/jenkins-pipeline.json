@@ -105,6 +105,10 @@
                                     {
                                         "name": "JNLP_SERVICE_NAME",
                                         "value": "${JNLP_SERVICE_NAME}"
+                                    },
+                                    {
+                                        "name": "JAVA_OPTS",
+                                        "value": "-XX:MaxMetaspaceSize=512m -Duser.timezone=America/Vancouver -Dhudson.model.DirectoryBrowserSupport.CSP="
                                     }
                                 ],
                                 "image": " ",
