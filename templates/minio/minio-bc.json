@@ -63,7 +63,7 @@
                 "source": {
                     "type": "Git",
                     "git": {
-                        "uri": "https://github.com/garywong-bc/s3-minio"
+                        "uri": "https://github.com/bcdevops/minio-openshift"
                     }
                 },
                 "strategy": {

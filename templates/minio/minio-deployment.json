@@ -3,7 +3,15 @@
   "apiVersion": "v1",
   "metadata": {
     "name": "true",
-    "creationTimestamp": null
+    "annotations": {
+      "description": "Minio with persistent storage. By BC Gov.",
+      "iconClass": "icon-hdd",
+      "openshift.io/display-name": "BC Gov Minio",
+      "tags": "bcgov,pathfinder,minio,s3,objectstore",
+      "template.openshift.io/documentation-url": "https://github.com/BCDevOps/openshift-tools/tree/master/templates/minio",
+      "template.openshift.io/long-description": "This template deploys a minio server within OpenShift, backed by persistent volume storage.",
+      "template.openshift.io/provider-display-name": "Province of BC, Office of the Chief Information Officer, BC DevExchange and DevOps Branch"
+    }
   },
   "objects": [
     {
@@ -18,14 +26,7 @@
       },
       "spec": {
         "strategy": {
-          "type": "Rolling",
-          "rollingParams": {
-            "updatePeriodSeconds": 1,
-            "intervalSeconds": 1,
-            "timeoutSeconds": 600,
-            "maxUnavailable": "25%",
-            "maxSurge": "25%"
-          },
+          "type": "Recreate",
           "resources": {},
           "activeDeadlineSeconds": 21600
         },
@@ -84,11 +85,21 @@
                 "env": [
                   {
                     "name": "MINIO_ACCESS_KEY",
-                    "value": "${MINIO_ACCESS_KEY}"
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "${NAME}",
+                        "key": "minioAccessKey"
+                      }
+                    }
                   },
                   {
                     "name": "MINIO_SECRET_KEY",
-                    "value": "${MINIO_SECRET_KEY}"
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "${NAME}",
+                        "key": "minioSecretKey"
+                      }
+                    }
                   },
                   {
                     "name": "MINIO_CONFIG_DIR",
