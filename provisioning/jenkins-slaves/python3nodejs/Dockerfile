@@ -36,4 +36,12 @@ RUN INSTALL_PKGS="rh-nodejs6 rh-nodejs6-nodejs-nodemon" && \
 RUN chown -R 1001:0 $HOME && \
     chmod -R g+rw $HOME
 
+RUN source scl_source enable rh-python35 && \
+    virtualenv /opt/app-root
+
+# In order to drop the root user, we have to make some directories world
+# writable as OpenShift default security model is to run the container under
+# random UID.
+RUN chown -R 1001:0 /opt/app-root && chmod -R og+rwx /opt/app-root
+
 USER 1001
