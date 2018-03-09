@@ -31,7 +31,7 @@ RUN INSTALL_PKGS="rh-nodejs6 rh-nodejs6-nodejs-nodemon" && \
     ln -s /usr/lib/node_modules/nodemon/bin/nodemon.js /usr/bin/nodemon && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
-    yum clean all -y
+   # yum clean all -y
 
 RUN chown -R 1001:0 $HOME && \
     chmod -R g+rw $HOME
