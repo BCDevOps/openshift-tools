@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7
 
 # Note this is based on https://github.com/sclorg/s2i-python-container/blob/master/3.5/Dockerfile.rhel7
 
-USER root
+USER 1001
 
 EXPOSE 8080
 
