@@ -12,7 +12,7 @@ ENV PYTHON_VERSION=3.5 \
     LANG=en_US.UTF-8 \
     PIP_NO_CACHE_DIR=off
 
-ENV NODEJS_VERSION=6.9.1 \
+ENV NODEJS_VERSION=4.4 \
     NPM_CONFIG_PREFIX=$HOME/.npm-global \
     PATH=$HOME/node_modules/.bin/:$HOME/.npm-global/bin/:$PATH \
     BASH_ENV=/usr/local/bin/scl_enable \
@@ -44,10 +44,10 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
-    yum-config-manager --disable epel >/dev/null || : && \
+    # yum-config-manager --disable epel >/dev/null || : && \
     INSTALL_PKGS="rh-python35 rh-python35-python-devel rh-python35-python-setuptools rh-python35-python-pip \
 	nss_wrapper httpd24 httpd24-httpd-devel httpd24-mod_ssl httpd24-mod_auth_kerb httpd24-mod_ldap httpd24-mod_session \
-        atlas-devel gcc-gfortran libffi-devel libtool-ltdl rh-nodejs6 rh-nodejs6-nodejs-nodemon" && \
+        atlas-devel gcc-gfortran libffi-devel libtool-ltdl rh-nodejs4 rh-nodejs4-nodejs-nodemon" && \
     ln -s /usr/lib/node_modules/nodemon/bin/nodemon.js /usr/bin/nodemon && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
