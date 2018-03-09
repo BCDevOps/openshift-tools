@@ -7,7 +7,7 @@ LABEL name="openshift/jenkins-slave-pythonnodejs-rhel7" \
       release="4" \
       io.k8s.display-name="Jenkins Slave PythonNodejs" \
       io.k8s.description="The jenkins slave Python/nodejs image has the nodejs tools on top of the jenkins Python slave base image." \
-      io.openshift.tags="openshift,jenkins,slave,nodejs, Python"
+      io.openshift.tags="openshift,jenkins,slave,nodejs,python"
 
 ENV NODEJS_VERSION=4.4 \
     NPM_CONFIG_PREFIX=$HOME/.npm-global \
