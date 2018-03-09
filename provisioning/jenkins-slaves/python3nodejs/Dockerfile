@@ -14,7 +14,7 @@ ENV PYTHON_VERSION=3.5 \
 
 
 
-ENV SUMMARY="Jenkins slave for using with Pythong based applications or tools in a Jenkins build process/pipeline." \
+ENV SUMMARY="Jenkins slave for using with Python/NodeJS based applications or tools in a Jenkins build process/pipeline." \
     DESCRIPTION="Python $PYTHON_VERSION available as docker container is a base platform for \
 building and running various Python $PYTHON_VERSION applications and frameworks. \
 Python is an easy to learn, powerful programming language. It has efficient high-level \
@@ -28,9 +28,8 @@ LABEL summary="$SUMMARY" \
       io.k8s.description="$DESCRIPTION" \
       io.k8s.display-name="Python 3.5" \
       io.openshift.expose-services="8080:http" \
-      io.openshift.tags="builder,python,python35,rh-python35" \
-      com.redhat.component="rh-python35-docker" \
-      name="rhscl/python-35-rhel7" \
+      io.openshift.tags="builder,python,python35,rh-python35,rh-nodejs" \
+      name="rhscl/python-node-rhel7" \
       version="3.5" \
       release="1"
 
@@ -42,10 +41,14 @@ RUN yum repolist > /dev/null && \
     yum-config-manager --enable rhel-server-rhscl-7-rpms && \
     yum-config-manager --enable rhel-7-server-rpms && \
     yum-config-manager --enable rhel-7-server-optional-rpms && \
-    yum-config-manager --enable epel && \
+    yum-config-manager --disable epel >/dev/null || : && \
+    INSTALL_PKGS="rh-nodejs4 rh-nodejs4-nodejs-nodemon" && \
+    ln -s /usr/lib/node_modules/nodemon/bin/nodemon.js /usr/bin/nodemon && \
+    yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     INSTALL_PKGS="rh-python35 rh-python35-python-devel rh-python35-python-setuptools rh-python35-python-pip \
 	nss_wrapper httpd24 httpd24-httpd-devel httpd24-mod_ssl httpd24-mod_auth_kerb httpd24-mod_ldap httpd24-mod_session \
-        atlas-devel gcc-gfortran libffi-devel libtool-ltdl nodejs npm" && \
+        atlas-devel gcc-gfortran libffi-devel libtool-ltdl rh-nodejs4 rh-nodejs4-nodejs-nodemon" && \
+        ln -s /usr/lib/node_modules/nodemon/bin/nodemon.js /usr/bin/nodemon && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
     rpm -V $INSTALL_PKGS && \
     # Remove redhat-logos (httpd dependency) to keep image size smaller.
