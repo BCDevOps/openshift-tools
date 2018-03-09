@@ -30,7 +30,7 @@ COPY contrib/bin/scl_enable /usr/local/bin/scl_enable
 RUN INSTALL_PKGS="rh-nodejs6 rh-nodejs6-nodejs-nodemon" && \
     ln -s /usr/lib/node_modules/nodemon/bin/nodemon.js /usr/bin/nodemon && \
     yum install -y --setopt=tsflags=nodocs $INSTALL_PKGS && \
-    rpm -V $INSTALL_PKGS && \
+    rpm -V $INSTALL_PKGS
    # yum clean all -y
 
 RUN chown -R 1001:0 $HOME && \
