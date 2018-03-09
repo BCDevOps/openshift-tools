@@ -1,4 +1,4 @@
-FROM openshift/jenkins-slave-python-rhel7
+FROM openshift/jenkins-slave-python-rhel7:latest
 
 # Labels consumed by Red Hat build service
 LABEL name="openshift/jenkins-slave-pythonnodejs-rhel7" \
