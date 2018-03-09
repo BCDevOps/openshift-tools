@@ -1,4 +1,4 @@
-FROM openshift/jenkins-slave-python-rhel7
+FROM docker-registry.pathfinder.gov.bc.ca/openshift/jenkins-slave-python-rhel7
 
 ENV NODEJS_VERSION=6.9.1 \
     NPM_CONFIG_PREFIX=$HOME/.npm-global \
