@@ -1,4 +1,4 @@
-FROM openshift/jenkins-slave-python-rhel7:latest
+FROM 172.50.0.2:5000/openshift/jenkins-slave-python-rhel7
 
 MAINTAINER Ben Parees <bparees@redhat.com>
 
