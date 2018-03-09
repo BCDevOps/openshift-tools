@@ -8,7 +8,6 @@ ENV NODEJS_VERSION=6.9.1 \
     PROMPT_COMMAND=". /usr/local/bin/scl_enable"
 
 COPY contrib/bin/scl_enable /usr/local/bin/scl_enable
-RUN chmod +x /usr/local/bin/scl_enable
 
 # Install NodeJS
 RUN yum-config-manager --enable rhel-server-rhscl-7-rpms && \    
