@@ -2,7 +2,7 @@ FROM docker-registry.pathfinder.gov.bc.ca/openshift/jenkins-slave-python-rhel7
 
 MAINTAINER Roland Stens <roland.stens@gmail.com>
 
-USER root
+USER jenkins
 
 # Labels consumed by Red Hat build service
 #LABEL com.redhat.component="jenkins-slave-nodejs-rhel7-docker" \
