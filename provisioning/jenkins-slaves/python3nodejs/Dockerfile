@@ -9,6 +9,7 @@ EXPOSE 8080
 USER 1001
 ENV PYTHON_VERSION=3.5 \
     PATH=$HOME/.local/bin/:$PATH \
+    PATH=/opt/rh/rh-python35/root/usr/bin/:$PATH \
     PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=UTF-8 \
     LC_ALL=en_US.UTF-8 \
