@@ -60,6 +60,8 @@ RUN yum repolist > /dev/null && \
 # Create a Python virtual environment for use by any application to avoid
 # potential conflicts with Python packages preinstalled in the main Python
 # installation.
+USER 1001
+
 RUN source scl_source enable rh-python35 && \
     virtualenv /opt/app-root
 
