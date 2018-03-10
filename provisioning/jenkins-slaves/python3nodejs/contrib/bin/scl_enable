@@ -1,3 +1,5 @@
-# This will make scl collection binaries work out of box.
+# This will make the scl Python 3.5 collection binaries work out of box, as well as creating a virtualenv and activating it
 unset BASH_ENV PROMPT_COMMAND ENV
-source scl_source enable rh-nodejs6
+source scl_source enable rh-python35
+virtualenv /opt/app-root
+source /opt/app-root/bin/activate
