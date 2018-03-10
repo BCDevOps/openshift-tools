@@ -15,26 +15,7 @@ ENV PYTHON_VERSION=3.5 \
     ENV=/usr/local/bin/scl_enable \
     PROMPT_COMMAND=". /usr/local/bin/scl_enable"
 
-
-ENV SUMMARY="Jenkins slave for using with Python based applications or tools in a Jenkins build process/pipeline." \
-    DESCRIPTION="Python $PYTHON_VERSION available as docker container is a base platform for \
-building and running various Python $PYTHON_VERSION applications and frameworks. \
-Python is an easy to learn, powerful programming language. It has efficient high-level \
-data structures and a simple but effective approach to object-oriented programming. \
-Python's elegant syntax and dynamic typing, together with its interpreted nature, \
-make it an ideal language for scripting and rapid application development in many areas \
-on most platforms."
-
-LABEL summary="$SUMMARY" \
-      description="$DESCRIPTION" \
-      io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="Python 3.5" \
-      io.openshift.expose-services="8080:http" \
-      io.openshift.tags="builder,python,python35,rh-python35" \
-      com.redhat.component="rh-python35-docker" \
-      name="rhscl/python-35-rhel7" \
-      version="3.5" \
-      release="1"
+COPY contrib/bin/scl_enable /usr/local/bin/scl_enable
 
 # We need to call 2 (!) yum commands before being able to enable repositories properly
 # This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1479388
@@ -54,13 +35,11 @@ RUN yum repolist > /dev/null && \
     rpm -e --nodeps redhat-logos && \
     yum clean all -y
 
-COPY contrib/bin/scl_enable /usr/local/bin/scl_enable
 # In order to drop the root user, we have to make some directories world
 # writable as OpenShift default security model is to run the container under
 # random UID.
 RUN mkdir -p /opt/app-root  && \
     chown -R 1001:0 /opt/app-root && \
-    chmod -R og+rwx /opt/app-root && \
-    /usr/local/bin/scl_enable
+    chmod -R og+rwx /opt/app-root
 
 USER 1001
