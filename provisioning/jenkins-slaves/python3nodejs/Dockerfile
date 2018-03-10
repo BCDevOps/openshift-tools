@@ -36,8 +36,6 @@ LABEL summary="$SUMMARY" \
       version="3.5" \
       release="1"
 
-COPY contrib/bin/scl_enable /usr/local/bin/scl_enable
-
 # We need to call 2 (!) yum commands before being able to enable repositories properly
 # This is a workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1479388
 RUN yum repolist > /dev/null && \
@@ -56,12 +54,12 @@ RUN yum repolist > /dev/null && \
     rpm -e --nodeps redhat-logos && \
     yum clean all -y
 
+COPY contrib/bin/scl_enable /usr/local/bin/scl_enable
 # In order to drop the root user, we have to make some directories world
 # writable as OpenShift default security model is to run the container under
 # random UID.
 RUN mkdir -p /opt/app-root  && \
     chown -R 1001:0 /opt/app-root && \
     chmod -R og+rwx /opt/app-root
-
 
 USER 1001
