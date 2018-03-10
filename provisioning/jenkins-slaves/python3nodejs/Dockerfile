@@ -60,6 +60,7 @@ COPY contrib/bin/scl_enable /usr/local/bin/scl_enable
 # random UID.
 RUN mkdir -p /opt/app-root  && \
     chown -R 1001:0 /opt/app-root && \
-    chmod -R og+rwx /opt/app-root
+    chmod -R og+rwx /opt/app-root && \
+    /usr/local/bin/scl_enable
 
 USER 1001
