@@ -42,8 +42,6 @@ RUN yum repolist > /dev/null && \
 # random UID.
 RUN mkdir -p /opt/app-root  && \
     chown -R 1001:0 /opt/app-root && \
-    chmod -R og+rwx /opt/app-root && \
-    rm /usr/local/bin/scl_enable && \
-    mv /usr/local/bin/scl_enable_1 /usr/local/bin/scl_enable
-
+    chmod -R og+rwx /opt/app-root 
+    
 USER 1001
