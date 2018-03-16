@@ -44,7 +44,7 @@ A typical call for GWELLS is:
 Please see the [Jenkinsfile-zap](https://github.com/bcgov/gwells/blob/developer/Jenkinsfile-zap) file to see our implementation example.        
 ### Running OWASP ZAP in the pipeline
 
-The simplest way of running ZAP in the pipeline is to include the following code in you pipeline Jenkinsfile:
+The simplest way of running ZAP in the pipeline is to include the following code in your pipeline Jenkinsfile:
 
 ```
 podTemplate(label: 'owasp-zap', name: 'owasp-zap', serviceAccount: 'jenkins', cloud: 'openshift', containers: [
