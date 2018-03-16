@@ -36,12 +36,7 @@ Common options for the baseline scan are:
     -p progress_file  progress file which specifies issues that are being addressed
     -s                short output format - dont show PASSes or example URLs
     -z zap_options    ZAP command line options e.g. -z "-config aaa=bbb -config ccc=ddd"
-
-A typical call for GWELLS is: 
-
-    /zap/zap-full-scan.py -r index.html -t https://testapps.nrs.gov.bc.ca/gwells/
-
-Please see the [Jenkinsfile-zap](https://github.com/bcgov/gwells/blob/developer/Jenkinsfile-zap) file to see our implementation example.        
+      
 ### Running OWASP ZAP in the pipeline
 
 The simplest way of running ZAP in the pipeline is to include the following code in your pipeline Jenkinsfile:
@@ -67,7 +62,7 @@ podTemplate(label: 'owasp-zap', name: 'owasp-zap', serviceAccount: 'jenkins', cl
         echo "Build: ${BUILD_ID}"
         checkout scm
         dir('zap') {
-            def retVal = sh returnStatus: true, script: './runzap.sh'
+            def retVal = sh returnStatus: true, script: '/zap/zap-baseline.py -r index.html -t <your url>'
             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: true, reportDir: '/zap/wrk', reportFiles: 'index.html', reportName: 'ZAP Full Scan', reportTitles: 'ZAP Full Scan'])
             echo "Return value is: ${retVal}"
             }
@@ -75,9 +70,3 @@ podTemplate(label: 'owasp-zap', name: 'owasp-zap', serviceAccount: 'jenkins', cl
   }
 }
 ```
-In the ***runzap.sh*** you can define the action you want to run, for example:
-
-```
-/zap/zap-baseline.py -r index.html -t <your url>
-```
-
