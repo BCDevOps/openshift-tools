@@ -56,7 +56,7 @@ podTemplate(label: 'owasp-zap', name: 'owasp-zap', serviceAccount: 'jenkins', cl
   )
 ]) {
   stage('ZAP Security Scan') {
-    node('zap') {
+    node('owasp-zap') {
         //the checkout is mandatory
         echo "checking out source"
         echo "Build: ${BUILD_ID}"
