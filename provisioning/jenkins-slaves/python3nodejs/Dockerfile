@@ -4,6 +4,17 @@ FROM registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7
 
 EXPOSE 8080
 
+ENV SUMMARY="Jenkins slave with python 3 and nodejs 6" \
+    DESCRIPTION="Jenkins pipeline slave with python 3 and nodejs 6 installed"
+
+LABEL summary="$SUMMARY" \
+      description="$DESCRIPTION" \
+      io.k8s.description="$DESCRIPTION" \
+      io.k8s.display-name="Jenkins-Pipeline-python-nodejs" \
+      io.openshift.expose-services="8080:http" \
+      io.openshift.tags="builder,jenkins-jnlp-python,jenkins-jnlp-nodejs,jenkins-jnlp" \
+      release="1"
+
 ENV PYTHON_VERSION=3.5 \
     PATH=$HOME/.local/bin/:$PATH \
     PYTHONUNBUFFERED=1 \
