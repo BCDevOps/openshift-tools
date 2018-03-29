@@ -41,6 +41,64 @@ bash_backtrace() {
     echo "Exiting with status ${RET}"
     exit "${RET}"
 }
+
+## FUNCTIONS FOR STATE MACHINE CHECKS
+
+function get_current_state () {
+# Parameters passed:
+#  - unique name identifying what is being tracked state-wise
+#  - variable to hold the current state, either read from state file or initialized when not yet set.
+# Also forms the basis for the file-name used to track state.
+# If the file does not exist, then a state of 0 is assigned and the state file created.
+
+  local statename="$1"
+  local statevalue="$2"
+  local current_state=0
+
+  STATE_FILE="/tmp/ocp-monitor."$1".state"
+
+  if [ -f $STATE_FILE ]; then
+    current_state=`cat $STATE_FILE`;
+  else
+    current_state=`echo 0 | tee $STATE_FILE`
+  fi
+  eval $statevalue=$current_state
+}
+
+function set_state () {
+# Parameters passed:
+#  - unique name identifying what is being tracked state-wise
+#  - variable to hold the current state, either read from state file or initialized when not yet set.
+# Also forms the basis for the file-name used to track state.
+# If the file does not exist, then a state of 0 is assigned and the state file created.
+
+  STATE_FILE="/tmp/ocp-monitor."$1".state"
+  local evalstate = `echo $2 | tee $STATE_FILE`
+}
+
+## FUNCTIONS FOR NODE_READY CHECKS
+# These checks used to be placed in-line, but are now separated into separate functions so
+# as to increase clarity when adding the state checks for Node Ready health check.
+
+function test_if_all_nodes_are_ready () {
+# following test will return 1 if all nodes have a Ready state = True. Otherwise, return 0.
+
+  if oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}" | grep -v True
+  then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function return_node_ready_count () {
+# counts and returns the number of nodes where Ready=True.
+# works around limits involving functions by passing by reference update to the calling parameter to the function.
+
+  local var1="$1"
+  eval $var1=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}"|wc -l)
+}
+
 {% endraw %}
 # Copy STDOUT and STDERR so they can be restored later
 exec 3>&1 4>&2
@@ -116,15 +174,42 @@ fi
 
 {% raw %}
 # Check that all nodes are Ready
+# Now with additional Finite State Automata support
+# One failure in a row will only log WARN to log file. Two or
+# more consecutive failures in a row will trigger ERROR alert.
 echo "$(datestamp) Check for NodeNotReady"
-if oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}" | grep -v True
-then
-  echo "$(datestamp) ERROR: Some nodes are not Ready"
-  # Dump the events, as they seem to go away quickly
+get_current_state nodestatus 'NODE_READY_STATE'
+
+if [[ "$(test_if_all_nodes_are_ready)" = "0" ]]; then
+  if [[ $NODE_READY_STATE -eq "0" ]]; then
+# node ready failure while in state 0, bumps us to state 1 and warns only
+    set_state nodestatus 1
+    echo "$(datestamp) WARN: Some nodes are not Ready"
+  elif [[ $NODE_READY_STATE -eq "1" ]]; then
+# node ready failure while in state 1, bumps us to state 2 and alerts oncall with error
+    set_state nodestatus 2
+    echo "$(datestamp) ERROR: Some nodes are not Ready"
+  elif [[ $NODE_READY_STATE -eq "2" ]]; then
+# node ready failure while in state 2, no state change. Still will alert though.
+    echo "$(datestamp) ERROR: Some nodes are not Ready"
+  fi
+# Dump the events, as they seem to go away quickly
   oc get events -n default
 else
-  NODES=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}"|wc -l)
-  echo "$(datestamp) INFO: $NODES nodes online and ready"
+# All nodes are ready, grab the node count and then adjust state accordingly.
+  return_node_ready_count 'NUM_NODES_READY'
+  if [[ $NODE_READY_STATE -eq "0" ]]; then
+# node ready success while in state 0, no state change
+    echo "$(datestamp) INFO: $NUM_NODES_READY nodes online and ready"
+  elif [[ $NODE_READY_STATE -eq "1" ]]; then
+# node ready success while in state 1, state change back to 0
+    set_state nodestatus 0
+    echo "$(datestamp) INFO: $NUM_NODES_READY nodes online and ready"
+  elif [[ $NODE_READY_STATE -eq "2" ]]; then
+# node ready success while in state 2, state change back to 0
+    set_state nodestatus 0
+    echo "$(datestamp) INFO: $NUM_NODES_READY nodes online and ready"
+  fi
 fi
 
 # Verify the Registry is on 3 nodes
