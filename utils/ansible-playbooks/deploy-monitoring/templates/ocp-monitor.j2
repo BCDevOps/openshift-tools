@@ -46,13 +46,26 @@ bash_backtrace() {
 
 function get_state () {
 # Parameters passed:
-#  - unique name identifying what is being tracked state-wise
-#  - variable to hold the current state, either read from state file or initialized when not yet set.
-# Also forms the basis for the file-name used to track state.
-# If the file does not exist, then a state of 0 is assigned and the state file created.
+#  - STATENAME = uniquei name identifying what is being tracked state-wise. Alllows re-use of this function to 
+#    implement more than one state automata in the same script if desired. Also acts as the basis for how the state file
+#    is named.
+#  - STATEVARIABLE = text which is the actual name of the global variable to be passed the value of the current state.
+#    If the state of the automata is not yet set, then an initial state of 0 is assigned as a starting point.
+#
+# IMPORTANT - the use of eval is what allows the passing of a value back to any arbitrary global variable without re-writing
+# this function, or have multiple copies. This allows us to use the one function to setup multiple state automata and use the 
+# current function as-is. Examples of using the same function for multiple state automata:
+
+# get_state first_machine FIRST_MACHINE_VARIABLE
+# get_state second_machine SECOND_MACHINE_VARIABLE
+# 
+# First call will grab the state of first_machine and store in the global variable FIRST_MACHINE_VARIABLE. 
+# Second call will do the same for second_machine, storing in a different global variable named SECOND_MACHINE_VARIABLE.
+# For both function calls, the use of eval allows us to not have to re-write that one function despite capturing return values
+# to different variables.
 
   local STATENAME="$1"
-  local STATEVALUE="$2"
+  local STATEVARIABLE="$2"
   local CURRENT_STATE=0
 
   STATE_FILE="/tmp/ocp-monitor."${STATENAME}".state"
@@ -62,15 +75,16 @@ function get_state () {
   else
     CURRENT_STATE=`echo 0 | tee "${STATE_FILE}"`
   fi
-  eval "${STATEVALUE}"="${CURRENT_STATE}"
+  eval "${STATEVARIABLE}"="${CURRENT_STATE}"
 }
 
 function set_state () {
 # Parameters passed:
-#  - unique name identifying what is being tracked state-wise
-#  - variable to hold the current state, either read from state file or initialized when not yet set.
-# Also forms the basis for the file-name used to track state.
-# If the file does not exist, then a state of 0 is assigned and the state file created.
+#  - STATENAME = unique name identifying what is being tracked state-wise. Alllows re-use of this function to
+#    implement more than one state automata in the same script if desired. Also acts as the basis for how the state file
+#    is named.
+#  - STATEVALUE = actual desired value to set the new state to, usually as the result of a specific check.
+#
 
   local STATENAME="$1"
   local STATEVALUE="$2"
@@ -84,7 +98,8 @@ function set_state () {
 
 function test_if_all_nodes_are_ready () {
 # following test will return 1 if all nodes have a Ready state = True. Otherwise, return 0.
-  local NODES_READY_CHECK=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}" | grep -v True)
+# Works on data stored in the global variable CURRENT_NODE_STATE to reduce duplication of queries to OpenShift.
+  local NODES_READY_CHECK=$(echo "${CURRENT_NODE_STATE}" | grep -v True)
   if [ -z "${NODES_READY_CHECK}" ]; then
     echo 1
   else
@@ -94,8 +109,9 @@ function test_if_all_nodes_are_ready () {
 
 function return_node_ready_count () {
 # counts and returns the number of nodes where Ready=True.
+# Works on data stored in the global variable CURRENT_NODE_STATE to reduce duplication of queries to OpenShift.
 
-  echo $(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}"|wc -l)
+  echo $(echo "${CURRENT_NODE_STATE}" | wc -l)
 }
 
 {% endraw %}
@@ -178,6 +194,8 @@ fi
 # more consecutive failures in a row will trigger ERROR alert.
 echo "$(datestamp) Check for NodeNotReady"
 get_state nodestatus NODE_READY_STATE
+CURRENT_NODE_STATE=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}")
+
 
 if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
   if [[ "${NODE_READY_STATE}" -eq "0" ]]; then
@@ -193,6 +211,8 @@ if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
     echo "$(datestamp) ERROR: Some nodes are not Ready"
   fi
 # Dump the events, as they seem to go away quickly
+# Also output the original capture of node state as recorded by CURRENT_NODE_STATE. 
+  echo "${CURRENT_NODE_STATE}"
   oc get events -n default
 else
 # All nodes are ready, grab the node count and then adjust state accordingly.
