@@ -84,12 +84,11 @@ function set_state () {
 
 function test_if_all_nodes_are_ready () {
 # following test will return 1 if all nodes have a Ready state = True. Otherwise, return 0.
-
-  if oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}" | grep -v True
-  then
-    return 0
+  local NODES_READY_CHECK=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}" | grep -v True)
+  if [ -z "${NODES_READY_CHECK}" ]; then
+    echo 1
   else
-    return 1
+    echo 0
   fi
 }
 
@@ -180,7 +179,7 @@ fi
 echo "$(datestamp) Check for NodeNotReady"
 get_state nodestatus NODE_READY_STATE
 
-if [[ "$(test_if_all_nodes_are_ready)" = "0" ]]; then
+if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
   if [[ "${NODE_READY_STATE}" -eq "0" ]]; then
 # node ready failure while in state 0, bumps us to state 1 and warns only
     set_state nodestatus 1
