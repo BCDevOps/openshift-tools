@@ -352,29 +352,34 @@ fi
 {% endraw %}
 {% endif %}
 
-{% if ansible_fqdn in groups['storage'] %}
-{% raw %}
+# 2018June25 disabled this entire check by request from Steven until it can
+# be investigated and fixed.
+# Steven is now tracking this as an issue.
+# https://github.com/BCDevOps/openshift-tools/issues/13
+
+#{% if ansible_fqdn in groups['storage'] %}
+#{% raw %}
 # Check Gluster disk usage
-export LVM_SUPPRESS_FD_WARNINGS=1
-echo "$(datestamp) Checking Gluster Disks"
+#export LVM_SUPPRESS_FD_WARNINGS=1
+#echo "$(datestamp) Checking Gluster Disks"
 # Find the volume groups
-VGS=$(/sbin/vgs --readonly --noheadings -o vg_name | egrep 'vg_[0-9a-f]{32}')
-for VG in $VGS
-do
-  VG_STATS=$(/sbin/vgs --units g --nosuffix --separator " " --readonly --options vg_size,vg_free --noheadings $VG )
-  SIZE=$(echo $VG_STATS | awk '{print $1}')
-  FREE=$(echo $VG_STATS | awk '{print $2}')
-  USED=$(echo "$SIZE - $FREE" | bc -l)
-  PERCENT=$(echo "$USED / $SIZE * 100" | bc -l | awk '{printf "%.2f",$0}')
-  echo "$(datestamp) $VG = ${USED}G / ${SIZE}G = $PERCENT%"
-  PERCENT=$(echo "$PERCENT" | awk '{printf "%.f",$0}')
-  if [ "$PERCENT" -gt 85 ]
-  then
-    echo "$(datestamp) ERROR: Gluster device $VG low on space"
-  fi
-done
-{% endraw %}
-{% endif %}
+#VGS=$(/sbin/vgs --readonly --noheadings -o vg_name | egrep 'vg_[0-9a-f]{32}')
+#for VG in $VGS
+#do
+#  VG_STATS=$(/sbin/vgs --units g --nosuffix --separator " " --readonly --options vg_size,vg_free --noheadings $VG )
+#  SIZE=$(echo $VG_STATS | awk '{print $1}')
+#  FREE=$(echo $VG_STATS | awk '{print $2}')
+#  USED=$(echo "$SIZE - $FREE" | bc -l)
+#  PERCENT=$(echo "$USED / $SIZE * 100" | bc -l | awk '{printf "%.2f",$0}')
+#  echo "$(datestamp) $VG = ${USED}G / ${SIZE}G = $PERCENT%"
+#  PERCENT=$(echo "$PERCENT" | awk '{printf "%.f",$0}')
+#  if [ "$PERCENT" -gt 85 ]
+#  then
+#    echo "$(datestamp) ERROR: Gluster device $VG low on space"
+#  fi
+#done
+#{% endraw %}
+#{% endif %}
 
 # Checks for all nodes
 
