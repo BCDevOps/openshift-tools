@@ -41,6 +41,79 @@ bash_backtrace() {
     echo "Exiting with status ${RET}"
     exit "${RET}"
 }
+
+## FUNCTIONS FOR STATE MACHINE CHECKS
+
+function get_state () {
+# Parameters passed:
+#  - STATENAME = uniquei name identifying what is being tracked state-wise. Alllows re-use of this function to 
+#    implement more than one state automata in the same script if desired. Also acts as the basis for how the state file
+#    is named.
+#  - STATEVARIABLE = text which is the actual name of the global variable to be passed the value of the current state.
+#    If the state of the automata is not yet set, then an initial state of 0 is assigned as a starting point.
+#
+# IMPORTANT - the use of eval is what allows the passing of a value back to any arbitrary global variable without re-writing
+# this function, or have multiple copies. This allows us to use the one function to setup multiple state automata and use the 
+# current function as-is. Examples of using the same function for multiple state automata:
+
+# get_state first_machine FIRST_MACHINE_VARIABLE
+# get_state second_machine SECOND_MACHINE_VARIABLE
+# 
+# First call will grab the state of first_machine and store in the global variable FIRST_MACHINE_VARIABLE. 
+# Second call will do the same for second_machine, storing in a different global variable named SECOND_MACHINE_VARIABLE.
+# For both function calls, the use of eval allows us to not have to re-write that one function despite capturing return values
+# to different variables.
+
+  local STATENAME="$1"
+  local STATEVARIABLE="$2"
+  local CURRENT_STATE=0
+
+  STATE_FILE="/tmp/ocp-monitor."${STATENAME}".state"
+
+  if [ -f "${STATE_FILE}" ]; then
+    CURRENT_STATE=`cat "${STATE_FILE}"`;
+  else
+    CURRENT_STATE=`echo 0 | tee "${STATE_FILE}"`
+  fi
+  eval "${STATEVARIABLE}"="${CURRENT_STATE}"
+}
+
+function set_state () {
+# Parameters passed:
+#  - STATENAME = unique name identifying what is being tracked state-wise. Alllows re-use of this function to
+#    implement more than one state automata in the same script if desired. Also acts as the basis for how the state file
+#    is named.
+#  - STATEVALUE = actual desired value to set the new state to, usually as the result of a specific check.
+#
+
+  local STATENAME="$1"
+  local STATEVALUE="$2"
+  STATE_FILE="/tmp/ocp-monitor.""${STATENAME}"".state"
+  local EVALSTATE=`echo "${STATEVALUE}" | tee "${STATE_FILE}"`
+}
+
+## FUNCTIONS FOR NODE_READY CHECKS
+# These checks used to be placed in-line, but are now separated into separate functions so
+# as to increase clarity when adding the state checks for Node Ready health check.
+
+function test_if_all_nodes_are_ready () {
+# following test will return 1 if all nodes have a Ready state = True. Otherwise, return 0.
+# Works on data stored in the global variable CURRENT_NODE_STATE to reduce duplication of queries to OpenShift.
+  local NODES_READY_CHECK=$(echo "${CURRENT_NODE_STATE}" | grep -v True)
+  if [ -z "${NODES_READY_CHECK}" ]; then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
+function return_node_ready_count () {
+# counts and returns the number of nodes where Ready=True.
+# Works on data stored in the global variable CURRENT_NODE_STATE to reduce duplication of queries to OpenShift.
+
+  echo $(echo "${CURRENT_NODE_STATE}" | wc -l)
+}
+
 {% endraw %}
 # Copy STDOUT and STDERR so they can be restored later
 exec 3>&1 4>&2
@@ -116,15 +189,46 @@ fi
 
 {% raw %}
 # Check that all nodes are Ready
+# Now with additional Finite State Automata support
+# One failure in a row will only log WARN to log file. Two or
+# more consecutive failures in a row will trigger ERROR alert.
 echo "$(datestamp) Check for NodeNotReady"
-if oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}" | grep -v True
-then
-  echo "$(datestamp) ERROR: Some nodes are not Ready"
-  # Dump the events, as they seem to go away quickly
+get_state nodestatus NODE_READY_STATE
+CURRENT_NODE_STATE=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}")
+
+
+if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
+  if [[ "${NODE_READY_STATE}" -eq "0" ]]; then
+# node ready failure while in state 0, bumps us to state 1 and warns only
+    set_state nodestatus 1
+    echo "$(datestamp) WARN: Some nodes are not Ready"
+  elif [[ "${NODE_READY_STATE}" -eq "1" ]]; then
+# node ready failure while in state 1, bumps us to state 2 and alerts oncall with error
+    set_state nodestatus 2
+    echo "$(datestamp) ERROR: Some nodes are not Ready"
+  elif [[ "${NODE_READY_STATE}" -eq "2" ]]; then
+# node ready failure while in state 2, no state change. Still will alert though.
+    echo "$(datestamp) ERROR: Some nodes are not Ready"
+  fi
+# Dump the events, as they seem to go away quickly
+# Also output the original capture of node state as recorded by CURRENT_NODE_STATE. 
+  echo "${CURRENT_NODE_STATE}"
   oc get events -n default
 else
-  NODES=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}"|wc -l)
-  echo "$(datestamp) INFO: $NODES nodes online and ready"
+# All nodes are ready, grab the node count and then adjust state accordingly.
+  NUM_NODES_READY=$( return_node_ready_count )
+  if [[ "${NODE_READY_STATE}" -eq "0" ]]; then
+# node ready success while in state 0, no state change
+    echo "$(datestamp) INFO: ${NUM_NODES_READY} nodes online and ready"
+  elif [[ "${NODE_READY_STATE}" -eq "1" ]]; then
+# node ready success while in state 1, state change back to 0
+    set_state nodestatus 0
+    echo "$(datestamp) INFO: ${NUM_NODES_READY} nodes online and ready"
+  elif [[ "${NODE_READY_STATE}" -eq "2" ]]; then
+# node ready success while in state 2, state change back to 0
+    set_state nodestatus 0
+    echo "$(datestamp) INFO: ${NUM_NODES_READY} nodes online and ready"
+  fi
 fi
 
 # Verify the Registry is on 3 nodes
@@ -248,29 +352,34 @@ fi
 {% endraw %}
 {% endif %}
 
-{% if ansible_fqdn in groups['storage'] %}
-{% raw %}
+# 2018June25 disabled this entire check by request from Steven until it can
+# be investigated and fixed.
+# Steven is now tracking this as an issue.
+# https://github.com/BCDevOps/openshift-tools/issues/13
+
+#{% if ansible_fqdn in groups['storage'] %}
+#{% raw %}
 # Check Gluster disk usage
-export LVM_SUPPRESS_FD_WARNINGS=1
-echo "$(datestamp) Checking Gluster Disks"
+#export LVM_SUPPRESS_FD_WARNINGS=1
+#echo "$(datestamp) Checking Gluster Disks"
 # Find the volume groups
-VGS=$(/sbin/vgs --readonly --noheadings -o vg_name | egrep 'vg_[0-9a-f]{32}')
-for VG in $VGS
-do
-  VG_STATS=$(/sbin/vgs --units g --nosuffix --separator " " --readonly --options vg_size,vg_free --noheadings $VG )
-  SIZE=$(echo $VG_STATS | awk '{print $1}')
-  FREE=$(echo $VG_STATS | awk '{print $2}')
-  USED=$(echo "$SIZE - $FREE" | bc -l)
-  PERCENT=$(echo "$USED / $SIZE * 100" | bc -l | awk '{printf "%.2f",$0}')
-  echo "$(datestamp) $VG = ${USED}G / ${SIZE}G = $PERCENT%"
-  PERCENT=$(echo "$PERCENT" | awk '{printf "%.f",$0}')
-  if [ "$PERCENT" -gt 85 ]
-  then
-    echo "$(datestamp) ERROR: Gluster device $VG low on space"
-  fi
-done
-{% endraw %}
-{% endif %}
+#VGS=$(/sbin/vgs --readonly --noheadings -o vg_name | egrep 'vg_[0-9a-f]{32}')
+#for VG in $VGS
+#do
+#  VG_STATS=$(/sbin/vgs --units g --nosuffix --separator " " --readonly --options vg_size,vg_free --noheadings $VG )
+#  SIZE=$(echo $VG_STATS | awk '{print $1}')
+#  FREE=$(echo $VG_STATS | awk '{print $2}')
+#  USED=$(echo "$SIZE - $FREE" | bc -l)
+#  PERCENT=$(echo "$USED / $SIZE * 100" | bc -l | awk '{printf "%.2f",$0}')
+#  echo "$(datestamp) $VG = ${USED}G / ${SIZE}G = $PERCENT%"
+#  PERCENT=$(echo "$PERCENT" | awk '{printf "%.f",$0}')
+#  if [ "$PERCENT" -gt 85 ]
+#  then
+#    echo "$(datestamp) ERROR: Gluster device $VG low on space"
+#  fi
+#done
+#{% endraw %}
+#{% endif %}
 
 # Checks for all nodes
 
