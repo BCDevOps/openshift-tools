@@ -198,7 +198,7 @@ DIR=$(dirname $(readlink -f "$0"))
 get_state metricshealth METRICS_HEALTH_STATE
 
 echo -n "$(datestamp) Metrics status: "
-if [[ ! $(/usr/local/bin/metrics-health-check {{ metrics_url }}) ]]; then
+if [[ ! $(/usr/local/bin/metrics-health-check {{ metrics_url }} | grep '200 Ok') ]]; then
 
   if [[ "${METRICS_HEALTH_STATE}" -eq "0" ]]; then
 # metrics health check failure while in state 0, bumps us to state 1 and warns only
@@ -277,7 +277,7 @@ if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
   elif [[ "${NODE_READY_STATE}" -eq "1" ]]; then
 # node ready failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state nodestatus 2
-    MSG=$(echo "$(datestamp) WARN: Some nodes are not Ready")
+    MSG=$(echo "$(datestamp) ERROR: Some nodes are not Ready")
     MSG="${MSG}\n${CURRENT_NODE_STATE}"
     MSG="${MSG}\n`oc get events -n default`"
     echo -e "${MSG}"
