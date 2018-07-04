@@ -13,6 +13,11 @@ set -o pipefail
 
 # Print a backtrace on error
 # https://github.com/ab/bin/blob/master/bash-backtrace.sh
+
+# global variables re-used through the script.
+MSG = ""
+MAILTO="william.hutchison@dxcas.com steven.barre@dxcas.com"
+
 {% raw %}
 bash_backtrace() {
     # Return value of command that caused error
@@ -159,12 +164,42 @@ fi
 # Run provided metrics health check
 # Find the dir we are running in
 DIR=$(dirname $(readlink -f "$0"))
-echo -n "$(datestamp) Metrics status: "
-if ! /usr/local/bin/metrics-health-check {{ metrics_url }}
-then
-  echo "$(datestamp) ERROR: Metrics health check failed"
-fi
+get_state metricshealth METRICS_HEALTH_STATE
 
+echo -n "$(datestamp) Metrics status: "
+if [[ ! /usr/local/bin/metrics-health-check {{ metrics_url }} ]]; then
+
+  if [[ "${METRICS_HEALTH_STATE}" -eq "0" ]]; then
+# metrics health check failure while in state 0, bumps us to state 1 and warns only
+    set_state metricshealth 1
+    MSG=$(echo "$(datestamp) WARN: Metrics health check failed")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "WARN event for MetricsHealthCheck on `hostname` ${MAILTO}
+  elif [[ "${METRICS_HEALTH_STATE}" -eq "1" ]]; then
+# metrics health check failure while in state 1, bumps us to state 2 and alerts oncall with error
+    set_state metricshealth 2
+    MSG=$(echo "$(datestamp) ERROR: Metrics health check failed")
+    echo -e "${MSG}"
+  elif [[ "${METRICS_HEALTH_STATE}" -eq "2" ]]; then
+# metrics health check failure while in state 2, no state change. Still will alert though.
+    MSG=$(echo "$(datestamp) ERROR: Metrics health check failed")
+    echo -e "${MSG}"
+  fi
+else
+# Metrics health check passed, adjust state accordingly.
+  if [[ "${METRICS_HEALTH_STATE}" -eq "0" ]]; then
+# metrics health check success while in state 0, no state change
+    echo "$(datestamp) INFO: Metrics health check passed"
+  elif [[ "${METRICS_HEALTH_STATE}" -eq "1" ]]; then
+# metrics health check success while in state 1, state change back to 0
+    set_state metricshealth 0
+    echo "$(datestamp) INFO: Metrics health check passed"
+  elif [[ "${METRICS_HEALTH_STATE}" -eq "2" ]]; then
+# metrics health check success while in state 2, state change back to 0
+    set_state metricshealth 0
+    echo "$(datestamp) INFO: Metrics health check passed"
+  fi
+fi
 # Check disk space of Registry
 echo -n "$(datestamp) Registry disk usage: "
 POD=$(oc -n default get pods -l deploymentconfig=docker-registry -o name | sed 's#pods/##' | head -n 1)
@@ -193,30 +228,33 @@ fi
 # One failure in a row will only log WARN to log file. Two or
 # more consecutive failures in a row will trigger ERROR alert.
 echo "$(datestamp) Check for NodeNotReady"
-
-MSG = ""
-MAILTO="william.hutchison@dxcas.com steven.barre@dxcas.com"
-
 get_state nodestatus NODE_READY_STATE
 CURRENT_NODE_STATE=$(oc get nodes -o go-template="{{range .items}}{{.metadata.name}}{{print \"\t\"}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{.status}}{{end}}{{end}}{{print \"\n\"}}{{end}}")
 
 
 if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
-# build MSG buffer which will be either output to stdout and/or to email.
-  MSG=$(echo "$(datestamp) WARN: Some nodes are not Ready")
-  MSG="${MSG}\n${CURRENT_NODE_STATE}"
-  MSG="${MSG}\n`oc get events -n default`"
+# build MSG buffer differently depending on each state.
+
   if [[ "${NODE_READY_STATE}" -eq "0" ]]; then
 # node ready failure while in state 0, bumps us to state 1 and warns only
     set_state nodestatus 1
+    MSG=$(echo "$(datestamp) WARN: Some nodes are not Ready")
+    MSG="${MSG}\n${CURRENT_NODE_STATE}"
+    MSG="${MSG}\n`oc get events -n default`"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for NodeNotReady on `hostname` $MAILTO
+    echo -e "${MSG}" | mail -s "WARN event for NodeNotReady on `hostname` ${MAILTO}
   elif [[ "${NODE_READY_STATE}" -eq "1" ]]; then
 # node ready failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state nodestatus 2
+    MSG=$(echo "$(datestamp) WARN: Some nodes are not Ready")
+    MSG="${MSG}\n${CURRENT_NODE_STATE}"
+    MSG="${MSG}\n`oc get events -n default`"
     echo -e "${MSG}"
   elif [[ "${NODE_READY_STATE}" -eq "2" ]]; then
 # node ready failure while in state 2, no state change. Still will alert though.
+    MSG=$(echo "$(datestamp) ERROR: Some nodes are not Ready")
+    MSG="${MSG}\n${CURRENT_NODE_STATE}"
+    MSG="${MSG}\n`oc get events -n default`"
     echo -e "${MSG}"
   fi
 else
