@@ -15,8 +15,10 @@ set -o pipefail
 # https://github.com/ab/bin/blob/master/bash-backtrace.sh
 
 # global variables re-used through the script.
-MSG = ""
+MSG=""
 MAILTO="william.hutchison@dxcas.com steven.barre@dxcas.com"
+CANARY_HEALTH_STATE="0"
+METRICS_HEALTH_STATE="0"
 
 {% raw %}
 bash_backtrace() {
@@ -149,14 +151,14 @@ fi
 # Test that a sample route is working
 echo -n "$(datestamp) Canary Route Status: "
 get_state canaryhealth CANARY_HEALTH_STATE
-if [[ ! curl --head --insecure --silent --show-error {{ canary_route }} | grep '200 OK' ]]; then
+if [[ ! $(curl --head --insecure --silent --show-error {{ canary_route }} | grep '200 OK') ]]; then
 
   if [[ "${CANARY_HEALTH_STATE}" -eq "0" ]]; then
 # canary health check failure while in state 0, bumps us to state 1 and warns only
     set_state canaryhealth 1
     MSG=$(echo "$(datestamp) WARN: curl of {{ canary_route }} failed")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for CanaryHealthCheck on `hostname` $MAILTO
+    echo -e "${MSG}" | mail -s "WARN event for CanaryHealthCheck on `hostname`" $MAILTO
   elif [[ "${CANARY_HEALTH_STATE}" -eq "1" ]]; then
 # canary health check failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state canaryhealth 2
@@ -196,14 +198,14 @@ DIR=$(dirname $(readlink -f "$0"))
 get_state metricshealth METRICS_HEALTH_STATE
 
 echo -n "$(datestamp) Metrics status: "
-if [[ ! /usr/local/bin/metrics-health-check {{ metrics_url }} ]]; then
+if [[ ! $(/usr/local/bin/metrics-health-check {{ metrics_url }}) ]]; then
 
   if [[ "${METRICS_HEALTH_STATE}" -eq "0" ]]; then
 # metrics health check failure while in state 0, bumps us to state 1 and warns only
     set_state metricshealth 1
     MSG=$(echo "$(datestamp) WARN: Metrics health check failed")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for MetricsHealthCheck on `hostname` ${MAILTO}
+    echo -e "${MSG}" | mail -s "WARN event for MetricsHealthCheck on `hostname`" ${MAILTO}
   elif [[ "${METRICS_HEALTH_STATE}" -eq "1" ]]; then
 # metrics health check failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state metricshealth 2
@@ -269,9 +271,9 @@ if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
     set_state nodestatus 1
     MSG=$(echo "$(datestamp) WARN: Some nodes are not Ready")
     MSG="${MSG}\n${CURRENT_NODE_STATE}"
-    MSG="${MSG}\n`oc get events -n default`"
+    MSG="${MSG}\n$(oc get events -n default)"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for NodeNotReady on `hostname` ${MAILTO}
+    echo -e "${MSG}" | mail -s "WARN event for NodeNotReady on `hostname`" ${MAILTO}
   elif [[ "${NODE_READY_STATE}" -eq "1" ]]; then
 # node ready failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state nodestatus 2
