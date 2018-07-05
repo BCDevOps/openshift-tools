@@ -20,6 +20,7 @@ MAILTO="william.hutchison@dxcas.com steven.barre@dxcas.com"
 CANARY_HEALTH_STATE="0"
 METRICS_HEALTH_STATE="0"
 REGISTRY_POD_STATE="0"
+ROUTER_POD_STATE="0"
 
 {% raw %}
 bash_backtrace() {
@@ -373,17 +374,74 @@ fi
 
 # Verify the Router is on 3 nodes
 NODES=$(oc -n default get pods -l deploymentconfig=router -o yaml -o go-template="{{range .items}}{{if eq .status.phase \"Running\"}}{{.spec.nodeName}}{{print \"\n\"}}{{end}}{{end}}")
-POD_COUNT=$(echo "$NODES" | wc -l)
-UNIQ_NODES=$(echo "$NODES" | sort | uniq | wc -l)
-echo "$(datestamp) Check that Router is scaled to 3: $POD_COUNT"
-echo "$(datestamp) Check that Router is scaled to all infra nodes: " $UNIQ_NODES
-if [ "$POD_COUNT" -lt 3 ]
-then
-  echo "$(datestamp) ERROR: Router pod count $POD_COUNT is less than 3"
-elif [ "$UNIQ_NODES" -lt 3 ]
-then
-  echo "$(datestamp) ERROR: Router on too few nodes " $NODES
+POD_COUNT=$(echo "${NODES}" | wc -l)
+UNIQ_NODES=$(echo "${NODES}" | sort | uniq | wc -l)
+echo "$(datestamp) Check that Router is scaled to 3: ${POD_COUNT}"
+echo "$(datestamp) Check that Router is scaled to all infra nodes: " ${UNIQ_NODES}
+get_state routerpodcount ROUTER_POD_STATE
+if [[ ("${POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
+  if [[ "${ROUTER_POD_STATE}" -eq "0" ]]; then
+# health check failure while in state 0, bumps us to state 1 and warns only
+    set_state routerpodcount 1
+    if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) WARN: Router pod count ${POD_COUNT} is less than 3 and Router on too few infra nodes: " ${NODES})
+    elif [[ "${POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) WARN: Router pod count ${POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) WARN: Router running on too few infra nodes " ${NODES})
+    fi
+# for convenience include actual pod status for Router pods to save time investigating
+    MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=router)"
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "WARN event for RouterPodCheck on $(hostname)" ${MAILTO}
+  elif [[ "${ROUTER_POD_STATE}" -eq "1" ]]; then
+# health check failure while in state 1, bumps us to state 2 and alerts oncall with error
+    set_state routerpodcount 2
+    if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) ERROR: Router pod count ${POD_COUNT} is less than 3 and Router running on too few infra nodes: " ${NODES})
+    elif [[ "${POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: Router pod count ${POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: Router running on too few infra nodes " ${NODES})
+    fi
+# for convenience include actual pod status for Router pods to save time investigating
+    MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=router)"
+    echo -e "${MSG}"
+  elif [[ "${ROUTER_POD_STATE}" -eq "2" ]]; then
+# health check failure while in state 2, no state change. Still will alert though.
+    if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) ERROR: Router pod count ${POD_COUNT} is less than 3 and Router running on too few infra nodes: " ${NODES})
+    elif [[ "${POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: Router pod count ${POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: Router running on too few infra nodes " ${NODES})
+    fi
+# for convenience include actual pod status for Router pods to save time investigating
+    MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=router)"
+    echo -e "${MSG}"
+  fi
+else
+# Health check passed, adjust state accordingly.
+  if [[ "${ROUTER_POD_STATE}" -eq "0" ]]; then
+# health check success while in state 0, no state change
+    echo "$(datestamp) INFO: Router pods are properly scaled"
+  elif [[ "${ROUTER_POD_STATE}" -eq "1" ]]; then
+# metrics health check success while in state 1, state change back to 0
+    set_state routerpodcount 0
+    echo "$(datestamp) INFO: Router pods are properly scaled"
+  elif [[ "${ROUTER_POD_STATE}" -eq "2" ]]; then
+# metrics health check success while in state 2, state change back to 0
+    set_state routerpodcount 0
+    echo "$(datestamp) INFO: Router pods are properly scaled"
+  fi
 fi
+#if [ "$POD_COUNT" -lt 3 ]
+#then
+#  echo "$(datestamp) ERROR: Router pod count $POD_COUNT is less than 3"
+#elif [ "$UNIQ_NODES" -lt 3 ]
+#then
+#  echo "$(datestamp) ERROR: Router on too few nodes " $NODES
+#fi
 
 # Verify the IP Failover is on 3 nodes
 {% endraw %}
