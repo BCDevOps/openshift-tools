@@ -21,6 +21,7 @@ CANARY_HEALTH_STATE="0"
 METRICS_HEALTH_STATE="0"
 REGISTRY_POD_STATE="0"
 ROUTER_POD_STATE="0"
+IPF_POD_STATE="0"
 
 {% raw %}
 bash_backtrace() {
@@ -435,29 +436,73 @@ else
     echo "$(datestamp) INFO: Router pods are properly scaled"
   fi
 fi
-#if [ "$POD_COUNT" -lt 3 ]
-#then
-#  echo "$(datestamp) ERROR: Router pod count $POD_COUNT is less than 3"
-#elif [ "$UNIQ_NODES" -lt 3 ]
-#then
-#  echo "$(datestamp) ERROR: Router on too few nodes " $NODES
-#fi
 
 # Verify the IP Failover is on 3 nodes
 {% endraw %}
 ROUTER_DC="{{ router_dc }}"
 {% raw %}
 NODES=$(oc -n default get pods -l deploymentconfig="${ROUTER_DC}" -o yaml -o go-template="{{range .items}}{{if eq .status.phase \"Running\"}}{{.spec.nodeName}}{{print \"\n\"}}{{end}}{{end}}")
-POD_COUNT=$(echo "$NODES" | wc -l)
-UNIQ_NODES=$(echo "$NODES" | sort | uniq | wc -l)
-echo "$(datestamp) Check that IPF is scaled to 3: $POD_COUNT"
-echo "$(datestamp) Check that IPF is scaled to all infra nodes: " $UNIQ_NODES
-if [ "$POD_COUNT" -lt 3 ]
-then
-  echo "$(datestamp) ERROR: IPF pod count $POD_COUNT is less than 3"
-elif [ "$UNIQ_NODES" -lt 3 ]
-then
-  echo "$(datestamp) ERROR: IPF on too few nodes " $NODES
+POD_COUNT=$(echo "${NODES}" | wc -l)
+UNIQ_NODES=$(echo "${NODES}" | sort | uniq | wc -l)
+echo "$(datestamp) Check that IPF is scaled to 3: ${POD_COUNT}"
+echo "$(datestamp) Check that IPF is scaled to all infra nodes: " ${UNIQ_NODES}
+get_state ipfpodcount IPF_POD_STATE
+if [[ ("${POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
+
+  if [[ "${IPF_POD_STATE}" -eq "0" ]]; then
+# health check failure while in state 0, bumps us to state 1 and warns only
+    set_state ipfpodcount 1
+    if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) WARN: IPF pod count ${POD_COUNT} is less than 3 and IPF running on too few infra nodes: " ${NODES})
+    elif [[ "${POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) WARN: IPF pod count ${POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) WARN: IPF running on too few infra nodes " ${NODES})
+    fi
+# for convenience include actual pod status for IPF pods to save time investigating
+    MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=${ROUTER_DC})"
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "WARN event for IPFPodCheck on $(hostname)" ${MAILTO}
+  elif [[ "${IPF_POD_STATE}" -eq "1" ]]; then
+# health check failure while in state 1, bumps us to state 2 and alerts oncall with error
+    set_state ipfpodcount 2
+    if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) ERROR: IPF pod count ${POD_COUNT} is less than 3 and IPF running on too few infra nodes: " ${NODES})
+    elif [[ "${POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: IPF pod count ${POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: IPF running on too few infra nodes " ${NODES})
+    fi
+# for convenience include actual pod status for IPF pods to save time investigating
+    MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=${ROUTER_DC})"
+    echo -e "${MSG}"
+  elif [[ "${IPF_POD_STATE}" -eq "2" ]]; then
+# health check failure while in state 2, no state change. Still will alert though.
+    if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) ERROR: IPF pod count ${POD_COUNT} is less than 3 and IPF running on too few infra nodes: " ${NODES})
+    elif [[ "${POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: IPF pod count ${POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: IPF running on too few infra nodes " ${NODES})
+    fi
+# for convenience include actual pod status for IPF pods to save time investigating
+    MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=${ROUTER_DC})"
+    echo -e "${MSG}"
+  fi
+else
+# Health check passed, adjust state accordingly.
+  if [[ "${IPF_POD_STATE}" -eq "0" ]]; then
+# health check success while in state 0, no state change
+    echo "$(datestamp) INFO: IPF pods are properly scaled"
+  elif [[ "${IPF_POD_STATE}" -eq "1" ]]; then
+# metrics health check success while in state 1, state change back to 0
+    set_state ipfpodcount 0
+    echo "$(datestamp) INFO: IPF pods are properly scaled"
+  elif [[ "${IPF_POD_STATE}" -eq "2" ]]; then
+# metrics health check success while in state 2, state change back to 0
+    set_state ipfpodcount 0
+    echo "$(datestamp) INFO: IPF pods are properly scaled"
+  fi
 fi
 
 # Check the clusters capacity
