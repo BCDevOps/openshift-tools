@@ -17,11 +17,22 @@ set -o pipefail
 # global variables re-used through the script.
 MSG=""
 MAILTO="william.hutchison@dxcas.com steven.barre@dxcas.com"
+# global variables responsible for tracking state on each Finite State Automata (FSA).
+# The default value here does not affect anything - actual use of the FSA will set this
+# to the actual state value when queried.
 CANARY_HEALTH_STATE="0"
 METRICS_HEALTH_STATE="0"
 REGISTRY_POD_STATE="0"
 ROUTER_POD_STATE="0"
 IPF_POD_STATE="0"
+CPU_CAPACITY_STATE="0"
+MEM_CAPACITY_STATE="0"
+POD_CAPACITY_STATE="0"
+# capacity percentage thresholds to check for and warn/alert on.
+CPU_CAPACITY_THRESHOLD=85
+MEM_CAPACITY_THRESHOLD=85
+POD_CAPACITY_THRESHOLD=85
+
 
 {% raw %}
 bash_backtrace() {
@@ -56,20 +67,20 @@ bash_backtrace() {
 
 function get_state () {
 # Parameters passed:
-#  - STATENAME = uniquei name identifying what is being tracked state-wise. Alllows re-use of this function to 
+#  - STATENAME = uniquei name identifying what is being tracked state-wise. Alllows re-use of this function to
 #    implement more than one state automata in the same script if desired. Also acts as the basis for how the state file
 #    is named.
 #  - STATEVARIABLE = text which is the actual name of the global variable to be passed the value of the current state.
 #    If the state of the automata is not yet set, then an initial state of 0 is assigned as a starting point.
 #
 # IMPORTANT - the use of eval is what allows the passing of a value back to any arbitrary global variable without re-writing
-# this function, or have multiple copies. This allows us to use the one function to setup multiple state automata and use the 
+# this function, or have multiple copies. This allows us to use the one function to setup multiple state automata and use the
 # current function as-is. Examples of using the same function for multiple state automata:
 
 # get_state first_machine FIRST_MACHINE_VARIABLE
 # get_state second_machine SECOND_MACHINE_VARIABLE
-# 
-# First call will grab the state of first_machine and store in the global variable FIRST_MACHINE_VARIABLE. 
+#
+# First call will grab the state of first_machine and store in the global variable FIRST_MACHINE_VARIABLE.
 # Second call will do the same for second_machine, storing in a different global variable named SECOND_MACHINE_VARIABLE.
 # For both function calls, the use of eval allows us to not have to re-write that one function despite capturing return values
 # to different variables.
@@ -511,47 +522,153 @@ echo "$(datestamp) Check Cluster Capacity of region=app"
 # Format into a string with each node enclosed in quotes
 NODE_LIST=$(oc get nodes -l region=app -o name | sed 's#nodes/##')
 NODES=
-for N in $NODE_LIST; do NODES="$NODES \"$N\""; done
+for N in ${NODE_LIST}; do NODES="${NODES} \"${N}\""; done
 # Get Node capacity
 # node.dmz cpu_int mem_ki pods
-NODE_CAP=$(oc get nodes -o go-template="{{range .items}}{{if  eq .metadata.name $NODES}}{{.metadata.name}}{{print \"\t\"}}{{.status.capacity.cpu}}{{print \"\t\"}}{{.status.capacity.memory}}{{print \"\t\"}}{{.status.capacity.pods}}{{print \"\n\"}}{{end}}{{end}}")
+NODE_CAP=$(oc get nodes -o go-template="{{range .items}}{{if  eq .metadata.name ${NODES}}}{{.metadata.name}}{{print \"\t\"}}{{.status.capacity.cpu}}{{print \"\t\"}}{{.status.capacity.memory}}{{print \"\t\"}}{{.status.capacity.pods}}{{print \"\n\"}}{{end}}{{end}}")
+
 # CPU Capacity
-CPU_CAP=$(echo "$NODE_CAP" | awk -F "\t" 'BEGIN { SUM=0 } {if ($2 ~ "m") SUM+=$2/1000; else SUM+=$2 } END {print SUM}')
+CPU_CAP=$(echo "${NODE_CAP}" | awk -F "\t" 'BEGIN { SUM=0 } {if ($2 ~ "m") SUM+=$2/1000; else SUM+=$2 } END {print SUM}')
+
 # Memory Capacity in Gi
-MEM_CAP=$(echo "$NODE_CAP" | awk -F "\t" 'BEGIN { SUM=0 } {if ($3 ~ "Gi") $3=$3*1024"Mi"; if ($3 ~ "G") $3=$3*1000"M"; if ($3 ~ "Mi") $3=$3*1024"Ki"; if ($3 ~ "M") $3=$3*1000"K"; if ($3 ~ "Ki") $3=$3*1024; if ($3 ~ "K") $3=$3*1000; SUM+=$3} END { print SUM/1024/1024/1024"Gi"}')
+MEM_CAP=$(echo "${NODE_CAP}" | awk -F "\t" 'BEGIN { SUM=0 } {if ($3 ~ "Gi") $3=$3*1024"Mi"; if ($3 ~ "G") $3=$3*1000"M"; if ($3 ~ "Mi") $3=$3*1024"Ki"; if ($3 ~ "M") $3=$3*1000"K"; if ($3 ~ "Ki") $3=$3*1024; if ($3 ~ "K") $3=$3*1000; SUM+=$3} END { print SUM/1024/1024/1024"Gi"}')
+
 # Pod Capacity
-POD_CAP=$(echo "$NODE_CAP" | awk -F "\t" 'BEGIN { SUM=0 } {SUM+=$4 } END {print SUM}')
+POD_CAP=$(echo "${NODE_CAP}" | awk -F "\t" 'BEGIN { SUM=0 } {SUM+=$4 } END {print SUM}')
+
 # Get stats for running pods
-PODS=$(oc get pods --all-namespaces -o go-template="{{range .items}}{{if .spec.nodeName}}{{if and (not (eq .status.phase \"Failed\" \"Succeeded\")) (eq .spec.nodeName $NODES)}}{{range .spec.containers}}{{.name}}{{print \"\t\"}}{{.resources.requests.cpu}}{{print \"\t\"}}{{.resources.requests.memory}}{{print \"\n\"}}{{end}}{{end}}{{end}}{{end}}")
+PODS=$(oc get pods --all-namespaces -o go-template="{{range .items}}{{if .spec.nodeName}}{{if and (not (eq .status.phase \"Failed\" \"Succeeded\")) (eq .spec.nodeName ${NODES})}}{{range .spec.containers}}{{.name}}{{print \"\t\"}}{{.resources.requests.cpu}}{{print \"\t\"}}{{.resources.requests.memory}}{{print \"\n\"}}{{end}}{{end}}{{end}}{{end}}")
+
 # CPU Requests
-CPU_REQ=$(echo "$PODS" | awk -F "\t" 'BEGIN { SUM=0 } {if ($2 ~ "m") SUM+=$2/1000; else SUM+=$2 } END {print SUM}')
+CPU_REQ=$(echo "${PODS}" | awk -F "\t" 'BEGIN { SUM=0 } {if ($2 ~ "m") SUM+=$2/1000; else SUM+=$2 } END {print SUM}')
+
 # Memory Requests in Gi
-MEM_REQ=$(echo "$PODS" | awk -F "\t" 'BEGIN { SUM=0 } {if ($3 ~ "Gi") $3=$3*1024"Mi"; if ($3 ~ "G") $3=$3*1000"M"; if ($3 ~ "Mi") $3=$3*1024"Ki"; if ($3 ~ "M") $3=$3*1000"K"; if ($3 ~ "Ki") $3=$3*1024; if ($3 ~ "K") $3=$3*1000; SUM+=$3} END { print SUM/1024/1024/1024"Gi"}')
+MEM_REQ=$(echo "${PODS}" | awk -F "\t" 'BEGIN { SUM=0 } {if ($3 ~ "Gi") $3=$3*1024"Mi"; if ($3 ~ "G") $3=$3*1000"M"; if ($3 ~ "Mi") $3=$3*1024"Ki"; if ($3 ~ "M") $3=$3*1000"K"; if ($3 ~ "Ki") $3=$3*1024; if ($3 ~ "K") $3=$3*1000; SUM+=$3} END { print SUM/1024/1024/1024"Gi"}')
+
 # Pods Running
-POD_REQ=$(echo "$PODS" | wc -l)
-# Print CPU
-CPU_PERCENT=$(echo "$CPU_REQ / $CPU_CAP * 100" | bc -l | awk '{printf "%.2f",$0}')
-echo "$(datestamp) CPU Capacity: $CPU_REQ / $CPU_CAP = ${CPU_PERCENT}%"
-CPU_PERCENT=$(echo "$CPU_PERCENT" | awk '{printf "%.f",$0}')
-if [ "$CPU_PERCENT" -gt 85 ]
-then
-  echo "$(datestamp) ERROR: Cluster low on CPU capacity"
+POD_REQ=$(echo "${PODS}" | wc -l)
+
+get_state clustercpucapacity CPU_CAPACITY_STATE
+get_state clusterramcapacity MEM_CAPACITY_STATE
+get_state clusterpodcapacity POD_CAPACITY_STATE
+
+# Print CPU Capacity
+CPU_PERCENT=$(echo "${CPU_REQ} / ${CPU_CAP} * 100" | bc -l | awk '{printf "%.2f",$0}')
+echo "$(datestamp) Cluster CPU Capacity: ${CPU_REQ} / ${CPU_CAP} = ${CPU_PERCENT}%"
+CPU_PERCENT=$(echo "${CPU_PERCENT}" | awk '{printf "%.f",$0}')
+if [ "${CPU_PERCENT}" -gt ${CPU_CAPACITY_THRESHOLD} ]; then
+  if [[ "${CPU_CAPACITY_STATE}" -eq "0" ]]; then
+# CPU capacity failure while in state 0, bumps us to state 1 and warns only
+    set_state clustercpucapacity 1
+    MSG=$(echo "$(datestamp) WARN: Cluster low on CPU capacity - over the threshold of ${CPU_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "WARN event for CPUCapacityCheck on $(hostname)" ${MAILTO}
+  elif [[ "${CPU_CAPACITY_STATE}" -eq "1" ]]; then
+# CPU capacity failure while in state 1, bumps us to state 2 and alerts oncall with error
+    set_state clustercpucapacity 2
+    MSG=$(echo "$(datestamp) ERROR: Cluster low on CPU capacity - over the threshold of ${CPU_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${CPU_CAPACITY_STATE}" -eq "2" ]]; then
+    MSG=$(echo "$(datestamp) ERROR: Cluster low on CPU capacity - over the threshold of ${CPU_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  fi
+else
+# CPU Capacity check passed, adjust state accordingly.
+  if [[ "${CPU_CAPACITY_STATE}" -eq "0" ]]; then
+# CPU Capacity check success while in state 0, no state change
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient CPU capacity - under the threshold of ${CPU_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${CPU_CAPACITY_STATE}" -eq "1" ]]; then
+# CPU Capacity check success while in state 1, state change back to 0
+    set_state clustercpucapacity 0
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient CPU capacity - under the threshold of ${CPU_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${CPU_CAPACITY_STATE}" -eq "2" ]]; then
+# CPU Capacity check success while in state 2, state change back to 0
+    set_state clustercpucapacity 0
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient CPU capacity - under the threshold of ${CPU_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  fi
 fi
-# Print Memory
-MEM_PERCENT=$(echo "$MEM_REQ / $MEM_CAP * 100" | sed 's#Gi##g' | bc -l | awk '{printf "%.2f",$0}')
-echo "$(datestamp) Memory Capacity: $MEM_REQ / $MEM_CAP = ${MEM_PERCENT}%"
-MEM_PERCENT=$(echo "$MEM_PERCENT" | awk '{printf "%.f",$0}')
-if [ "$MEM_PERCENT" -gt 85 ]
-then
-  echo "$(datestamp) ERROR: Cluster low on Memory capacity"
+
+# Print Memory Capacity
+MEM_PERCENT=$(echo "${MEM_REQ} / ${MEM_CAP} * 100" | sed 's#Gi##g' | bc -l | awk '{printf "%.2f",$0}')
+echo "$(datestamp) Cluster Memory Capacity: ${MEM_REQ} / ${MEM_CAP} = ${MEM_PERCENT}%"
+MEM_PERCENT=$(echo "${MEM_PERCENT}" | awk '{printf "%.f",$0}')
+
+if [ "${MEM_PERCENT}" -gt ${MEM_CAPACITY_THRESHOLD} ]; then
+  if [[ "${MEM_CAPACITY_STATE}" -eq "0" ]]; then
+# Memory capacity failure while in state 0, bumps us to state 1 and warns only
+    set_state clusterramcapacity 1
+    MSG=$(echo "$(datestamp) WARN: Cluster low on Memory capacity - over the threshold of ${MEM_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "WARN event for MemoryCapacityCheck on $(hostname)" ${MAILTO}
+  elif [[ "${MEM_CAPACITY_STATE}" -eq "1" ]]; then
+# Memory capacity failure while in state 1, bumps us to state 2 and alerts oncall with error
+    set_state clusterramcapacity 2
+    MSG=$(echo "$(datestamp) ERROR: Cluster low on Memory capacity - over the threshold of ${MEM_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${MEM_CAPACITY_STATE}" -eq "2" ]]; then
+    MSG=$(echo "$(datestamp) ERROR: Cluster low on Memory capacity - over the threshold of ${MEM_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  fi
+else
+# Memory Capacity check passed, adjust state accordingly.
+  if [[ "${MEM_CAPACITY_STATE}" -eq "0" ]]; then
+# Memory Capacity check success while in state 0, no state change
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient Memory capacity - under the threshold of ${MEM_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${MEM_CAPACITY_STATE}" -eq "1" ]]; then
+# Memory Capacity check success while in state 1, state change back to 0
+    set_state clusterramcapacity 0
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient Memory capacity - under the threshold of ${MEM_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${MEM_CAPACITY_STATE}" -eq "2" ]]; then
+# Memory Capacity check success while in state 2, state change back to 0
+    set_state clusterramcapacity 0
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient Memory capacity - under the threshold of ${MEM_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  fi
 fi
-# Print Pods
+
+# Print Pod Capacity
 POD_PERCENT=$(echo "$POD_REQ / $POD_CAP * 100" | bc -l | awk '{printf "%.2f",$0}')
-echo "$(datestamp) Pod Capacity: $POD_REQ / $POD_CAP = ${POD_PERCENT}%"
+echo "$(datestamp) Cluster Pod Capacity: $POD_REQ / $POD_CAP = ${POD_PERCENT}%"
 POD_PERCENT=$(echo "$POD_PERCENT" | awk '{printf "%.f",$0}')
-if [ "$POD_PERCENT" -gt 85 ]
-then
-  echo "$(datestamp) ERROR: Cluster low on Pod capacity"
+
+if [ "${POD_PERCENT}" -gt ${POD_CAPACITY_THRESHOLD} ]; then
+  if [[ "${POD_CAPACITY_STATE}" -eq "0" ]]; then
+# Pod capacity failure while in state 0, bumps us to state 1 and warns only
+    set_state clusterpodcapacity 1
+    MSG=$(echo "$(datestamp) WARN: Cluster low on Pod capacity - over the threshold of ${POD_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "WARN event for PodCapacityCheck on $(hostname)" ${MAILTO}
+  elif [[ "${POD_CAPACITY_STATE}" -eq "1" ]]; then
+# Pod capacity failure while in state 1, bumps us to state 2 and alerts oncall with error
+    set_state clusterpodcapacity 2
+    MSG=$(echo "$(datestamp) ERROR: Cluster low on Pod capacity - over the threshold of ${POD_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${POD_CAPACITY_STATE}" -eq "2" ]]; then
+    MSG=$(echo "$(datestamp) ERROR: Cluster low on Pod capacity - over the threshold of ${POD_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  fi
+else
+# Pod Capacity check passed, adjust state accordingly.
+  if [[ "${POD_CAPACITY_STATE}" -eq "0" ]]; then
+# Pod Capacity check success while in state 0, no state change
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient Pod capacity - under the threshold of ${POD_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${POD_CAPACITY_STATE}" -eq "1" ]]; then
+# Pod Capacity check success while in state 1, state change back to 0
+    set_state clusterpodcapacity 0
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient Pod capacity - under the threshold of ${POD_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  elif [[ "${POD_CAPACITY_STATE}" -eq "2" ]]; then
+# Pod Capacity check success while in state 2, state change back to 0
+    set_state clusterpodcapacity 0
+    MSG=$(echo "$(datestamp) INFO: Cluster has sufficient Pod capacity - under the threshold of ${POD_CAPACITY_THRESHOLD}%")
+    echo -e "${MSG}"
+  fi
 fi
 {% endraw %}
 {% endif %}
