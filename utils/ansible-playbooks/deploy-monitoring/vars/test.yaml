@@ -1,9 +1,9 @@
 ---
 primary_master: ociopf-t-301.dmz
 api_url: https://console.lab.pathfinder.gov.bc.ca:8443
-router_service: http://10.131.7.73:1936
+router_service: http://router.default.svc:1936
 router_dc: ipf-ha-router
-registry_service: http://10.131.6.232:5000
+registry_service: https://docker-registry.default.svc:5000
 canary_route: https://canary.lab.pathfinder.gov.bc.ca/
 metrics_url: https://hawkular-metrics.lab.pathfinder.gov.bc.ca
 cron_hour: "9-15"
