@@ -146,9 +146,12 @@ function datestamp () {
   date "+%F %H:%M:%S"
 }
 
+# Define defaults for Curl
+CURL="curl --connect-timeout 5 --max-time 10 --silent --show-error"
+
 # Test that the API is responding
 echo -n "$(datestamp) OpenShift API Status: "
-if ! curl --silent --show-error {{ api_url }}/healthz | grep ok
+if ! ${CURL} {{ api_url }}/healthz | grep ok
 then
   echo "$(datestamp) ERROR: curl of API {{ api_url }}/healthz failed"
 fi
@@ -157,7 +160,7 @@ fi
 # Test that the Router service is responding
 # TODO switch to DNS name once server are using dnsmasq properly
 echo -n "$(datestamp) OpenShift Router Status: "
-if ! curl --silent --show-error {{ router_service }}/healthz | grep 'Service ready'
+if ! ${CURL} {{ router_service }}/healthz | grep 'Service ready'
 then
   echo "$(datestamp) ERROR: curl of router service {{ router_service }}/healthz failed"
 fi
@@ -165,7 +168,8 @@ fi
 # Test that a sample route is working
 echo -n "$(datestamp) Canary Route Status: "
 get_state canaryhealth CANARY_HEALTH_STATE
-if [[ ! $(curl --head --insecure --silent --show-error {{ canary_route }} | grep '200 OK') ]]; then
+# Use --insecure in case there are TLS cert issues
+if [[ ! $(${CURL} --head --insecure {{ canary_route }} | grep '200 OK') ]]; then
 
   if [[ "${CANARY_HEALTH_STATE}" -eq "0" ]]; then
 # canary health check failure while in state 0, bumps us to state 1 and warns only
@@ -201,7 +205,8 @@ fi
 # Test the Docker Registry is responding
 # TOD switch to DNS name once server is using dnsmasq properly
 echo -n "$(datestamp) Docker Registry Status: "
-if ! curl --head --silent --show-error {{ registry_service }}/healthz | grep '200 OK'
+# Use --head as this enpoint returns an empty document
+if ! ${CURL} --head {{ registry_service }}/healthz | grep '200 OK'
 then
   echo "$(datestamp) ERROR: curl of docker registry service {{ registry_service }}/healthz failed"
 fi
