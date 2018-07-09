@@ -50,7 +50,7 @@ readonly CONNECT_TIMEOUT="5"
 
 #cURL parms and headers
 #parms passed to cURL
-curl_parms="-sk --max-time ${MAX_TIME} --connect-timeout ${CONNECT_TIMEOUT}"
+curl_parms="--silent --show-error --insecure --max-time ${MAX_TIME} --connect-timeout ${CONNECT_TIMEOUT}"
 #URL to cURL
 url="${public_url}/hawkular/metrics/counters/data?stacked=true&tags=descriptor_name:cpu%2Frx,type:pod,labels:%5E%28%3F%3D.%2A%5Cbmetrics-infra%3A${POD_LABEL}%5Cb%29.%2A%24&bucketDuration=60000ms&start=-2mn"
 #Required, Hawkular-Tenant header.
