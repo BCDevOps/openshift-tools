@@ -167,7 +167,7 @@ then
 fi
 
 # Test that a sample route is working
-echo -n "$(datestamp) Canary Route Status: "
+echo "$(datestamp) Canary Route Status"
 get_state canaryhealth CANARY_HEALTH_STATE
 # Use --insecure in case there are TLS cert issues
 if [[ ! $(${CURL} --head --insecure {{ canary_route }} | grep '200 OK') ]]; then
@@ -217,7 +217,7 @@ fi
 DIR=$(dirname $(readlink -f "$0"))
 get_state metricshealth METRICS_HEALTH_STATE
 
-echo -n "$(datestamp) Metrics status: "
+echo "$(datestamp) Metrics Status"
 if [[ ! $(/usr/local/bin/metrics-health-check {{ metrics_url }} | grep '200 Ok') ]]; then
 
   if [[ "${METRICS_HEALTH_STATE}" -eq "0" ]]; then
