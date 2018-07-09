@@ -11,13 +11,14 @@ set -o pipefail
 # Turn on traces, useful while debugging but commented out by default
 # set -o xtrace
 
-# Print a backtrace on error
-# https://github.com/ab/bin/blob/master/bash-backtrace.sh
-
-# global variables re-used through the script.
+# Global variables re-used through the script.
 MSG=""
 MAILTO="william.hutchison@dxcas.com steven.barre@dxcas.com"
-# global variables responsible for tracking state on each Finite State Automata (FSA).
+
+# Define defaults for Curl
+CURL="curl --connect-timeout 5 --max-time 10 --silent --show-error"
+
+# Global variables responsible for tracking state on each Finite State Automata (FSA).
 # The default value here does not affect anything - actual use of the FSA will set this
 # to the actual state value when queried.
 CANARY_HEALTH_STATE="0"
@@ -28,13 +29,15 @@ IPF_POD_STATE="0"
 CPU_CAPACITY_STATE="0"
 MEM_CAPACITY_STATE="0"
 POD_CAPACITY_STATE="0"
+
 # capacity percentage thresholds to check for and warn/alert on.
 CPU_CAPACITY_THRESHOLD=85
 MEM_CAPACITY_THRESHOLD=85
 POD_CAPACITY_THRESHOLD=85
 
-
 {% raw %}
+# Print a backtrace on error
+# https://github.com/ab/bin/blob/master/bash-backtrace.sh
 bash_backtrace() {
     # Return value of command that caused error
     local RET=$?
@@ -61,6 +64,16 @@ bash_backtrace() {
 
     echo "Exiting with status ${RET}"
     exit "${RET}"
+}
+{% endraw %}
+# Copy STDOUT and STDERR so they can be restored later
+exec 3>&1 4>&2
+# Trap script errors and print some helpful debug info
+trap bash_backtrace ERR
+
+# Standardize the date stamps output
+function datestamp () {
+  date "+%F %H:%M:%S"
 }
 
 ## FUNCTIONS FOR STATE MACHINE CHECKS
@@ -135,19 +148,7 @@ function return_node_ready_count () {
   echo $(echo "${CURRENT_NODE_STATE}" | wc -l)
 }
 
-{% endraw %}
-# Copy STDOUT and STDERR so they can be restored later
-exec 3>&1 4>&2
-# Trap script errors and print some helpful debug info
-trap bash_backtrace ERR
-
-# Standardize the date stamps output
-function datestamp () {
-  date "+%F %H:%M:%S"
-}
-
-# Define defaults for Curl
-CURL="curl --connect-timeout 5 --max-time 10 --silent --show-error"
+## BEGIN TESTS
 
 # Test that the API is responding
 echo -n "$(datestamp) OpenShift API Status: "
