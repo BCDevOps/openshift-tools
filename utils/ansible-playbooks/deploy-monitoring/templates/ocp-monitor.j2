@@ -159,11 +159,10 @@ fi
 
 {% if ansible_fqdn == primary_master %}
 # Test that the Router service is responding
-# TODO switch to DNS name once server are using dnsmasq properly
 echo -n "$(datestamp) OpenShift Router Status: "
-if ! ${CURL} {{ router_service }}/healthz | grep 'Service ready'
+if ! ${CURL} http://router.default.svc:1936/healthz | grep 'Service ready'
 then
-  echo "$(datestamp) ERROR: curl of router service {{ router_service }}/healthz failed"
+  echo "$(datestamp) ERROR: curl of router service http://router.default.svc:1936/healthz failed"
 fi
 
 # Test that a sample route is working
