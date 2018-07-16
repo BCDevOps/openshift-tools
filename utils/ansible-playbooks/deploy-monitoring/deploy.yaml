@@ -51,5 +51,5 @@
         cron_file: /etc/cron.d/ocp-monitor
         user: root
         minute: "*/5"
-        job: /usr/local/bin/ocp-monitor 2>&1 >> /var/log/ocp-monitor.log
+        job: /usr/local/bin/ocp-monitor >> /var/log/ocp-monitor.log 2>&1
 
