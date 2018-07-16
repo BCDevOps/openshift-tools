@@ -21,7 +21,6 @@
       with_items:
       - primary_master
       - api_url
-      - router_service
       - router_dc
       - registry_service
       - canary_route

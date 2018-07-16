@@ -1,7 +1,6 @@
 ---
 primary_master: ociopf-d-100.dmz
 api_url: https://console.pathfinder.gov.bc.ca:8443
-router_service: http://router.default.svc:1936
 router_dc: ipf-ha-router-kamloops
 registry_service: http://docker-registry.default.svc:5000
 canary_route: https://bcdevexchange.org/
