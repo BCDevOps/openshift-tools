@@ -6,3 +6,5 @@ router_dc: ipf-ha-router
 registry_service: http://10.131.6.232:5000
 canary_route: https://canary.lab.pathfinder.gov.bc.ca/
 metrics_url: https://hawkular-metrics.lab.pathfinder.gov.bc.ca
+cron_hour: "9-15"
+cron_weekday: "MON-FRI"
