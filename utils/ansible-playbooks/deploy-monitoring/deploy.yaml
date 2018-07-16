@@ -5,7 +5,7 @@
   tasks:
     - name: Check for cluster var
       fail:
-        msg: "Please define cluster on the command line, to load the correct variable file"
+        msg: "Please define cluster on the command line with --extra-vars cluster=<cluster> , to load the correct variable file"
       when: "cluster is undefined"
 
 - name: OCP Monitoring
