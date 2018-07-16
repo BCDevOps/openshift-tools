@@ -51,5 +51,7 @@
         cron_file: /etc/cron.d/ocp-monitor
         user: root
         minute: "*/5"
+        hour: '{{ cron_hour | default(omit) }}'
+        weekday: '{{ cron_weekday | default(omit) }}'
         job: /usr/local/bin/ocp-monitor >> /var/log/ocp-monitor.log 2>&1
 
