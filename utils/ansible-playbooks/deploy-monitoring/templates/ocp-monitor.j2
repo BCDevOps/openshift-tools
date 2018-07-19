@@ -34,6 +34,7 @@ POD_CAPACITY_STATE="0"
 CPU_CAPACITY_THRESHOLD=85
 MEM_CAPACITY_THRESHOLD=85
 POD_CAPACITY_THRESHOLD=85
+GLUSTER_POD_THRESHOLD=50
 
 {% raw %}
 # Print a backtrace on error
@@ -675,6 +676,69 @@ else
     echo -e "${MSG}"
   fi
 fi
+
+# core CNS health checks - individual volume health check is out of scope here.
+
+for POD in $(oc -n cns get pods -l glusterfs=pod -o name | sed 's#pods/##')
+do
+
+  # Check health of additional services in Gluster pods
+  for SERVICE in tcmu-runner gluster-block-target gluster-blockd
+  do
+    echo -n "$(datestamp) Status of ${SERVICE} on ${POD}: "
+    if ! oc exec -n cns ${POD} -- /bin/bash -c 'systemctl is-active '${SERVICE}'.service'
+    then
+        MSG=$(echo "$(datestamp) WARN: ${SERVICE} on CNS pod ${POD} is unhealthy")
+        MSG="${MSG}\n$(oc exec -n cns ${POD} -- /bin/bash -c 'systemctl status '${SERVICE}'.service' || true)"
+        echo -e "${MSG}"
+        echo -e "${MSG}" | mail -s "WARN event for CNS service check on pod ${POD}" ${MAILTO}
+    else
+        echo "$(datestamp) INFO: ${SERVICE} on CNS pod ${POD} is healthy"
+    fi
+  done
+
+  # Check Peer Status
+  echo -n "$(datestamp) Confirm CNS pod ${POD} sees two connected peers: "
+  PEERS=$(oc exec -n cns ${POD} -- gluster peer status | grep 'State: Peer in Cluster (Connected)' | wc -l)
+  echo $PEERS
+  if [ "${PEERS}" -lt 2 ]
+  then
+    MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} not connected to peers")
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster peer status)"
+    echo -e "${MSG}" | mail -s "WARN event for CNS peer check on pod ${POD}" ${MAILTO}
+  else
+    echo "$(datestamp) INFO: CNS pod ${POD} can see all peers"
+  fi
+
+  # Check Pool List
+  echo -n "$(datestamp) Confirm CNS pod ${POD} sees 3 pool members: "
+  POOLS=$(oc exec -n cns ${POD} -- gluster pool list | grep Connected | wc -l)
+  echo ${POOLS}
+  if [ "${POOLS}" -lt 3 ]
+  then
+    MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} not connected to pool members")
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster pool list)"
+    echo -e "${MSG}" | mail -s "WARN event for CNS pool check on pod ${POD}" ${MAILTO}
+  else
+    echo "$(datestamp) INFO: CNS pod ${POD} is connected to all pool members"
+  fi
+
+ # NEW - check disk space for the pod to see if it ran out.
+  PODDF=$((oc exec -n cns ${POD} -- /bin/df /) | grep dev | awk '{ print $(NF-1) }' | sed 's/\%//')
+  echo "$(datestamp) Checking available disk space on Gluster pod image ${POD}"
+  if [ "${PODDF}" -gt "${GLUSTER_POD_THRESHOLD}" ]
+  then
+    MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} is low on disk space. ${PODDF}% full")
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(oc exec -n cns ${POD} -- /bin/df /)"
+    echo -e "${MSG}" | mail -s "WARN event for CNS disk space check on pod ${POD}" ${MAILTO}
+  else
+    echo "$(datestamp) INFO: CNS pod is ${PODDF}% full"
+  fi
+done
+
 {% endraw %}
 {% endif %}
 
