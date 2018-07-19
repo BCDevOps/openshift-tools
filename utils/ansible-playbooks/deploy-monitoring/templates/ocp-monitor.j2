@@ -725,7 +725,7 @@ do
     echo "$(datestamp) INFO: CNS pod ${POD} is connected to all pool members"
   fi
 
- # NEW - check disk space for the pod to see if it ran out.
+ # Check disk space for the gluster pod to see if it ran out.
   PODDF=$((oc exec -n cns ${POD} -- /bin/df /) | grep dev | awk '{ print $(NF-1) }' | sed 's/\%//')
   echo "$(datestamp) Checking available disk space on Gluster pod image ${POD}"
   if [ "${PODDF}" -gt "${GLUSTER_POD_THRESHOLD}" ]
