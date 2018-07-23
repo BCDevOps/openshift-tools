@@ -852,13 +852,11 @@ fi
 
 # Check and return applicable PIDs matching docker-containerd-current. If nothing is returned, then it may have been killed off.
 
-DOCKERPID=$(pgrep --full /usr/bin/docker-containerd-current)
-DOCKERPIDRESULT=$?
+DOCKERPID=$(pgrep --full /usr/bin/docker-containerd-current || true)
 get_state dockerpid DOCKER_PROCESS_STATE
 echo "$(datestamp) Checking for active PID on docker-containerd-current"
-if [ ${DOCKERPIDRESULT} -ne 0 ]; then
-
-  if [[ "${DOCKER_PROCESS_STATE}" -ne "0" ]]; then
+if [ -z ${DOCKERPID} ]; then
+  if [[ "${DOCKER_PROCESS_STATE}" -eq "0" ]]; then
 # docker PID check failure while in state 0, bumps us to state 1 and warns as well as emails
     set_state dockerpid 1
     MSG=$(echo "$(datestamp) WARN: Cannot find any PID for docker-containerd-current")
