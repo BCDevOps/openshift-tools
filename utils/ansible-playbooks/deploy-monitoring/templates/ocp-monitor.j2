@@ -29,6 +29,7 @@ IPF_POD_STATE="0"
 CPU_CAPACITY_STATE="0"
 MEM_CAPACITY_STATE="0"
 POD_CAPACITY_STATE="0"
+DOCKER_PROCESS_STATE="0"
 
 # capacity percentage thresholds to check for and warn/alert on.
 CPU_CAPACITY_THRESHOLD=85
@@ -58,7 +59,6 @@ bash_backtrace() {
 
         # Location of error
         echo "  File ${BASH_SOURCE[FRAME+1]}, line ${LINENO}, in ${FUNCNAME[FRAME+1]}"
-
         # Print the error line, with preceding whitespace removed
         echo "$(sed -n "${LINENO}s/^[   ]*/    /p" "${BASH_SOURCE[FRAME+1]}")"
     done
@@ -848,5 +848,52 @@ echo -n "$(datestamp) OpenVSwitch Deamon Status: "
 if ! systemctl is-active openvswitch.service
 then
   echo "$(datestamp) ERROR: OpenVSwitch is not running"
+fi
+
+# Check and return applicable PIDs matching docker-containerd-current. If nothing is returned, then it may have been killed off.
+
+DOCKERPID=$(pgrep --full /usr/bin/docker-containerd-current)
+DOCKERPIDRESULT=$?
+get_state dockerpid DOCKER_PROCESS_STATE
+echo "$(datestamp) Checking for active PID on docker-containerd-current"
+if [ ${DOCKERPIDRESULT} -ne 0 ]; then
+
+  if [[ "${DOCKER_PROCESS_STATE}" -ne "0" ]]; then
+# docker PID check failure while in state 0, bumps us to state 1 and warns as well as emails
+    set_state dockerpid 1
+    MSG=$(echo "$(datestamp) WARN: Cannot find any PID for docker-containerd-current")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "WARN event for DockerPIDCheck on `hostname`" $MAILTO
+  elif [[ "${DOCKER_PROCESS_STATE}" -eq "1" ]]; then
+# docker PID check failure while in state 1, bumps us to state 2 which remains as WARN, no email
+    set_state dockerpid 2
+    MSG=$(echo "$(datestamp) WARN: Cannot find any PID for docker-containerd-current")
+    echo -e "${MSG}"
+  elif [[ "${DOCKER_PROCESS_STATE}" -eq "2" ]]; then
+# docker PID check failure while in state 2, no state change. Still produces WARN, no email.
+    MSG=$(echo "$(datestamp) WARN: Cannot find any PID for docker-containerd-current")
+    echo -e "${MSG}"
+  fi
+else
+# docker PID check passed, adjust state accordingly.
+  if [[ "${DOCKER_PROCESS_STATE}" -eq "0" ]]; then
+# docker PID check success while in state 0, no state change
+    MSG=$(echo "$(datestamp) INFO: PID found for docker-containerd-current")
+    echo -e "${MSG}"
+  elif [[ "${DOCKER_PROCESS_STATE}" -eq "1" ]]; then
+# docker PID check success while in state 1, state change back to 0
+    set_state dockerpid 0
+    MSG=$(echo "$(datestamp) INFO: PID found for docker-containerd-current")
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(echo "Found PID ${DOCKERPID}")"
+    echo -e "${MSG}" | mail -s "RECOVER event for DockerPIDCheck on `hostname`" $MAILTO
+  elif [[ "${DOCKER_PROCESS_STATE}" -eq "2" ]]; then
+# docker PID check success while in state 2, state change back to 0
+    set_state dockerpid 0
+    MSG=$(echo "$(datestamp) INFO: PID found for docker-containerd-current")
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(echo "Found PID ${DOCKERPID}")"
+    echo -e "${MSG}" | mail -s "RECOVER event for DockerPIDCheck on `hostname`" $MAILTO
+  fi
 fi
 
