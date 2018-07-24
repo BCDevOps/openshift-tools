@@ -1,0 +1,6 @@
+---
+- name: Docker Config
+  hosts: all
+  serial: 3
+  roles:
+    - role: docker-config

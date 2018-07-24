@@ -1,0 +1,7 @@
+---
+- name: Drain node
+  include_tasks: drain.yml
+- name: Update docker config
+  include_tasks: dockerconfig.yml
+- name: Uncordon Node
+  include_tasks: uncordon.yml
