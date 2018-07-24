@@ -1,6 +1,18 @@
 ---
-- name: Docker Config
-  hosts: all
+- name: Docker Config Masters
+  hosts: masters
+  serial: 1
+  roles:
+    - role: docker-config
+
+- name: Docker Config Infra
+  hosts: infra
+  serial: 1
+  roles:
+    - role: docker-config
+
+- name: Docker Config App
+  hosts: app
   serial: 3
   roles:
     - role: docker-config
