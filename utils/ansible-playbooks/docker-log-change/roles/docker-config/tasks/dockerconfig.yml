@@ -4,8 +4,8 @@
     dest: /etc/sysconfig/docker
     regexp: '^OPTIONS=.*$'
     line: "OPTIONS=' --selinux-enabled --log-driver=json-file --log-opt max-size=50m --log-opt max-file=5 --signature-verification=False'"
-  notify:
-  - Restart docker
+  # notify:
+  # - Restart docker
 
 - name: Restart docker
   systemd:
@@ -16,4 +16,3 @@
   until: not (r_docker_restart_docker_result is failed)
   retries: 3
   delay: 30
-
