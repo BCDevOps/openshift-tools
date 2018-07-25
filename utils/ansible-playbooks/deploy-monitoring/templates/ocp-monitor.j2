@@ -916,7 +916,7 @@ fi
 
 # Check for core dump files
 echo "$(datestamp) Check for presence of Core files"
-if STATUS=$(cd / && ls -lht $(sysctl kernel.core_pattern | awk '{print $3}')*);
+if STATUS=$(cd / && ls -lht $(/sbin/sysctl kernel.core_pattern | awk '{print $3}')*);
 then
   MSG=$(echo -e "$(datestamp) ERROR: Core files found\n${STATUS}")
   echo -e "${MSG}"
