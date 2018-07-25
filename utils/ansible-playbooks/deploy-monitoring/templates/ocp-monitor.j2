@@ -914,6 +914,15 @@ else
   echo -e "${MSG}"
 fi
 
+# Check for core dump files
+echo "$(datestamp) Check for presence of Core files"
+if STATUS=$(cd / && ls -lht $(sysctl kernel.core_pattern | awk '{print $3}')*);
+then
+  MSG=$(echo -e "$(datestamp) ERROR: Core files found\n${STATUS}")
+  echo -e "${MSG}"
+  echo -e "${MSG}" | mail -s "ERROR event for Core File Check on `hostname`" $MAILTO
+fi
+
 # Check and return applicable PIDs matching docker-containerd-current. If nothing is returned, then it may have been killed off.
 
 DOCKERPID=$(pgrep --full /usr/bin/docker-containerd-current || true)
