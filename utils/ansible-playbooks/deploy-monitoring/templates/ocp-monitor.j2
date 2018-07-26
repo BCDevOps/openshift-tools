@@ -20,7 +20,7 @@ MAILFROM="-r hslinuxteam@dxcas.com"
 CURL="curl --connect-timeout 5 --max-time 10 --silent --show-error"
 
 # Define global variable representing the text to display in the email subject for environment.
-EMAIL_ENV = "{{ email_env }}"
+EMAIL_ENV="{{ email_env }}"
 
 # Global variables responsible for tracking state on each Finite State Automata (FSA).
 # The default value here does not affect anything - actual use of the FSA will set this
