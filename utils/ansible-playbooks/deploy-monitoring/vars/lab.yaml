@@ -7,3 +7,4 @@ canary_route: https://canary.lab.pathfinder.gov.bc.ca/
 metrics_url: https://hawkular-metrics.lab.pathfinder.gov.bc.ca
 cron_hour: "9-15"
 cron_weekday: "MON-FRI"
+email_env: "LAB"
