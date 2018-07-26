@@ -19,6 +19,9 @@ MAILFROM="-r hslinuxteam@dxcas.com"
 # Define defaults for Curl
 CURL="curl --connect-timeout 5 --max-time 10 --silent --show-error"
 
+# Define global variable representing the text to display in the email subject for environment.
+EMAIL_ENV="{{ email_env }}"
+
 # Global variables responsible for tracking state on each Finite State Automata (FSA).
 # The default value here does not affect anything - actual use of the FSA will set this
 # to the actual state value when queried.
@@ -159,7 +162,7 @@ then
   echo -e "${STATUS}"
   MSG=$(echo "$(datestamp) ERROR: curl of API {{ api_url }}/healthz failed")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for API Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for API Status Check on `hostname`" $MAILFROM $MAILTO
 else
   echo -e "${STATUS}"
 fi
@@ -171,7 +174,7 @@ if ! STATUS=$(${CURL} http://router.default.svc:1936/healthz 2>&1 | grep -i OK)
 then
   MSG=$(echo -e "\n$(datestamp) ERROR: curl of router service http://router.default.svc:1936/healthz failed\n${STATUS}")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Router Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Router Status Check on `hostname`" $MAILFROM $MAILTO
 else
   echo -e "${STATUS}"
 fi
@@ -187,13 +190,13 @@ if ! STATUS=$(${CURL} --head --insecure {{ canary_route }} 2>&1 | grep '200 OK')
     set_state canaryhealth 1
     MSG=$(echo -e "$(datestamp) WARN: curl of {{ canary_route }} failed\n${STATUS}")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for CanaryHealthCheck on `hostname`" $MAILFROM $MAILTO
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for CanaryHealthCheck on `hostname`" $MAILFROM $MAILTO
   elif [[ "${CANARY_HEALTH_STATE}" -eq "1" ]]; then
 # canary health check failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state canaryhealth 2
     MSG=$(echo -e "$(datestamp) ERROR: curl of {{ canary_route }} failed\n${STATUS}")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for CanaryHealthCheck on `hostname`" $MAILFROM $MAILTO
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for CanaryHealthCheck on `hostname`" $MAILFROM $MAILTO
   elif [[ "${CANARY_HEALTH_STATE}" -eq "2" ]]; then
 # canary health check failure while in state 2, no state change. Still will alert though.
     MSG=$(echo -e "$(datestamp) ERROR: curl of {{ canary_route }} failed\n${STATUS}")
@@ -222,7 +225,7 @@ if ! STATUS=$(${CURL} --head {{ registry_service }}/healthz 2>&1 | grep '200 OK'
 then
   MSG=$(echo -e"\n$(datestamp) ERROR: curl of docker registry service {{ registry_service }}/healthz failed\n${STATUS}")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Registry Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Registry Status Check on `hostname`" $MAILFROM $MAILTO
 else
   echo -e "${STATUS}"
 fi
@@ -240,13 +243,13 @@ if ! STATUS=$(/usr/local/bin/metrics-health-check {{ metrics_url }} 2>&1 | grep 
     set_state metricshealth 1
     MSG=$(echo -e "$(datestamp) WARN: Metrics health check failed\n${STATUS}")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for MetricsHealthCheck on `hostname`" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for MetricsHealthCheck on `hostname`" $MAILFROM ${MAILTO}
   elif [[ "${METRICS_HEALTH_STATE}" -eq "1" ]]; then
 # metrics health check failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state metricshealth 2
     MSG=$(echo -e "$(datestamp) ERROR: Metrics health check failed\n${STATUS}")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for MetricsHealthCheck on `hostname`" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for MetricsHealthCheck on `hostname`" $MAILFROM ${MAILTO}
   elif [[ "${METRICS_HEALTH_STATE}" -eq "2" ]]; then
 # metrics health check failure while in state 2, no state change. Still will alert though.
     MSG=$(echo "$(datestamp) ERROR: Metrics health check failed")
@@ -277,7 +280,7 @@ if [ "$FREE" -lt 1 ]
 then
   MSG=$(echo "$(datestamp) ERROR: Low Docker Registry Space")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Registry Space on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Registry Space on `hostname`" $MAILFROM $MAILTO
 fi
 
 # Check disk space of Metrics Cassandra
@@ -290,7 +293,7 @@ if [ "$FREE" -lt 1 ]
 then
   MSG=$(echo "$(datestamp) ERROR: Low Metrics Cassandra Space")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Cassandra Space on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Cassandra Space on `hostname`" $MAILFROM $MAILTO
 fi
 
 {% raw %}
@@ -313,7 +316,7 @@ if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
     MSG="${MSG}\n${CURRENT_NODE_STATE}"
     MSG="${MSG}\n$(oc get events -n default)"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for NodeNotReady on `hostname`" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for NodeNotReady on `hostname`" $MAILFROM ${MAILTO}
   elif [[ "${NODE_READY_STATE}" -eq "1" ]]; then
 # node ready failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state nodestatus 2
@@ -321,7 +324,7 @@ if [[ "$(test_if_all_nodes_are_ready)" -eq "0" ]]; then
     MSG="${MSG}\n${CURRENT_NODE_STATE}"
     MSG="${MSG}\n`oc get events -n default`"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for NodeNotReady on `hostname`" $MAILFROM  ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for NodeNotReady on `hostname`" $MAILFROM  ${MAILTO}
   elif [[ "${NODE_READY_STATE}" -eq "2" ]]; then
 # node ready failure while in state 2, no state change. Still will alert though.
     MSG=$(echo "$(datestamp) ERROR: Some nodes are not Ready")
@@ -368,7 +371,7 @@ if [[ ("${POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
 # for convenience include actual pod status for registry pods to save time investigating
     MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=docker-registry)"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for RegistryPodCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for RegistryPodCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${REGISTRY_POD_STATE}" -eq "1" ]]; then
 # health check failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state registrypodcount 2
@@ -382,7 +385,7 @@ if [[ ("${POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
 # for convenience include actual pod status for registry pods to save time investigating
     MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=docker-registry)"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for RegistryPodCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for RegistryPodCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${REGISTRY_POD_STATE}" -eq "2" ]]; then
 # health check failure while in state 2, no state change. Still will alert though.
     if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
@@ -433,7 +436,7 @@ if [[ ("${POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
 # for convenience include actual pod status for Router pods to save time investigating
     MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=router)"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for RouterPodCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for RouterPodCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${ROUTER_POD_STATE}" -eq "1" ]]; then
 # health check failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state routerpodcount 2
@@ -447,7 +450,7 @@ if [[ ("${POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
 # for convenience include actual pod status for Router pods to save time investigating
     MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=router)"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for RouterPodCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for RouterPodCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${ROUTER_POD_STATE}" -eq "2" ]]; then
 # health check failure while in state 2, no state change. Still will alert though.
     if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
@@ -502,7 +505,7 @@ if [[ ("${POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
 # for convenience include actual pod status for IPF pods to save time investigating
     MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=${ROUTER_DC})"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for IPFPodCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for IPFPodCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${IPF_POD_STATE}" -eq "1" ]]; then
 # health check failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state ipfpodcount 2
@@ -516,7 +519,7 @@ if [[ ("${POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
 # for convenience include actual pod status for IPF pods to save time investigating
     MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=${ROUTER_DC})"
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for IPFPodCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for IPFPodCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${IPF_POD_STATE}" -eq "2" ]]; then
 # health check failure while in state 2, no state change. Still will alert though.
     if [[ ("${POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
@@ -592,13 +595,13 @@ if [ "${CPU_PERCENT}" -gt ${CPU_CAPACITY_THRESHOLD} ]; then
     set_state clustercpucapacity 1
     MSG=$(echo "$(datestamp) WARN: Cluster low on CPU capacity - over the threshold of ${CPU_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for CPUCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for CPUCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${CPU_CAPACITY_STATE}" -eq "1" ]]; then
 # CPU capacity failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state clustercpucapacity 2
     MSG=$(echo "$(datestamp) ERROR: Cluster low on CPU capacity - over the threshold of ${CPU_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for CPUCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for CPUCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${CPU_CAPACITY_STATE}" -eq "2" ]]; then
     MSG=$(echo "$(datestamp) ERROR: Cluster low on CPU capacity - over the threshold of ${CPU_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
@@ -633,13 +636,13 @@ if [ "${MEM_PERCENT}" -gt ${MEM_CAPACITY_THRESHOLD} ]; then
     set_state clusterramcapacity 1
     MSG=$(echo "$(datestamp) WARN: Cluster low on Memory capacity - over the threshold of ${MEM_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for MemoryCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for MemoryCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${MEM_CAPACITY_STATE}" -eq "1" ]]; then
 # Memory capacity failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state clusterramcapacity 2
     MSG=$(echo "$(datestamp) ERROR: Cluster low on Memory capacity - over the threshold of ${MEM_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for MemoryCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for MemoryCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${MEM_CAPACITY_STATE}" -eq "2" ]]; then
     MSG=$(echo "$(datestamp) ERROR: Cluster low on Memory capacity - over the threshold of ${MEM_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
@@ -674,13 +677,13 @@ if [ "${POD_PERCENT}" -gt ${POD_CAPACITY_THRESHOLD} ]; then
     set_state clusterpodcapacity 1
     MSG=$(echo "$(datestamp) WARN: Cluster low on Pod capacity - over the threshold of ${POD_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for PodCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for PodCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${POD_CAPACITY_STATE}" -eq "1" ]]; then
 # Pod capacity failure while in state 1, bumps us to state 2 and alerts oncall with error
     set_state clusterpodcapacity 2
     MSG=$(echo "$(datestamp) ERROR: Cluster low on Pod capacity - over the threshold of ${POD_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "ERROR event for PodCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for PodCapacityCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${POD_CAPACITY_STATE}" -eq "2" ]]; then
     MSG=$(echo "$(datestamp) ERROR: Cluster low on Pod capacity - over the threshold of ${POD_CAPACITY_THRESHOLD}%")
     echo -e "${MSG}"
@@ -718,7 +721,7 @@ do
         MSG=$(echo "$(datestamp) WARN: ${SERVICE} on CNS pod ${POD} is unhealthy")
         MSG="${MSG}\n${STATUS}\n$(oc exec -n cns ${POD} -- /bin/bash -c 'systemctl status '${SERVICE}'.service' 2>&1 || true)"
         echo -e "${MSG}"
-        echo -e "${MSG}" | mail -s "WARN event for CNS service check on pod ${POD}" $MAILFROM ${MAILTO}
+        echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for CNS service check on pod ${POD}" $MAILFROM ${MAILTO}
     else
         echo "$(datestamp) INFO: ${SERVICE} on CNS pod ${POD} is healthy"
     fi
@@ -733,7 +736,7 @@ do
     MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} not connected to peers")
     echo -e "${MSG}"
     MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster peer status)"
-    echo -e "${MSG}" | mail -s "WARN event for CNS peer check on pod ${POD}" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for CNS peer check on pod ${POD}" $MAILFROM ${MAILTO}
   else
     echo "$(datestamp) INFO: CNS pod ${POD} can see all peers"
   fi
@@ -747,7 +750,7 @@ do
     MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} not connected to pool members")
     echo -e "${MSG}"
     MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster pool list)"
-    echo -e "${MSG}" | mail -s "WARN event for CNS pool check on pod ${POD}" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for CNS pool check on pod ${POD}" $MAILFROM ${MAILTO}
   else
     echo "$(datestamp) INFO: CNS pod ${POD} is connected to all pool members"
   fi
@@ -760,7 +763,7 @@ do
     MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} is low on disk space. ${PODDF}% full")
     echo -e "${MSG}"
     MSG="${MSG}\n$(oc exec -n cns ${POD} -- /bin/df /)"
-    echo -e "${MSG}" | mail -s "WARN event for CNS disk space check on pod ${POD}" $MAILFROM ${MAILTO}
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for CNS disk space check on pod ${POD}" $MAILFROM ${MAILTO}
   else
     echo "$(datestamp) INFO: CNS pod is ${PODDF}% full"
   fi
@@ -778,7 +781,7 @@ then
   echo -e "${STATUS}"
   MSG=$(echo "$(datestamp) ERROR: ETCD is not running")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for ETCD Deamon Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for ETCD Deamon Status Check on `hostname`" $MAILFROM $MAILTO
 else
   echo -e "${MSG}"
 fi
@@ -790,7 +793,7 @@ then
   echo -e "${STATUS}"
   MSG=$(echo "$(datestamp) ERROR: OpenShift API Deamon is not running")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for OpenShift API Deamon Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for OpenShift API Deamon Status Check on `hostname`" $MAILFROM $MAILTO
 else
   echo -e "${MSG}"
 fi
@@ -802,7 +805,7 @@ then
   echo -e "${STATUS}"
   MSG=$(echo "$(datestamp) ERROR: OpenShift Controller is not running")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for OpenShift Controller Deamon Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for OpenShift Controller Deamon Status Check on `hostname`" $MAILFROM $MAILTO
 else
   echo -e "${MSG}"
 fi
@@ -847,7 +850,7 @@ then
   echo -e "${STATUS}"
   MSG=$(echo "$(datestamp) ERROR: Docker is not running")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Docker Deamon Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Docker Deamon Status Check on `hostname`" $MAILFROM $MAILTO
   # Other checks depend on Docker running, exit out
   exit 1
 else
@@ -864,7 +867,7 @@ then
   MSG=$(echo "$(datestamp) ERROR: Low Docker Data Space")
   MSG="{MSG}\n$(docker info | grep 'Data Space')"
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Docker Data Space Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Docker Data Space Check on `hostname`" $MAILFROM $MAILTO
 fi
 
 # Check Docker Metadata Usage
@@ -877,7 +880,7 @@ then
   MSG=$(echo "$(datestamp) ERROR: Low Docker Metadata Space")
   MSG="{MSG}\n$(docker info | grep 'Metadata Space')"
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Docker Metadata Space Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Docker Metadata Space Check on `hostname`" $MAILFROM $MAILTO
 fi
 
 # Check for local volume count
@@ -888,7 +891,7 @@ if [ "$VOLS" -gt "1000" ]
 then
   MSG=$( echo "$(datestamp) ERROR: Too many volumes")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for PodVolume Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for PodVolume Check on `hostname`" $MAILFROM $MAILTO
 fi
 
 # Check Node service
@@ -898,7 +901,7 @@ then
   echo -e "${STATUS}"
   MSG=$(echo "$(datestamp) ERROR: OpenShift Node is not running")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Node Deamon Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Node Deamon Status Check on `hostname`" $MAILFROM $MAILTO
 else
   echo -e "${MSG}"
 fi
@@ -910,7 +913,7 @@ then
   echo -e "${STATUS}"
   MSG=$(echo "$(datestamp) ERROR: OpenVSwitch is not running")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for OpenVSwitch Deamon Status Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for OpenVSwitch Deamon Status Check on `hostname`" $MAILFROM $MAILTO
 else
   echo -e "${MSG}"
 fi
@@ -921,7 +924,7 @@ if STATUS=$(cd / && ls -lht $(/sbin/sysctl kernel.core_pattern | awk '{print $3}
 then
   MSG=$(echo -e "$(datestamp) ERROR: Core files found\n${STATUS}")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "ERROR event for Core File Check on `hostname`" $MAILFROM $MAILTO
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Core File Check on `hostname`" $MAILFROM $MAILTO
 fi
 
 # Check and return applicable PIDs matching docker-containerd-current. If nothing is returned, then it may have been killed off.
@@ -935,7 +938,7 @@ if [ -z ${DOCKERPID} ]; then
     set_state dockerpid 1
     MSG=$(echo "$(datestamp) WARN: Cannot find any PID for docker-containerd-current")
     echo -e "${MSG}"
-    echo -e "${MSG}" | mail -s "WARN event for DockerPIDCheck on `hostname`" $MAILFROM $MAILTO
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for DockerPIDCheck on `hostname`" $MAILFROM $MAILTO
   elif [[ "${DOCKER_PROCESS_STATE}" -eq "1" ]]; then
 # docker PID check failure while in state 1, bumps us to state 2 which remains as WARN, no email
     set_state dockerpid 2
@@ -958,14 +961,14 @@ else
     MSG=$(echo "$(datestamp) INFO: PID found for docker-containerd-current")
     echo -e "${MSG}"
     MSG="${MSG}\n$(echo "Found PID ${DOCKERPID}")"
-    echo -e "${MSG}" | mail -s "RECOVER event for DockerPIDCheck on `hostname`" $MAILFROM $MAILTO
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} RECOVER event for DockerPIDCheck on `hostname`" $MAILFROM $MAILTO
   elif [[ "${DOCKER_PROCESS_STATE}" -eq "2" ]]; then
 # docker PID check success while in state 2, state change back to 0
     set_state dockerpid 0
     MSG=$(echo "$(datestamp) INFO: PID found for docker-containerd-current")
     echo -e "${MSG}"
     MSG="${MSG}\n$(echo "Found PID ${DOCKERPID}")"
-    echo -e "${MSG}" | mail -s "RECOVER event for DockerPIDCheck on `hostname`" $MAILFROM $MAILTO
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} RECOVER event for DockerPIDCheck on `hostname`" $MAILFROM $MAILTO
   fi
 fi
 
