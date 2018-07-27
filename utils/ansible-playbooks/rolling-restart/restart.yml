@@ -1,6 +1,6 @@
 ---
 - name: OCP Restart
   hosts: all
-  serial: 2
+  serial: 1
   roles:
     - role: ocp-restart

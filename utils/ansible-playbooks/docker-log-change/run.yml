@@ -13,6 +13,6 @@
 
 - name: Docker Config App
   hosts: app
-  serial: 3
+  serial: 1
   roles:
     - role: docker-config
