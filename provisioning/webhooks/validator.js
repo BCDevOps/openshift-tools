@@ -2,8 +2,13 @@ var express = require('express');
 var app = express();
 
 app.get('/', function (req, res) {
-    console.log("Got a request");
-    res.send('Hello World');
+    console.log("Got a request to /");
+    res.send('OK');
+})
+
+app.get('/tag', function (req, res) {
+    console.log("Got a request to /tag");
+    res.send('OK');
 })
 
 var server = app.listen(8080, function () {

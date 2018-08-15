@@ -1,0 +1,22 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+  kind: MutatingWebhookConfiguration
+  metadata:
+    name: osba-namespace-tagging-webhook
+  webhooks:
+  - name: osba-namespace-tagging-webhook
+    clientConfig:
+      service:
+        namespace:
+        name:
+       path: /addTags
+      caBundle: <cert>
+    rules:
+    - operations:
+      - <operation>
+      apiGroups:
+      - ""
+      apiVersions:
+      - "*"
+      resources:
+      - <resource>
+    failurePolicy: <policy>
