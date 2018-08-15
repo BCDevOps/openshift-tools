@@ -1,22 +1,21 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
-  kind: MutatingWebhookConfiguration
-  metadata:
-    name: osba-namespace-tagging-webhook
-  webhooks:
-  - name: osba-namespace-tagging-webhook
-    clientConfig:
-      service:
-        namespace:
-        name:
-       path: /addTags
-      caBundle: <cert>
+kind: MutatingWebhookConfiguration
+metadata:
+  name: osba-namespace-tagging-webhook
+webhooks:
+- name: osba-namespace-tagging-webhook.lab.pathfinder.gov.bc.ca
+  clientConfig:
+    service:
+      namespace: provisioning-tools
+      name: admission-control
+      path: "/tag"
     rules:
     - operations:
-      - <operation>
+      - CREATE
       apiGroups:
       - ""
       apiVersions:
       - "*"
       resources:
-      - <resource>
-    failurePolicy: <policy>
+      - ServiceInstance
+    failurePolicy: Fail
