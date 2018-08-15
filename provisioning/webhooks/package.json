@@ -4,6 +4,7 @@
   "description": "webhooks to work with provisioning tools sush as OSBA",
   "main": "validator.js",
   "scripts": {
+    "start": "node validator.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
