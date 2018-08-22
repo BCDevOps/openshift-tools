@@ -89,7 +89,7 @@ def main(argv):
   print("Start date=" + start_date + ", End date=" + end_date)
   print("Connecting to the Billing API...")
   # ENROLLMENT_NUM and API_KEY are environment variables
-  billing_obj = AzureEABillingCollector(int(os.environ['ENROLLMENT_NUM']), os.environ['ENROLLMENT_NUM'], 30)
+  billing_obj = AzureEABillingCollector(int(os.environ['ENROLLMENT_NUM']), os.environ['API_KEY'], 30)
   print("Getting the usage details..")
   rsp = billing_obj.get_usage_details()
   csv_content = rsp.content.decode('utf-8')
