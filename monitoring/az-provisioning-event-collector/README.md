@@ -16,7 +16,7 @@ export EVENTHUB_KEY_NAME=...
 Build the Dockerfile and run the image
 
 ```bash
-aztoinflux -s <SUBSCRIPTION ID> -a <LEASE STORAGE ACCOUNT NAME> -g <RESOURCE GROUP> -u <TELEGRAF URL> -t <TEMPLATE>
+azcollect -s <SUBSCRIPTION ID> -a <LEASE STORAGE ACCOUNT NAME> -g <RESOURCE GROUP> -u <TELEGRAF URL> -t <TEMPLATE>
 ```
 
 
