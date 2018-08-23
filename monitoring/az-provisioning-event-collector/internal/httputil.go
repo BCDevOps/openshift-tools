@@ -18,11 +18,11 @@ func ExecuteRetriablePost(body string, url string) error {
 		func(retry int) error {
 			var err error
 			b := bytes.NewBufferString(body)
-			r := bytes.NewReader(b.Bytes())
 			var res *http.Response
 			var req *http.Request
 
-			req, err = http.NewRequest("POST", url, r)
+			req, err = http.NewRequest("POST", url, b)
+			req.ContentLength = int64(b.Len())
 
 			if err != nil {
 				return err
