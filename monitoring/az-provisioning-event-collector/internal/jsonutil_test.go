@@ -79,3 +79,44 @@ func TestInvalidChildKey(t *testing.T) {
 	assert.NoError(t, err, "No error")
 	assert.Nil(t, kv, "Must be nil")
 }
+
+func TestEventHubDoc(t *testing.T){
+	const event = `
+	[{
+		"topic": "/subscriptions/sub123/resourceGroups/blobporter/providers/Microsoft.Storage/storageAccounts/foobar",
+		"subject": "/blobServices/default/containers/test/blobs/1KB_10000957462500.dat",
+		"eventType": "Microsoft.Storage.BlobCreated",
+		"eventTime": "2018-08-22T03:17:25.5904001Z",
+		"id": "29de4281-601e-010a-5dc6-399a53060603",
+		"data": {
+		  "api": "PutBlob",
+		  "clientRequestId": "3a9a37d8-37f0-4d33-473c-d5384eaa9cd6",
+		  "requestId": "29de4281-601e-010a-5dc6-399a53000000",
+		  "eTag": "0x8D607DDC8B3E701",
+		  "contentType": "application/octet-stream",
+		  "contentLength": 1024,
+		  "blobType": "BlockBlob",
+		  "url": "https://foobar.blob.core.windows.net/test/1KB_10000957462500.dat",
+		  "sequencer": "00000000000000000000000000000322000000000078690d",
+		  "storageDiagnostics": {
+			"batchId": "00e45fff-fae3-46aa-bd83-3399054158b1"
+		  }
+		},
+		"dataVersion": "",
+		"metadataVersion": "1"
+	  }]
+	`
+
+	kv, err := ResultKeyValueFromJSONPath("subject", event)
+
+	assert.NoError(t, err, "No error")
+	if assert.NotNil(t, kv, "The KV must be a valid reference") {
+		assert.Equal(t, "subject", kv.Key, "key must be present")
+		assert.Equal(t, "/blobServices/default/containers/test/blobs/1KB_10000957462500.dat", kv.Value)
+	}
+
+	data, err := KeyAndValueFromJSONKey("eventType", "=", event)
+	assert.NoError(t, err, "No error")
+	assert.Equal(t, "eventType=Microsoft.Storage.BlobCreated", data, "value must match")
+		
+}

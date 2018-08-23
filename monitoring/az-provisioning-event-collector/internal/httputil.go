@@ -14,16 +14,14 @@ const retrySleepDuration = time.Millisecond * 250 // Retry wait interval in retr
 
 //ExecuteRetriablePost TODO
 func ExecuteRetriablePost(body string, url string) error {
-	b := bytes.NewBufferString(body)
-	r := bytes.NewReader(b.Bytes())
-	var res *http.Response
-	var req *http.Request
-
 	return retriableOperation(
 		func(retry int) error {
 			var err error
+			b := bytes.NewBufferString(body)
+			r := bytes.NewReader(b.Bytes())
+			var res *http.Response
+			var req *http.Request
 
-			r.Seek(0, 0)
 			req, err = http.NewRequest("POST", url, r)
 
 			if err != nil {
@@ -33,7 +31,7 @@ func ExecuteRetriablePost(body string, url string) error {
 			res, err = httpClient.Do(req)
 
 			//TODO: Specify valid codes for the retry to occurr
-			if res != nil && res.Status != "200" {
+			if res != nil && res.StatusCode != 200 {
 				return fmt.Errorf("Invalid response %s. Retrying", res.Status)
 			}
 			if err != nil {
