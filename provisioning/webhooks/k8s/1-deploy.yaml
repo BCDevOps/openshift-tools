@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hook
+spec:
+  selector:
+    matchLabels:
+      app: mutating-hook
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: mutating-hook
+    spec:
+      containers:
+      - name: mutating-hook
+        image: evanlouie/mutating-webhook:latest
+        ports:
+        - containerPort: 8080
+
