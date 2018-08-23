@@ -13,12 +13,26 @@ export EVENTHUB_KEY_VALUE=...
 export EVENTHUB_KEY_NAME=...
 ```
 
-Build the Dockerfile and run the image
+Build the image
 
 ```bash
-azcollect -s <SUBSCRIPTION ID> -a <LEASE STORAGE ACCOUNT NAME> -g <RESOURCE GROUP> -u <TELEGRAF URL> -t <TEMPLATE>
+docker build . -t azcollect
 ```
 
+Run it in a container...
+
+```bash
+
+docker run -it --rm \
+    -e AZURE_CLIENT_ID=$AZURE_CLIENT_ID \
+    -e AZURE_TENANT_ID=$AZURE_TENANT_ID \
+    -e AZURE_CLIENT_SECRET=$AZURE_CLIENT_SECRET \
+    -e EVENTHUB_NAMESPACE=$EVENTHUB_NAMESPACE \
+    -e EVENTHUB_NAME=$env:EVENTHUB_NAME \
+    -e EVENTHUB_KEY_VALUE=$env:EVENTHUB_KEY_VALUE \
+    -e EVENTHUB_KEY_NAME=$env:EVENTHUB_KEY_NAME \
+    azcollect azcollect -s <SUBSCRIPTION ID> -a <LEASE STORAGE ACCT> -g <RESOURCE GROUP> -u <TELEGRAPH URL> -t <TEMPLATE>
+```
 
 *Note:* ```<RESOURCE GROUP>``` must be the name of the resource group containing the lease storage account.
 

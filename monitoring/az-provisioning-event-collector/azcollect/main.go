@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/giventocode/openshift-tools/monitoring/az-provisioning-event-collector/workers"
+	"github.com/BCDevOps/openshift-tools/monitoring/az-provisioning-event-collector/workers"
 )
 
 var options workers.EventHubMultiPartitionReaderOptions

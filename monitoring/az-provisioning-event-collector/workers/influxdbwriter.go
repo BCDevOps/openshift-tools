@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/giventocode/openshift-tools/monitoring/az-provisioning-event-collector/internal"
+	"github.com/BCDevOps/openshift-tools/monitoring/az-provisioning-event-collector/internal"
 )
 
 //InfluxDBEventWriter TODO
