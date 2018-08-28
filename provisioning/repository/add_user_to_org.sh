@@ -15,9 +15,12 @@ function promptForValue {
     fi
 }
 
-promptForValue ORG_NAME  "Organization name: " ${ORG_NAME}
-promptForValue GITHUB_USER_NAME  "GitHub username: " ${GITHUB_USER_NAME}
-promptForValue GITHUB_TOKEN "GitHub token: " ${GITHUB_TOKEN}
+promptForValue ORG_NAME  "Organization name: [$ORG_NAME] " ${ORG_NAME}
+promptForValue GITHUB_USER_NAME  "GitHub username: [$GITHUB_USER_NAME]" ${GITHUB_USER_NAME}
+
+if [[ -z $GITHUB_TOKEN ]]; then
+    promptForValue GITHUB_TOKEN "GitHub token:" ${GITHUB_TOKEN}
+fi
 
 GITHUB_API="https://api.github.com/orgs/${ORG_NAME}/memberships/${GITHUB_USER_NAME}"
 
