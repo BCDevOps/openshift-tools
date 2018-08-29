@@ -20,8 +20,6 @@ echo -n "Enter the description of the product: "
 read PRODUCT_DESCRIPTION
 echo -n "Enter the category of the product: "
 read CATEGORY
-echo -n "Enter the path to the environment creation template (or enter to skip): "
-read CREATE_SCRIPT
 echo -n "Enter the username name for the user who will be the admin for the new project (or enter to skip):"
 read PROJECT_ADMIN_USER
 
@@ -50,15 +48,6 @@ do
 
     PROJECTS+=(${OS_PROJECT_NAME})
 
-    if [[ -z "${CREATE_SCRIPT// }" ]]; then
-        echo "Skipping project resource creation."
-    else
-        if [ -e $CREATE_SCRIPT ]; then
-            echo "Creating project resources from file $CREATE_SCRIPT..."
-            oc create -f $CREATE_SCRIPT -n $OS_PROJECT_NAME
-        fi
-    fi
-
     if [[ -z "${PROJECT_ADMIN_USER// }" ]]; then
         echo "Skipping project resource creation."
     else
@@ -67,7 +56,7 @@ do
 
     echo "Labelling project..."
 
-    /bin/bash project_label.sh $OS_PROJECT_NAME category=$CATEGORY team=$TEAM product=$PRODUCT environment=$ENVIRONMENT
+    /bin/bash project_label.sh $OS_PROJECT_NAME category=$CATEGORY team=$TEAM product=$PRODUCT environment=$ENVIRONMENT project_type=user
 
    # if tools project set cpu limit to 12
    if [ $ENVIRONMENT == "tools" ] 
