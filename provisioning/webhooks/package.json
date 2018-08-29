@@ -1,15 +1,23 @@
 {
   "name": "webhooks",
   "version": "1.0.0",
-  "description": "webhooks to work with provisioning tools sush as OSBA",
+  "description": "Webhook to work with provisioning tools such as OSBA",
   "main": "validator.js",
   "scripts": {
-    "start": "node validator.js",
+    "start": "ts-node validator.ts",
+    "format": "prettier --write \"**/*.{ts,js,md,json}\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.16.3"
+    "fast-json-patch": "^2.0.6",
+    "fastify": "^1.10.0",
+    "immutable": "^4.0.0-rc.9"
+  },
+  "devDependencies": {
+    "prettier": "^1.14.2",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.0.1"
   }
 }

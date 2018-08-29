@@ -1,44 +1,44 @@
 {
-    "kind": "Template",
-    "apiVersion": "v1",
-    "metadata": {
-        "name": "true",
-        "creationTimestamp": null
-    },
-    "objects": [
-        {
-            "kind": "Service",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "admission-control",
-                "creationTimestamp": null,
-                "labels": {
-                    "app": "admission-control"
-                },
-                "annotations": {
-                    "openshift.io/generated-by": "OpenShiftNewApp",
-                    "service.alpha.openshift.io/serving-cert-secret-name": "admission-control-cert"
-                }
-            },
-            "spec": {
-                "ports": [
-                    {
-                        "name": "8080-tcp",
-                        "protocol": "TCP",
-                        "port": 8080,
-                        "targetPort": 8080
-                    }
-                ],
-                "selector": {
-                    "app": "admission-control",
-                    "deploymentconfig": "admission-control"
-                },
-                "type": "ClusterIP",
-                "sessionAffinity": "None"
-            },
-            "status": {
-                "loadBalancer": {}
-            }
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "true",
+    "creationTimestamp": null
+  },
+  "objects": [
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "admission-control",
+        "creationTimestamp": null,
+        "labels": {
+          "app": "admission-control"
+        },
+        "annotations": {
+          "openshift.io/generated-by": "OpenShiftNewApp",
+          "service.alpha.openshift.io/serving-cert-secret-name": "admission-control-cert"
         }
-    ]
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "8080-tcp",
+            "protocol": "TCP",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "app": "admission-control",
+          "deploymentconfig": "admission-control"
+        },
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    }
+  ]
 }

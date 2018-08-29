@@ -6,8 +6,8 @@ webhooks:
 - name: osba-namespace-tagging-webhook.lab.pathfinder.gov.bc.ca
   clientConfig:
     service:
-      namespace: provisioning-tools
-      name: admission-control
+      namespace: default
+      name: mutating-hook
       path: "/tag"
     rules:
     - operations:
@@ -18,4 +18,3 @@ webhooks:
       - "*"
       resources:
       - ServiceInstance
-    failurePolicy: Fail
