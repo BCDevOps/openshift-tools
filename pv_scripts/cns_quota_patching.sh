@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Patch CNS block/file quotas for all projects
+# Patch CNS block/file quotas for all "user" projects that do not have a "custom_quota=true" label)
 #
-for P in $(oc get projects -o name|sed 's#projects/##');
+for P in $(oc get projects -o name -l 'project_type=user,custom_quota!=true' |sed 's#projects/##');
 do 
   echo $P; 
   Q=$(oc -n $P get quota -o name);
