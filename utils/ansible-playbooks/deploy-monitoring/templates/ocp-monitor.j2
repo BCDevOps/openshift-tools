@@ -977,3 +977,18 @@ else
   fi
 fi
 
+# Check disk space for /var/lib/origin, alert if over 60% full
+
+echo -e "$(datestamp) Testing /var/lib/origin disk usage: "
+SPACE=$(df /var/lib/origin | awk '/origin/ {print $5}' | tr -d "%")
+FREE=$(echo 100 '-' $SPACE '>' 40 | bc -l)
+if [ "$FREE" -lt 1 ]
+then
+  MSG=$(echo "$(datestamp) ERROR: Low Disk Space in /var/lib/origin - $(echo 100 '-' $SPACE | bc -l)% free")
+  echo -e "${MSG}"
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Registry Space on `hostname`" $MAILFROM $MAILTO
+else
+  MSG=$(echo "$(datestamp) INFO: Sufficient Disk Space in /var/lib/origin - $(echo 100 '-' $SPACE | bc -l)% free")
+  echo -e "${MSG}"
+fi
+
