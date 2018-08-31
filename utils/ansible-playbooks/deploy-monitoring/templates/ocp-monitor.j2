@@ -293,12 +293,22 @@ echo -n "$(datestamp) Metrics disk usage: "
 POD=$(oc -n openshift-infra get pods -l type=hawkular-cassandra -o name | sed 's#pods/##' | head -n 1)
 SPACE=$(oc -n openshift-infra exec $POD -- sh -c 'echo "$(df /cassandra_data | awk '\''/cassandra_data/ {print $5}'\'' | tr -d "%")"')
 echo "$(echo 100 '-' $SPACE | bc -l)% free"
-FREE=$(echo 100 '-' $SPACE '>' 15 | bc -l)
-if [ "$FREE" -lt 1 ]
+WARNFREE=$(echo 100 '-' $SPACE '>' 25 | bc -l)
+ERRORFREE=$(echo 100 '-' $SPACE '>' 15 | bc -l)
+
+if [ "$ERRORFREE" -lt 1 ]
 then
-  MSG=$(echo "$(datestamp) ERROR: Low Metrics Cassandra Space")
+  MSG=$(echo "$(datestamp) ERROR: Low Metrics Cassandra Space - $(echo 100 '-' $SPACE | bc -l)% free")
   echo -e "${MSG}"
   echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Cassandra Space on `hostname`" $MAILFROM $MAILTO
+elif [ "$WARNFREE" -lt 1 ]
+then
+  MSG=$(echo "$(datestamp) WARN: Low Metrics Cassandra Space - $(echo 100 '-' $SPACE | bc -l)% free")
+  echo -e "${MSG}"
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for Cassandra Space on `hostname`" $MAILFROM $MAILTO
+else
+  MSG=$(echo "$(datestamp) INFO: Metrics Cassandra Space - $(echo 100 '-' $SPACE | bc -l)% free")
+  echo -e "${MSG}"
 fi
 
 {% raw %}
