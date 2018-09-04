@@ -171,6 +171,20 @@ fi
 ##### CHECKS FOR ONLY PRIMARY MASTER NODE #####
 
 {% if ansible_fqdn == primary_master %}
+
+# Test that the API is responding to Get Nodes
+echo -n "$(datestamp) OpenShift API Get Nodes: "
+STATUS=$(${CURL} --request GET --head --header "Accept: application/json" --header "Authorization: Bearer $(</etc/ocp-monitor/esit-monitor-sa-token)" {{ api_url }}/api/v1/nodes?limit=1 2>&1 | tr -d "\r")
+if ! echo "${STATUS}" | grep "200 OK"
+then
+  echo -e "${STATUS}"
+  MSG=$(echo "$(datestamp) ERROR: curl of API {{ api_url }}/api/v1/nodes?limit=1 failed")
+  echo -e "${MSG}"
+  echo -e "${MSG}\n${STATUS}" | mail -s "${EMAIL_ENV} ERROR event for API Get Nodes Check on `hostname`" $MAILFROM $MAILTO
+else
+  echo -e "${STATUS}"
+fi
+
 # Test that the Router service is responding
 echo -n "$(datestamp) OpenShift Router Status: "
 STATUS=$(${CURL} http://router.default.svc:1936/healthz 2>&1)
