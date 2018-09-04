@@ -12,6 +12,7 @@
   hosts: all
   vars_files:
     - "vars/{{ cluster }}.yaml"
+    - "vault/{{ cluster }}.yaml"
   tasks:
     - name: Check for required variables
       fail:
@@ -25,6 +26,7 @@
       - registry_service
       - canary_route
       - metrics_url
+      - sa_token
 
     - name: Logrotate
       copy:
@@ -41,6 +43,20 @@
       copy:
         src: files/metrics-health-check
         dest: /usr/local/bin/metrics-health-check
+        mode: 0700
+      when: ansible_fqdn == primary_master
+
+    - name: OCP Monitor Config Dir
+      file:
+        path: /etc/ocp-monitor
+        mode: 0700
+        state: directory
+      when: ansible_fqdn == primary_master
+
+    - name: OCP Monitor - SA token
+      copy:
+        dest: /etc/ocp-monitor/esit-monitor-sa-token
+        content: "{{ sa_token }}"
         mode: 0700
       when: ansible_fqdn == primary_master
 
