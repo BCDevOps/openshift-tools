@@ -168,6 +168,8 @@ else
   echo -e "${STATUS}"
 fi
 
+##### CHECKS FOR ONLY PRIMARY MASTER NODE #####
+
 {% if ansible_fqdn == primary_master %}
 # Test that the Router service is responding
 echo -n "$(datestamp) OpenShift Router Status: "
@@ -277,7 +279,7 @@ else
 fi
 # Check disk space of Registry
 echo -n "$(datestamp) Registry disk usage: "
-POD=$(oc -n default get pods -l deploymentconfig=docker-registry -o name | sed 's#pods/##' | head -n 1)
+POD=$(oc -n default get pods -l deploymentconfig=docker-registry -o name | sed 's#pod/##' | head -n 1)
 SPACE=$(oc -n default exec $POD -- sh -c 'echo "$(df /registry | awk '\''/registry/ {print $5}'\'' | tr -d "%")"')
 echo "$(echo 100 '-' $SPACE | bc -l)% free"
 FREE=$(echo 100 '-' $SPACE '>' 15 | bc -l)
@@ -290,7 +292,7 @@ fi
 
 # Check disk space of Metrics Cassandra
 echo -n "$(datestamp) Metrics disk usage: "
-POD=$(oc -n openshift-infra get pods -l type=hawkular-cassandra -o name | sed 's#pods/##' | head -n 1)
+POD=$(oc -n openshift-infra get pods -l type=hawkular-cassandra -o name | sed 's#pod/##' | head -n 1)
 SPACE=$(oc -n openshift-infra exec $POD -- sh -c 'echo "$(df /cassandra_data | awk '\''/cassandra_data/ {print $5}'\'' | tr -d "%")"')
 echo "$(echo 100 '-' $SPACE | bc -l)% free"
 WARNFREE=$(echo 100 '-' $SPACE '>' 25 | bc -l)
@@ -568,7 +570,7 @@ fi
 echo "$(datestamp) Check Cluster Capacity of region=app"
 # Get all the nodes in region=app
 # Format into a string with each node enclosed in quotes
-NODE_LIST=$(oc get nodes -l region=app -o name | sed 's#nodes/##')
+NODE_LIST=$(oc get nodes -l region=app -o name | sed 's#node/##')
 NODES=
 for N in ${NODE_LIST}; do NODES="${NODES} \"${N}\""; done
 # Get Node capacity
@@ -724,7 +726,7 @@ fi
 
 # core CNS health checks - individual volume health check is out of scope here.
 
-for POD in $(oc -n cns get pods -l glusterfs=pod -o name | sed 's#pods/##')
+for POD in $(oc -n cns get pods -l glusterfs=pod -o name | sed 's#pod/##')
 do
 
   # Check health of additional services in Gluster pods
@@ -784,48 +786,183 @@ do
   fi
 done
 
+# Verify master-api pods are running on all master nodes
+echo "$(datestamp) master-api Pod Status: "
+NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i master-api)
+RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
+UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
+echo "${NODES}"
+if [[ ("${RUNNING_POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
+    if [[ ("${RUNNING_POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-api pod count ${RUNNING_POD_COUNT} is less than 3 and master-api pod running on too few master nodes")
+    elif [[ "${RUNNING_POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-api pod count ${RUNNING_POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-api pod running on too few master nodes")
+    fi
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(echo "${NODES}")"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for master-api Pod Check" $MAILFROM ${MAILTO}
+else
+  if [[ "${RUNNING_POD_COUNT}" -eq 3 ]]; then
+    MSG=$(echo "$(datestamp) INFO: master-api Pod count ${RUNNING_POD_COUNT} is correct - all pods running")
+    echo -e "${MSG}"
+  fi
+  if [[ "${UNIQ_NODES}" -eq 3 ]]; then
+    MSG=$(echo "$(datestamp) INFO: master-api node count ${UNIQ_NODES} is correct - one API pod per master node is running")
+    echo -e "${MSG}"
+  fi
+fi
+
+# Verify master-etcd pods are running on all master nodes
+echo "$(datestamp) master-etcd Pod Status: "
+NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i master-etcd)
+RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
+UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
+echo "${NODES}"
+if [[ ("${RUNNING_POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
+    if [[ ("${RUNNING_POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-etcd pod count ${RUNNING_POD_COUNT} is less than 3 and master-etcd pod running on too few master nodes")
+    elif [[ "${RUNNING_POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-etcd pod count ${RUNNING_POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-etcd pod running on too few master nodes")
+    fi
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(echo "${NODES}")"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for master-etcd Pod Check" $MAILFROM ${MAILTO}
+else
+  if [[ "${RUNNING_POD_COUNT}" -eq 3 ]]; then
+    MSG=$(echo "$(datestamp) INFO: master-etcd Pod count ${RUNNING_POD_COUNT} is correct - all pods running")
+    echo -e "${MSG}"
+  fi
+  if [[ "${UNIQ_NODES}" -eq 3 ]]; then
+    MSG=$(echo "$(datestamp) INFO: master-etcd node count ${UNIQ_NODES} is correct - one etcd pod per master node is running")
+    echo -e "${MSG}"
+  fi
+fi
+
+# Verify master-controllers pods are running on all master nodes
+echo "$(datestamp) master-controllers Pod Status: "
+NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i master-controllers)
+RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
+UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
+echo "${NODES}"
+if [[ ("${RUNNING_POD_COUNT}" -lt 3) || ("${UNIQ_NODES}" -lt 3) ]]; then
+    if [[ ("${RUNNING_POD_COUNT}" -lt 3) && ("${UNIQ_NODES}" -lt 3) ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-controllers pod count ${RUNNING_POD_COUNT} is less than 3 and master-controllers pod running on too few master nodes")
+    elif [[ "${RUNNING_POD_COUNT}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-controllers pod count ${RUNNING_POD_COUNT} is less than 3")
+    elif [[ "${UNIQ_NODES}" -lt 3 ]]; then
+      MSG=$(echo "$(datestamp) ERROR: master-controllers pod running on too few master nodes")
+    fi
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(echo "${NODES}")"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for master-controllers Pod Check" $MAILFROM ${MAILTO}
+else
+  if [[ "${RUNNING_POD_COUNT}" -eq 3 ]]; then
+    MSG=$(echo "$(datestamp) INFO: master-controllers Pod count ${RUNNING_POD_COUNT} is correct - all pods running")
+    echo -e "${MSG}"
+  fi
+  if [[ "${UNIQ_NODES}" -eq 3 ]]; then
+    MSG=$(echo "$(datestamp) INFO: master-controllers node count ${UNIQ_NODES} is correct - one master-controllers pod per master node is running")
+    echo -e "${MSG}"
+  fi
+fi
+
+# Verify Openvswitch ovs pods are running on all nodes
+echo "$(datestamp) Openvswitch ovs Pod Status: "
+NODES=$(oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i ovs\-)
+RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
+UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
+TOTAL_NODES=$(oc get nodes --no-headers -o name | sed 's#node/##' | wc -l)
+echo "${NODES}"
+
+if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") || ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
+    if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") && ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
+      MSG=$(echo "$(datestamp) ERROR:  ovs pod count ${RUNNING_POD_COUNT} is less than ${TOTAL_NODES} and ovs pod running on too few nodes")
+    elif [[ "${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}" ]]; then
+      MSG=$(echo "$(datestamp) ERROR: ovs pod count ${RUNNING_POD_COUNT} is less than ${TOTAL_NODES}")
+    elif [[ "${UNIQ_NODES}" -lt "${TOTAL_NODES}" ]]; then
+      MSG=$(echo "$(datestamp) ERROR: ovs pod running on too few nodes")
+    fi
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(echo "${NODES}")"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Openvswitch ovs Pod Check" $MAILFROM ${MAILTO}
+else
+  if [[ "${RUNNING_POD_COUNT}" -eq "${UNIQ_NODES}" ]]; then
+    MSG=$(echo "$(datestamp) INFO: ovs Pod count ${RUNNING_POD_COUNT} is correct - all Openvswitch pods running")
+    echo -e "${MSG}"
+  fi
+  if [[ "${UNIQ_NODES}" -eq "${TOTAL_NODES}" ]]; then
+    MSG=$(echo "$(datestamp) INFO: ovs node count ${UNIQ_NODES} is correct - one Openvswitch pod per node is running")
+    echo -e "${MSG}"
+  fi
+fi
+
+# Verify SDN pods are running on all nodes
+echo "$(datestamp) SDN Pod Status: "
+NODES=$(oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i sdn\-)
+RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
+UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
+TOTAL_NODES=$(oc get nodes --no-headers -o name | sed 's#node/##' | wc -l)
+echo "${NODES}"
+
+if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") || ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
+    if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") && ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
+      MSG=$(echo "$(datestamp) ERROR: sdn pod count ${RUNNING_POD_COUNT} is less than ${TOTAL_NODES} and sdn pod running on too few nodes")
+    elif [[ "${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}" ]]; then
+      MSG=$(echo "$(datestamp) ERROR: sdn pod count ${RUNNING_POD_COUNT} is less than ${TOTAL_NODES}")
+    elif [[ "${UNIQ_NODES}" -lt "${TOTAL_NODES}" ]]; then
+      MSG=$(echo "$(datestamp) ERROR: sdn pod running on too few nodes")
+    fi
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(echo "${NODES}")"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for SDN Pod Check" $MAILFROM ${MAILTO}
+else
+  if [[ "${RUNNING_POD_COUNT}" -eq "${UNIQ_NODES}" ]]; then
+    MSG=$(echo "$(datestamp) INFO: sdn Pod count ${RUNNING_POD_COUNT} is correct - all SDN pods running")
+    echo -e "${MSG}"
+  fi
+  if [[ "${UNIQ_NODES}" -eq "${TOTAL_NODES}" ]]; then
+    MSG=$(echo "$(datestamp) INFO: sdn node count ${UNIQ_NODES} is correct - one SDN pod per node is running")
+    echo -e "${MSG}"
+  fi
+fi
+
+# Verify node sync pods are running on all nodes
+echo "$(datestamp) Node sync Pod Status: "
+NODES=$(oc get pods -n openshift-node --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i sync\-)
+RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
+UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
+TOTAL_NODES=$(oc get nodes --no-headers -o name | sed 's#node/##' | wc -l)
+echo "${NODES}"
+
+if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") || ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
+    if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") && ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
+      MSG=$(echo "$(datestamp) ERROR: sync pod count ${RUNNING_POD_COUNT} is less than ${TOTAL_NODES} and sync pod running on too few nodes")
+    elif [[ "${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}" ]]; then
+      MSG=$(echo "$(datestamp) ERROR: sync pod count ${RUNNING_POD_COUNT} is less than ${TOTAL_NODES}")
+    elif [[ "${UNIQ_NODES}" -lt "${TOTAL_NODES}" ]]; then
+      MSG=$(echo "$(datestamp) ERROR: sync pod running on too few nodes")
+    fi
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(echo "${NODES}")"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Node Sync Pod Check" $MAILFROM ${MAILTO}
+else
+  if [[ "${RUNNING_POD_COUNT}" -eq "${UNIQ_NODES}" ]]; then
+    MSG=$(echo "$(datestamp) INFO: sync Pod count ${RUNNING_POD_COUNT} is correct - all Node sync pods running")
+    echo -e "${MSG}"
+  fi
+  if [[ "${UNIQ_NODES}" -eq "${TOTAL_NODES}" ]]; then
+    MSG=$(echo "$(datestamp) INFO: sync node count ${UNIQ_NODES} is correct - one Node sync pod per node is running")
+    echo -e "${MSG}"
+  fi
+fi
+
 {% endraw %}
 {% endif %}
 
-{% if ansible_fqdn in groups['master'] %}
-{% raw %}
-# Verify ETCD is running
-echo -n "$(datestamp) ETCD Deamon Status: "
-if ! STATUS=$(systemctl is-active etcd.service 2>&1)
-then
-  echo -e "${STATUS}"
-  MSG=$(echo "$(datestamp) ERROR: ETCD is not running")
-  echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for ETCD Deamon Status Check on `hostname`" $MAILFROM $MAILTO
-else
-  echo -e "${MSG}"
-fi
-
-# Verify API service is running
-echo -n "$(datestamp) OpenShift API Deamon Status: "
-if ! STATUS=$(systemctl is-active atomic-openshift-master-api.service 2>&1)
-then
-  echo -e "${STATUS}"
-  MSG=$(echo "$(datestamp) ERROR: OpenShift API Deamon is not running")
-  echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for OpenShift API Deamon Status Check on `hostname`" $MAILFROM $MAILTO
-else
-  echo -e "${MSG}"
-fi
-
-# Verify Controller service is running
-echo -n "$(datestamp) OpenShift Controller Deamon Status: "
-if ! STATUS=$(systemctl is-active atomic-openshift-master-controllers.service 2>&1)
-then
-  echo -e "${STATUS}"
-  MSG=$(echo "$(datestamp) ERROR: OpenShift Controller is not running")
-  echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for OpenShift Controller Deamon Status Check on `hostname`" $MAILFROM $MAILTO
-else
-  echo -e "${MSG}"
-fi
-{% endraw %}
-{% endif %}
 
 # 2018June25 disabled this entire check by request from Steven until it can
 # be investigated and fixed.
@@ -856,9 +993,9 @@ fi
 #{% endraw %}
 #{% endif %}
 
-# Checks for all nodes
+##### CHECKS FOR ALL OPENSHIFT NODES #####
 
-# Check Docekr is running
+# Check Docker is running
 echo -n "$(datestamp) Docker Deamon Status: "
 if ! STATUS=$(systemctl is-active docker.service 2>&1)
 then
@@ -869,6 +1006,8 @@ then
   # Other checks depend on Docker running, exit out
   exit 1
 else
+  echo -e "${STATUS}"
+  MSG=$(echo "$(datestamp) INFO: Docker service is running")
   echo -e "${MSG}"
 fi
 
@@ -921,17 +1060,6 @@ else
   echo -e "${MSG}"
 fi
 
-# Check OpenVSwitch service
-echo -n "$(datestamp) OpenVSwitch Deamon Status: "
-if ! STATUS=$(systemctl is-active openvswitch.service 2>&1)
-then
-  echo -e "${STATUS}"
-  MSG=$(echo "$(datestamp) ERROR: OpenVSwitch is not running")
-  echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for OpenVSwitch Deamon Status Check on `hostname`" $MAILFROM $MAILTO
-else
-  echo -e "${MSG}"
-fi
 
 # Check for core dump files
 echo "$(datestamp) Check for presence of Core files"
