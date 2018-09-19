@@ -279,7 +279,7 @@ else
 fi
 # Check disk space of Registry
 echo -n "$(datestamp) Registry disk usage: "
-POD=$(oc -n default get pods -l deploymentconfig=docker-registry -o name | sed 's#pod/##' | head -n 1)
+POD=$(oc -n default get pods -l deploymentconfig=docker-registry -o=custom-columns=NAME:.metadata.name | head -n 1)
 SPACE=$(oc -n default exec $POD -- sh -c 'echo "$(df /registry | awk '\''/registry/ {print $5}'\'' | tr -d "%")"')
 echo "$(echo 100 '-' $SPACE | bc -l)% free"
 FREE=$(echo 100 '-' $SPACE '>' 15 | bc -l)
@@ -292,7 +292,7 @@ fi
 
 # Check disk space of Metrics Cassandra
 echo -n "$(datestamp) Metrics disk usage: "
-POD=$(oc -n openshift-infra get pods -l type=hawkular-cassandra -o name | sed 's#pod/##' | head -n 1)
+POD=$(oc -n openshift-infra get pods -l type=hawkular-cassandra -o=custom-columns=NAME:.metadata.name | head -n 1)
 SPACE=$(oc -n openshift-infra exec $POD -- sh -c 'echo "$(df /cassandra_data | awk '\''/cassandra_data/ {print $5}'\'' | tr -d "%")"')
 echo "$(echo 100 '-' $SPACE | bc -l)% free"
 WARNFREE=$(echo 100 '-' $SPACE '>' 25 | bc -l)
@@ -570,7 +570,7 @@ fi
 echo "$(datestamp) Check Cluster Capacity of region=app"
 # Get all the nodes in region=app
 # Format into a string with each node enclosed in quotes
-NODE_LIST=$(oc get nodes -l region=app -o name | sed 's#node/##')
+NODE_LIST=$(oc get nodes -l region=app -o=custom-columns=NAME:.metadata.name)
 NODES=
 for N in ${NODE_LIST}; do NODES="${NODES} \"${N}\""; done
 # Get Node capacity
@@ -726,7 +726,7 @@ fi
 
 # core CNS health checks - individual volume health check is out of scope here.
 
-for POD in $(oc -n cns get pods -l glusterfs=pod -o name | sed 's#pod/##')
+for POD in $(oc -n cns get pods -l glusterfs=pod -o=custom-columns=NAME:.metadata.name)
 do
 
   # Check health of additional services in Gluster pods
@@ -788,7 +788,7 @@ done
 
 # Verify master-api pods are running on all master nodes
 echo "$(datestamp) master-api Pod Status: "
-NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i master-api)
+NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase --selector openshift.io/component=api)
 RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
 UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
 echo "${NODES}"
@@ -816,7 +816,7 @@ fi
 
 # Verify master-etcd pods are running on all master nodes
 echo "$(datestamp) master-etcd Pod Status: "
-NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i master-etcd)
+NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase --selector openshift.io/component=etcd)
 RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
 UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
 echo "${NODES}"
@@ -844,7 +844,7 @@ fi
 
 # Verify master-controllers pods are running on all master nodes
 echo "$(datestamp) master-controllers Pod Status: "
-NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i master-controllers)
+NODES=$(oc get pods -n kube-system --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase --selector openshift.io/component=controllers)
 RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
 UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
 echo "${NODES}"
@@ -872,10 +872,10 @@ fi
 
 # Verify Openvswitch ovs pods are running on all nodes
 echo "$(datestamp) Openvswitch ovs Pod Status: "
-NODES=$(oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i ovs\-)
+NODES=$(oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase --selector app=ovs)
 RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
 UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
-TOTAL_NODES=$(oc get nodes --no-headers -o name | sed 's#node/##' | wc -l)
+TOTAL_NODES=$(oc get nodes --no-headers -o=custom-columns=NAME:.metadata.name | wc -l)
 echo "${NODES}"
 
 if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") || ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
@@ -902,10 +902,10 @@ fi
 
 # Verify SDN pods are running on all nodes
 echo "$(datestamp) SDN Pod Status: "
-NODES=$(oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i sdn\-)
+NODES=$(oc get pods -n openshift-sdn --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase --selector app=sdn)
 RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
 UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
-TOTAL_NODES=$(oc get nodes --no-headers -o name | sed 's#node/##' | wc -l)
+TOTAL_NODES=$(oc get nodes --no-headers -o=custom-columns=NAME:.metadata.name | wc -l)
 echo "${NODES}"
 
 if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") || ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
@@ -932,10 +932,10 @@ fi
 
 # Verify node sync pods are running on all nodes
 echo "$(datestamp) Node sync Pod Status: "
-NODES=$(oc get pods -n openshift-node --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase | grep -i sync\-)
+NODES=$(oc get pods -n openshift-node --no-headers -o=custom-columns=POD:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase --selector app=sync)
 RUNNING_POD_COUNT=$(echo "${NODES}" | grep -i running | wc -l)
 UNIQ_NODES=$(echo "${NODES}" | awk '{ print $2 }' | sort | uniq | wc -l)
-TOTAL_NODES=$(oc get nodes --no-headers -o name | sed 's#node/##' | wc -l)
+TOTAL_NODES=$(oc get nodes --no-headers -o=custom-columns=NAME:.metadata.name | wc -l)
 echo "${NODES}"
 
 if [[ ("${RUNNING_POD_COUNT}" -lt "${TOTAL_NODES}") || ("${UNIQ_NODES}" -lt "${TOTAL_NODES}") ]]; then
