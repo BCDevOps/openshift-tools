@@ -279,7 +279,7 @@ else
 fi
 # Check disk space of Registry
 echo -n "$(datestamp) Registry disk usage: "
-POD=$(oc -n default get pods -l deploymentconfig=docker-registry --no-headers -o=--no-headers custom-columns=NAME:.metadata.name | head -n 1)
+POD=$(oc -n default get pods -l deploymentconfig=docker-registry --no-headers -o=custom-columns=NAME:.metadata.name | head -n 1)
 SPACE=$(oc -n default exec $POD -- sh -c 'echo "$(df /registry | awk '\''/registry/ {print $5}'\'' | tr -d "%")"')
 echo "$(echo 100 '-' $SPACE | bc -l)% free"
 FREE=$(echo 100 '-' $SPACE '>' 15 | bc -l)
