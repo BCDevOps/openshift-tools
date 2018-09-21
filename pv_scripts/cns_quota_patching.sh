@@ -2,7 +2,7 @@
 #
 # Patch CNS block/file quotas for all "user" projects that do not have a "custom_quota=true" label)
 #
-for P in $(oc get projects -o name -l 'project_type=user,custom_quota!=true' |sed 's#projects/##');
+for P in $(oc get projects -l 'project_type=user,custom_quota!=true' -o=custom-columns=NAME:.metadata.name --no-headers);
 do 
   echo $P; 
   Q=$(oc -n $P get quota -o name);
