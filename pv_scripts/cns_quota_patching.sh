@@ -13,12 +13,12 @@ do
   "spec": {
     "hard": {
       "persistentvolumeclaims": 20,
-      "requests.storage": "600Gi",
-      "gluster-file.storageclass.storage.k8s.io/persistentvolumeclaims": 10,
+      "requests.storage": "200Gi",
+      "gluster-file.storageclass.storage.k8s.io/persistentvolumeclaims": 20,
       "gluster-file.storageclass.storage.k8s.io/requests.storage": "200Gi",
-      "gluster-file-db.storageclass.storage.k8s.io/persistentvolumeclaims": 5,
+      "gluster-file-db.storageclass.storage.k8s.io/persistentvolumeclaims": 20,
       "gluster-file-db.storageclass.storage.k8s.io/requests.storage": "200Gi",
-      "gluster-block.storageclass.storage.k8s.io/persistentvolumeclaims": 5,
+      "gluster-block.storageclass.storage.k8s.io/persistentvolumeclaims": 20,
       "gluster-block.storageclass.storage.k8s.io/requests.storage": "200Gi"
     }
   }
