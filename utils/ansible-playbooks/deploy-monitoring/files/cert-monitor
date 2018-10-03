@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# Exit on error. Append "|| true" if you expect an error.
+set -o errexit
+# Exit on error inside any functions or subshells.
+set -o errtrace
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
+set -o nounset
+# Catch the error in case mysqldump fails (but gzip succeeds) in `mysqldump |gzip`
+set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
+
+# Global variables re-used through the script.
+MAILTO="William.Hutchison@dxcas.com Steven.Barre@dxcas.com" # Dan.Deane@dxcas.com bcdevex@arctiq.ca Shea.Phillips@gov.bc.ca"
+MAILFROM="-r hslinuxteam@dxcas.com"
+
+# Run the playbook
+if ! PLAYBOOK_RUN=$(/usr/bin/ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/openshift-checks/certificate_expiry/default.yaml 2>&1)
+then
+  echo -e "${PLAYBOOK_RUN}" | mail -s "OCP ERROR - Cert Monitor Playbook Failed!" $MAILFROM $MAILTO
+  exit 1
+fi
+
+# Check for warning certs
+WARNING=$(/usr/local/bin/jq '.summary.warning' /tmp/cert-expiry-report.json 2>&1)
+if [[ "${WARNING}" -ne "0" ]]
+then
+  echo -e "${WARNING}" | mail -s "OCP WARNING - Certificates Expiring Soon" $MAILFROM $MAILTO
+fi
+
+# Check for expired certs
+EXPIRED=$(/usr/local/bin/jq '.summary.expired' /tmp/cert-expiry-report.json 2>&1)
+if [[ "${EXPIRED}" -ne "0" ]]
+then
+  echo -e "${EXPIRED}" | mail -s "OCP ERROR - Expired Certificates!" $MAILFROM $MAILTO
+fi
