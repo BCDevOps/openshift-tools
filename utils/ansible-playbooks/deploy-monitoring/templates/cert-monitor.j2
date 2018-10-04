@@ -12,13 +12,16 @@ set -o pipefail
 # set -o xtrace
 
 # Global variables re-used through the script.
-MAILTO="William.Hutchison@dxcas.com Steven.Barre@dxcas.com" # Dan.Deane@dxcas.com bcdevex@arctiq.ca Shea.Phillips@gov.bc.ca"
+MAILTO="William.Hutchison@dxcas.com Steven.Barre@dxcas.com Dan.Deane@dxcas.com bcdevex@arctiq.ca Shea.Phillips@gov.bc.ca Clecio.Varjao@gov.bc.ca"
 MAILFROM="-r hslinuxteam@dxcas.com"
+
+# Define global variable representing the text to display in the email subject for environment.
+EMAIL_ENV="{{ email_env }}"
 
 # Run the playbook
 if ! PLAYBOOK_RUN=$(/usr/bin/ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/openshift-checks/certificate_expiry/default.yaml 2>&1)
 then
-  echo -e "${PLAYBOOK_RUN}" | mail -s "OCP ERROR - Cert Monitor Playbook Failed!" $MAILFROM $MAILTO
+  echo -e "${PLAYBOOK_RUN}" | mail -s "${EMAIL_ENV} ERROR - Cert Monitor Playbook Failed!" $MAILFROM $MAILTO
   exit 1
 fi
 
@@ -26,12 +29,12 @@ fi
 WARNING=$(/usr/local/bin/jq '.summary.warning' /tmp/cert-expiry-report.json 2>&1)
 if [[ "${WARNING}" -ne "0" ]]
 then
-  echo -e "${WARNING}" | mail -s "OCP WARNING - Certificates Expiring Soon" $MAILFROM $MAILTO
+  echo -e "${WARNING}" | mail -s "${EMAIL_ENV} WARNING - Certificates Expiring Soon" $MAILFROM $MAILTO
 fi
 
 # Check for expired certs
 EXPIRED=$(/usr/local/bin/jq '.summary.expired' /tmp/cert-expiry-report.json 2>&1)
 if [[ "${EXPIRED}" -ne "0" ]]
 then
-  echo -e "${EXPIRED}" | mail -s "OCP ERROR - Expired Certificates!" $MAILFROM $MAILTO
+  echo -e "${EXPIRED}" | mail -s "${EMAIL_ENV} ERROR - Expired Certificates!" $MAILFROM $MAILTO
 fi
