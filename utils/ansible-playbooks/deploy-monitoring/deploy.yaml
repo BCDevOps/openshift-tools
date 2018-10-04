@@ -61,8 +61,8 @@
       when: ansible_fqdn == primary_master
 
     - name: Cert Monitor script
-      copy:
-        src: files/cert-monitor
+      template:
+        src: templates/cert-monitor.j2
         dest: /usr/local/bin/cert-monitor
         mode: 0700
       when: ansible_fqdn == primary_master
