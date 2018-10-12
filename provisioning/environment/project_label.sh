@@ -7,5 +7,5 @@ PROJECT_NAME=$1
 echo "Project name is $1"
 
 for i in "${@:2}"; do
-    oc label namespace/$PROJECT_NAME $i
+    oc label namespace/$PROJECT_NAME $i --as=system:serviceaccount:openshift:bcdevops-admin
 done
