@@ -14,7 +14,7 @@ for PROJECT in ${PROJECTS[@]};
         ROLE=$(oc get rolebindings -n ${PROJECT} --no-headers -o wide | grep $USER | awk '{print $2}')
         ROLE=${ROLE:1}
         echo "Removing ${USER} from ${PROJECT} in role ${ROLE}"...
-#        read -n1 -r -p "Press any key to continue..." key
+        read -n1 -r -p "Press any key to continue..." key
         oc policy remove-role-from-user ${ROLE} ${USER} -n ${PROJECT}
     done
 

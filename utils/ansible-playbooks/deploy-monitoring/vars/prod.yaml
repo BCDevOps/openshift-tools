@@ -6,3 +6,4 @@ registry_service: http://docker-registry.default.svc:5000
 canary_route: https://bcdevexchange.org/
 metrics_url: https://hawkular-metrics.pathfinder.gov.bc.ca
 email_env: "OPENSHIFT CLUSTER MONITORING - PROD"
+sa_token: "{{ vault_sa_token }}"

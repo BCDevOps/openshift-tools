@@ -20,10 +20,10 @@ echo -n "Enter the description of the product: "
 read PRODUCT_DESCRIPTION
 echo -n "Enter the category of the product: "
 read CATEGORY
-echo -n "Enter the path to the environment creation template (or enter to skip): "
-read CREATE_SCRIPT
-echo -n "Enter the username name for the user who will be the admin for the new project (or enter to skip):"
+echo -n "Enter the username for the team member who will be the admin for the new project (or enter to skip):"
 read PROJECT_ADMIN_USER
+echo -n "Enter the expiry date for the project set (ddmmyyyy format), if applicable (or enter to skip):"
+read PROJECT_EXPIRY_DATE
 
 if [[ "${#ENVIRONMENTS[@]}" -le "0" ]]; then
     echo -n "Enter the name of the environment: "
@@ -31,11 +31,14 @@ if [[ "${#ENVIRONMENTS[@]}" -le "0" ]]; then
     ENVIRONMENTS+=(${ENVIRONMENT_NAME})
 fi
 
+GENERATED_PROJECT_NAME_PREFIX=$(LC_CTYPE=C tr -cd '[:alnum:]'  < /dev/urandom | fold -w6 | head -n1 | tr '[:upper:]' '[:lower:]')
+
+
 for ENVIRONMENT in ${ENVIRONMENTS[@]}
 do
   echo "Creating environment '${ENVIRONMENT}'"
       #generate default project name, ensuring lowercase
-    DEFAULT_OS_PROJECT_NAME=$(echo $TEAM-$PRODUCT-$ENVIRONMENT  | tr '[:upper:]' '[:lower:]')
+    DEFAULT_OS_PROJECT_NAME=$GENERATED_PROJECT_NAME_PREFIX-$ENVIRONMENT
 
     echo -n "Enter the name for the project (or enter to use a '$DEFAULT_OS_PROJECT_NAME'):"
     read OS_PROJECT_NAME
@@ -46,34 +49,30 @@ do
 
     echo "Creating new Project called $OS_PROJECT_NAME..."
 
-    oc new-project $OS_PROJECT_NAME --display-name="$PRODUCT_DISPLAY ($ENVIRONMENT)" --description="$PRODUCT_DESCRIPTION ($ENVIRONMENT)"
+    oc new-project $OS_PROJECT_NAME --display-name="$PRODUCT_DISPLAY ($ENVIRONMENT)" --description="$PRODUCT_DESCRIPTION ($ENVIRONMENT)" --as=system:serviceaccount:openshift:bcdevops-admin
 
     PROJECTS+=(${OS_PROJECT_NAME})
 
-    if [[ -z "${CREATE_SCRIPT// }" ]]; then
-        echo "Skipping project resource creation."
-    else
-        if [ -e $CREATE_SCRIPT ]; then
-            echo "Creating project resources from file $CREATE_SCRIPT..."
-            oc create -f $CREATE_SCRIPT -n $OS_PROJECT_NAME
-        fi
-    fi
-
     if [[ -z "${PROJECT_ADMIN_USER// }" ]]; then
-        echo "Skipping project resource creation."
+        echo "Skipping admin user assignment."
     else
-        oc policy add-role-to-user admin $PROJECT_ADMIN_USER -n $OS_PROJECT_NAME
+        oc policy add-role-to-user admin $PROJECT_ADMIN_USER -n $OS_PROJECT_NAME --as=system:serviceaccount:openshift:bcdevops-admin
     fi
 
-    echo "Labelling project..."
+    echo "Labelling project with basic metadata..."
+    /bin/bash project_label.sh $OS_PROJECT_NAME category=$CATEGORY team=$TEAM product=$PRODUCT environment=$ENVIRONMENT project_type=user
 
-    /bin/bash project_label.sh $OS_PROJECT_NAME category=$CATEGORY team=$TEAM product=$PRODUCT environment=$ENVIRONMENT
+    if [[ -n "${PROJECT_EXPIRY_DATE// }" ]]; then
+        echo "Applying expiry date project..."
+        /bin/bash project_label.sh $OS_PROJECT_NAME expiry=$PROJECT_EXPIRY_DATE
+    fi
+
 
    # if tools project set cpu limit to 12
    if [ $ENVIRONMENT == "tools" ] 
    then
      echo "Setting $OS_PROJECT_NAME ($ENVIRONMENT) cpu limit to 12"
-     oc -n $OS_PROJECT_NAME patch resourcequotas/compute-resources -p '{"spec":{"hard":{"limits.cpu": 12}}}'
+     oc -n $OS_PROJECT_NAME patch resourcequotas/compute-resources -p '{"spec":{"hard":{"limits.cpu": 12}}}' --as=system:serviceaccount:openshift:bcdevops-admin
    fi
 
 done

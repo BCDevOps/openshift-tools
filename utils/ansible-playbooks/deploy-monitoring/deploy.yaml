@@ -12,6 +12,7 @@
   hosts: all
   vars_files:
     - "vars/{{ cluster }}.yaml"
+    - "vault/{{ cluster }}.yaml"
   tasks:
     - name: Check for required variables
       fail:
@@ -25,6 +26,7 @@
       - registry_service
       - canary_route
       - metrics_url
+      - sa_token
 
     - name: Logrotate
       copy:
@@ -44,6 +46,27 @@
         mode: 0700
       when: ansible_fqdn == primary_master
 
+    - name: OCP Monitor Config Dir
+      file:
+        path: /etc/ocp-monitor
+        mode: 0700
+        state: directory
+      when: ansible_fqdn == primary_master
+
+    - name: OCP Monitor - SA token
+      copy:
+        dest: /etc/ocp-monitor/esit-monitor-sa-token
+        content: "{{ sa_token }}"
+        mode: 0700
+      when: ansible_fqdn == primary_master
+
+    - name: Cert Monitor script
+      template:
+        src: templates/cert-monitor.j2
+        dest: /usr/local/bin/cert-monitor
+        mode: 0700
+      when: ansible_fqdn == primary_master
+
     - name: OCP Monitor Ccron
       cron:
         name: OCP Monitor
@@ -54,3 +77,13 @@
         weekday: '{{ cron_weekday | default(omit) }}'
         job: /usr/local/bin/ocp-monitor >> /var/log/ocp-monitor.log 2>&1
 
+    - name: Cert Monitor Ccron
+      cron:
+        name: Cert Monitor
+        cron_file: /etc/cron.d/ocp-cert-monitor
+        user: root
+        minute: "0"
+        hour: "9"
+        weekday: '{{ cron_weekday | default(omit) }}'
+        job: /usr/local/bin/cert-monitor >/dev/null 2>&1
+      when: ansible_fqdn == primary_master

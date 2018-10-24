@@ -1,0 +1,20 @@
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: osba-namespace-tagging-webhook
+webhooks:
+- name: osba-namespace-tagging-webhook.lab.pathfinder.gov.bc.ca
+  clientConfig:
+    service:
+      namespace: default
+      name: mutating-hook
+      path: "/tag"
+    rules:
+    - operations:
+      - CREATE
+      apiGroups:
+      - ""
+      apiVersions:
+      - "*"
+      resources:
+      - ServiceInstance
