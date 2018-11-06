@@ -21,7 +21,7 @@ EMAIL_ENV="{{ email_env }}"
 # Run the playbook
 if ! PLAYBOOK_RUN=$(/usr/bin/ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/openshift-checks/certificate_expiry/default.yaml 2>&1)
 then
-  echo -e "${PLAYBOOK_RUN}" | mail -s "${EMAIL_ENV} ERROR - Cert Monitor Playbook Failed!" $MAILFROM $MAILTO
+  echo -e "${PLAYBOOK_RUN}" | mail -a /tmp/cert-expiry-report.html -s "${EMAIL_ENV} ERROR - Cert Monitor Playbook Failed!" $MAILFROM $MAILTO
   exit 1
 fi
 
@@ -29,7 +29,7 @@ fi
 WARNING=$(/usr/local/bin/jq '.summary.warning' /tmp/cert-expiry-report.json 2>&1)
 if [[ "${WARNING}" -ne "0" ]]
 then
-  echo -e "${WARNING}" | mail -s "${EMAIL_ENV} WARNING - Certificates Expiring Soon" $MAILFROM $MAILTO
+  echo -e "${WARNING}" | mail -a /tmp/cert-expiry-report.html -s "${EMAIL_ENV} WARNING - Certificates Expiring Soon" $MAILFROM $MAILTO
 fi
 
 # Check for expired certs
