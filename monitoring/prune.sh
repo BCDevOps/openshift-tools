@@ -12,7 +12,7 @@ set -o pipefail
 # set -o xtrace
 
 # Send alerts to this address
-MAILTO="-r from@dxcas.com to@dxcas.com"
+MAILTO="-r hslinuxteam@dxcas.com hslinux@dxcas.com bcdevexchange@gov.bc.ca"
 
 export KUBECONFIG=/root/pruner/pruner.kubeconfig
 
@@ -25,52 +25,54 @@ DATE=$(date "+%Y%m%d_%H%M%S")
 LOG_DIR="/var/log/oc-prune"
 
 # Dry run of builds cleanup
-/bin/oadm prune builds --orphans $KEEP $LOGLEVEL > "${LOG_DIR}/${DATE}.builds.dryrun.log" 2> "${LOG_DIR}/${DATE}.builds.dryrun.err"
-if [ $? -ne 0 ]
+echo "Dry run of builds cleanup"
+if ! /bin/oc adm prune builds --orphans $KEEP $LOGLEVEL > "${LOG_DIR}/${DATE}.builds.dryrun.log" 2> "${LOG_DIR}/${DATE}.builds.dryrun.err"
 then
-        cat "${LOG_DIR}/${DATE}.builds.dryrun.err" "${LOG_DIR}/${DATE}.builds.dryrun.log" | mail -s "OpenShift Prune Failed" $MAILTO
+        tail -n 50 "${LOG_DIR}/${DATE}.builds.dryrun.err" "${LOG_DIR}/${DATE}.builds.dryrun.log" | mail -s "OpenShift Prune Failed" $MAILTO
         exit 1
 fi
 
 # Clean up builds
-/bin/oadm prune builds --orphans $KEEP $LOGLEVEL --confirm > "${LOG_DIR}/${DATE}.builds.run.log" 2> "${LOG_DIR}/${DATE}.builds.run.err"
-if [ $? -ne 0 ]
+echo "Clean up builds"
+if ! /bin/oc adm prune builds --orphans $KEEP $LOGLEVEL --confirm > "${LOG_DIR}/${DATE}.builds.run.log" 2> "${LOG_DIR}/${DATE}.builds.run.err"
 then
-        cat "${LOG_DIR}/${DATE}.builds.run.err" "${LOG_DIR}/${DATE}.builds.run.log"  | mail -s "OpenShift Prune Failed" $MAILTO
+        tail -n 50 "${LOG_DIR}/${DATE}.builds.run.err" "${LOG_DIR}/${DATE}.builds.run.log"  | mail -s "OpenShift Prune Failed" $MAILTO
         exit 1
 fi
 
 # Dry run of deployments cleanup
-/bin/oadm prune deployments --orphans $KEEP $LOGLEVEL > "${LOG_DIR}/${DATE}.deployments.dryrun.log" 2> "${LOG_DIR}/${DATE}.deployments.dryrun.err"
-if [ $? -ne 0 ]
+echo "Dry run of deployments cleanup"
+if ! /bin/oc adm prune deployments --orphans $KEEP $LOGLEVEL > "${LOG_DIR}/${DATE}.deployments.dryrun.log" 2> "${LOG_DIR}/${DATE}.deployments.dryrun.err"
 then
-        cat "${LOG_DIR}/${DATE}.deployments.dryrun.err" "${LOG_DIR}/${DATE}.deployments.dryrun.log" | mail -s "OpenShift Prune Failed" $MAILTO
+        tail -n 50 "${LOG_DIR}/${DATE}.deployments.dryrun.err" "${LOG_DIR}/${DATE}.deployments.dryrun.log" | mail -s "OpenShift Prune Failed" $MAILTO
         exit 1
 fi
 
 # Clean up deployments
-/bin/oadm prune deployments --orphans $KEEP $LOGLEVEL --confirm > "${LOG_DIR}/${DATE}.deployments.run.log" 2> "${LOG_DIR}/${DATE}.deployments.run.err"
-if [ $? -ne 0 ]
+echo "Clean up deployments"
+if ! /bin/oc adm prune deployments --orphans $KEEP $LOGLEVEL --confirm > "${LOG_DIR}/${DATE}.deployments.run.log" 2> "${LOG_DIR}/${DATE}.deployments.run.err"
 then
-        cat "${LOG_DIR}/${DATE}.deployments.run.err" "${LOG_DIR}/${DATE}.deployments.run.log" | mail -s "OpenShift Prune Failed" $MAILTO
+        tail -n 50 "${LOG_DIR}/${DATE}.deployments.run.err" "${LOG_DIR}/${DATE}.deployments.run.log" | mail -s "OpenShift Prune Failed" $MAILTO
         exit 1
 fi
 
 # Dry run of images cleanup
-/bin/oadm prune images $KEEP $LOGLEVEL > "${LOG_DIR}/${DATE}.images.dryrun.log" 2> "${LOG_DIR}/${DATE}.images.dryrun.err"
-if [ $? -ne 0 ]
+echo "Dry run of images cleanup"
+if ! /bin/oc adm prune images $KEEP $LOGLEVEL --force-insecure > "${LOG_DIR}/${DATE}.images.dryrun.log" 2> "${LOG_DIR}/${DATE}.images.dryrun.err"
 then
-        cat "${LOG_DIR}/${DATE}.images.dryrun.err" "${LOG_DIR}/${DATE}.images.dryrun.log" | mail -s "OpenShift Prune Failed" $MAILTO
+        tail -n 50 "${LOG_DIR}/${DATE}.images.dryrun.err" "${LOG_DIR}/${DATE}.images.dryrun.log" | mail -s "OpenShift Prune Failed" $MAILTO
         exit 1
 fi
 
 # Clean up images
-/bin/oadm prune images $KEEP $LOGLEVEL --confirm > "${LOG_DIR}/${DATE}.images.run.log" 2> "${LOG_DIR}/${DATE}.images.run.err"
-if [ $? -ne 0 ]
+echo "Clean up images"
+if ! /bin/oc adm prune images $KEEP $LOGLEVEL --confirm --force-insecure > "${LOG_DIR}/${DATE}.images.run.log" 2> "${LOG_DIR}/${DATE}.images.run.err"
 then
-        cat "${LOG_DIR}/${DATE}.images.run.err" "${LOG_DIR}/${DATE}.images.run.log" | mail -s "OpenShift Prune Failed" $MAILTO
+        tail -n 50 "${LOG_DIR}/${DATE}.images.run.err" "${LOG_DIR}/${DATE}.images.run.log" | mail -s "OpenShift Prune Failed" $MAILTO
         exit 1
 fi
+
+oc -n default rollout latest dc/docker-registry
 
 ansible nodes -m shell -a "journalctl -u atomic-openshift-node --since -24h | grep ImagePullBackOff" > "${LOG_DIR}/${DATE}.Node-ImagePullBackOff.out"||true
 
