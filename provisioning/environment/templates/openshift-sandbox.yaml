@@ -1,0 +1,185 @@
+apiVersion: v1
+kind: Template
+parameters:
+- name: NAME
+  generate: expression
+  from: "[a-z0-9]{6}"
+- name: PRODUCT
+- name: TEAM
+- name: DESCRIPTION
+- name: CATEGORY
+- name: ADMIN
+objects:
+  - kind: Project
+    apiVersion: v1
+    metadata:
+      name: ${NAME}-tools
+      labels:
+        environment: tools
+        product: ${PRODUCT}
+        name: ${NAME}
+        team: ${TEAM}
+        category: ${CATEGORY}
+        project_type: user
+        status: active
+        template: sandbox
+      annotations:
+        openshift.io/description: ${DESCRIPTION} (tools)
+        openshift.io/display-name: ${PRODUCT} (tools)
+  - kind: Project
+    apiVersion: v1
+    metadata:
+      name: ${NAME}-dev
+      labels:
+        environment: dev
+        product: ${PRODUCT}
+        name: ${NAME}
+        team: ${TEAM}
+        category: ${CATEGORY}
+        project_type: user
+        status: active
+        template: sandbox
+      annotations:
+        openshift.io/description: ${DESCRIPTION} (deploy)
+        openshift.io/display-name: ${PRODUCT} (deploy)
+#RoleBindings
+  - apiVersion: authorization.openshift.io/v1
+    kind: RoleBinding
+    metadata:
+      name: admin
+      namespace: ${NAME}-tools
+    roleRef:
+      name: admin
+    subjects:
+    - kind: User
+      name: ${ADMIN}
+    - kind: ServiceAccount
+      name: bcdevops-admin
+      namespace: openshift
+    userNames:
+    - ${ADMIN}
+    - system:serviceaccount:openshift:bcdevops-admin
+  - apiVersion: authorization.openshift.io/v1
+    kind: RoleBinding
+    metadata:
+      name: admin
+      namespace: ${NAME}-dev
+    roleRef:
+      name: admin
+    subjects:
+    - kind: User
+      name: ${ADMIN}
+    - kind: ServiceAccount
+      name: bcdevops-admin
+      namespace: openshift
+    userNames:
+    - ${ADMIN}
+    - system:serviceaccount:openshift:bcdevops-admin
+# ResourceQuota - TOOLS
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-compute-best-effort
+      namespace: ${NAME}-dev
+    spec:
+      hard:
+        pods: "2"
+      scopes:
+      - BestEffort
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-compute-long-running
+      namespace: ${NAME}-tools
+    spec:
+      hard:
+        limits.cpu: "16"
+        limits.memory: 64Gi
+        requests.cpu: "12"
+        requests.memory: 32Gi
+        pods: "100"
+      scopes:
+      - NotTerminating
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-compute-time-bound
+      namespace: ${NAME}-tools
+    spec:
+      hard:
+        limits.cpu: "16"
+        limits.memory: 64Gi
+        requests.cpu: "8"
+        requests.memory: 32Gi
+        pods: "100"
+      scopes:
+      - Terminating
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-storage-quota
+      namespace: ${NAME}-tools
+    spec:
+      hard:
+        gluster-block.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-block.storageclass.storage.k8s.io/requests.storage: 200Gi
+        gluster-file-db.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-file-db.storageclass.storage.k8s.io/requests.storage: 200Gi
+        gluster-file.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-file.storageclass.storage.k8s.io/requests.storage: 200Gi
+        persistentvolumeclaims: "20"
+        requests.storage: 200Gi
+# ResourceQuota - DEV
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-compute-best-effort
+      namespace: ${NAME}-dev
+    spec:
+      hard:
+        pods: "2"
+      scopes:
+      - BestEffort
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-compute-long-running
+      namespace: ${NAME}-dev
+    spec:
+      hard:
+        limits.cpu: "16"
+        limits.memory: 64Gi
+        requests.cpu: "8"
+        requests.memory: 32Gi
+        pods: "100"
+      scopes:
+      - NotTerminating
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-compute-time-bound
+      namespace: ${NAME}-dev
+    spec:
+      hard:
+        limits.cpu: "16"
+        limits.memory: 64Gi
+        requests.cpu: "8"
+        requests.memory: 32Gi
+        pods: "100"
+      scopes:
+      - Terminating
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-storage-quota
+      namespace: ${NAME}-dev
+    spec:
+      hard:
+        gluster-block.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-block.storageclass.storage.k8s.io/requests.storage: 200Gi
+        gluster-file-db.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-file-db.storageclass.storage.k8s.io/requests.storage: 200Gi
+        gluster-file.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-file.storageclass.storage.k8s.io/requests.storage: 200Gi
+        persistentvolumeclaims: "20"
+        requests.storage: 200Gi
