@@ -438,11 +438,18 @@ else
   elif [[ "${REGISTRY_POD_STATE}" -eq "1" ]]; then
 # metrics health check success while in state 1, state change back to 0
     set_state registrypodcount 0
-    echo "$(datestamp) INFO: Registry pods are properly scaled"
+    MSG=$(echo "$(datestamp) RECOVERY: Registry pods have recovered and are now properly scaled")
+    MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=docker-registry)"
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} RECOVERY event for RegistryPodCheck on $(hostname)" $MAILFROM ${MAILTO}
   elif [[ "${REGISTRY_POD_STATE}" -eq "2" ]]; then
 # metrics health check success while in state 2, state change back to 0
     set_state registrypodcount 0
-    echo "$(datestamp) INFO: Registry pods are properly scaled"
+    MSG=$(echo "$(datestamp) RECOVERY: Registry pods have recovered and are now properly scaled")
+    MSG="${MSG}\n$(oc -n default get pods -o wide -l deploymentconfig=docker-registry)"
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} RECOVERY event for RegistryPodCheck on $(hostname)" $MAILFROM ${MAILTO}
+
   fi
 fi
 
