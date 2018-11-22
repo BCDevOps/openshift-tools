@@ -1,0 +1,150 @@
+---
+kind: "Template"
+apiVersion: "v1"
+metadata:
+  name: "cronjob-registry-prune"
+  annotations:
+    description: "Scheduled Task to perform a Registry soft prune and redeploy"
+    iconClass: "icon-shadowman"
+    tags: "management,cronjob,registry,prune"
+parameters:
+  - name: "NAMESPACE"
+    displayName: "Namespace"
+    description: "Name of the Namespace where to deploy the Scheduled Job"
+    value: "advsol-ops"
+    required: true
+  - name: "JOB_NAME"
+    displayName: "Job Name"
+    description: "Name of the Scheduled Job to Create."
+    value: "cronjob-registry-soft-prune"
+    required: true
+  - name: "JOB_SOURCE_SCRIPT"
+    displayName: "Job Source Script"
+    description: "Name of the Scheduled Job's ConfigMap script to Create."
+    value: "soft-prune-script"
+    required: true
+  - name: "PRUNE_KEEP"
+    displayName: "Prune Keep Options"
+    description: "Keep options to pass to the prune job.  eg: --keep-younger-than=96h"
+    required: false
+    value: "--keep-younger-than=96h"
+  - name: "SCHEDULE"
+    displayName: "Cron Schedule"
+    description: "Cron Schedule to Execute the Job (in UTC)"
+    value: "0 5 * * *"
+#    value: "*/2 * * * *"
+    required: true
+  - name: "JOB_SERVICE_ACCOUNT"
+    displayName: "Service Account Name"
+    description: "Name of the Service Account To Exeucte the Job As."
+    value: "registry-pruner"
+    required: true
+  - name: "SUCCESS_JOBS_HISTORY_LIMIT"
+    displayName: "Successful Job History Limit"
+    description: "The number of successful jobs that will be retained"
+    value: "5"
+    required: true
+  - name: "FAILED_JOBS_HISTORY_LIMIT"
+    displayName: "Failed Job History Limit"
+    description: "The number of failed jobs that will be retained"
+    value: "5"
+    required: true
+  - name: "JOB_BACKOFF_LIMIT"
+    displayName: "Job Backoff Limit"
+    description: "The number of attempts to try for a successful job outcome (default: 6)"
+    value: "1"
+    required: false
+objects:
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: ${JOB_SOURCE_SCRIPT}
+    namespace: ${NAMESPACE}
+    labels:
+      template: "cronjob-registry-prune"
+  data:
+    ${JOB_SOURCE_SCRIPT}: |
+      NOOP=echo
+      timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
+      echo "$(timestamp): oc adm prune images ${PRUNE_KEEP}"
+      oc adm prune images ${PRUNE_KEEP}
+      rc=$?; if [ $rc -ne 0 ] ; then
+        date
+        echo "$(timestamp): Dry-Run Prune failed, aborting..."
+        exit $rc;
+      fi
+      echo "$(timestamp) oc adm prune images ${PRUNE_KEEP} --confirm --loglevel=4"
+      ${NOOP} oc adm prune images ${PRUNE_KEEP} --confirm --loglevel=4
+      rc=$?; if [ $rc -ne 0 ] ; then
+        date
+        echo "$(timestamp): Prune failed, aborting..."
+        exit $rc;
+      fi
+      echo $(timestamp)
+      ${NOOP} oc rollout latest dc/docker-registry -n default
+      ${NOOP} oc rollout status dc/docker-registry -n default
+      echo $(timestamp)
+- kind: "CronJob"
+  apiVersion: "batch/v1beta1"
+  metadata:
+    name: "${JOB_NAME}"
+    namespace: ${NAMESPACE}
+    labels:
+      template: "cronjob-registry-prune"
+  spec:
+    schedule: "${SCHEDULE}"
+    concurrencyPolicy: "Forbid"
+    successfulJobsHistoryLimit: "${{SUCCESS_JOBS_HISTORY_LIMIT}}"
+    failedJobsHistoryLimit: "${{FAILED_JOBS_HISTORY_LIMIT}}"
+    jobTemplate:
+      spec:
+        backoffLimit: ${JOB_BACKOFF_LIMIT}
+        template:
+          spec:
+            containers:
+              - name: "${JOB_NAME}"
+                image: "openshift3/ose"
+                command:
+                  - "/bin/bash"
+                  - "-c"
+                  - "source /etc/config/${JOB_SOURCE_SCRIPT} || :"
+                volumeMounts:
+                  - mountPath: "/etc/config"
+                    name: "registry-prune-volume"
+            volumes:
+              - configMap:
+                  items:
+                    - key: ${JOB_SOURCE_SCRIPT}
+                      path: ${JOB_SOURCE_SCRIPT}
+                  name: ${JOB_SOURCE_SCRIPT}
+                name: registry-prune-volume
+            restartPolicy: "Never"
+            terminationGracePeriodSeconds: 30
+            activeDeadlineSeconds: 1600
+            dnsPolicy: "ClusterFirst"
+            serviceAccountName: "${JOB_SERVICE_ACCOUNT}"
+            serviceAccount: "${JOB_SERVICE_ACCOUNT}"
+- kind: ServiceAccount
+  apiVersion: v1
+  metadata:
+    name: ${JOB_SERVICE_ACCOUNT}
+    namespace: ${NAMESPACE}
+    labels:
+      template: "cronjob-registry-prune"
+- kind: ClusterRoleBinding
+  apiVersion: v1
+  groupNames: null
+  metadata:
+    name: system:registry-pruners
+    namespace: ${NAMESPACE}
+    labels:
+      template: "cronjob-registry-prune"
+  roleRef:
+    name: system:image-pruner
+  subjects:
+  - kind: ServiceAccount
+    name: ${JOB_SERVICE_ACCOUNT}
+  userNames:
+  - system:serviceaccount:${NAMESPACE}:${JOB_SERVICE_ACCOUNT}
+labels:
+  template: "cronjob-registry-prune"

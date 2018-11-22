@@ -32,13 +32,15 @@ Run complete... Grabbing a coffee before next run...
 =================
 ```
 
-## prune.sh
+## Cluster Pruning jobs
+
+### Registry Prune via OS Cron script (prune.sh)
 
 This script will prune the builds, deployments, and images from the registry. Set up as a cron on one of the master servers.
 
 To create the pruner user for the script
 
-```
+```bash
 oc project default
 echo '{"kind":"ServiceAccount","apiVersion":"v1","metadata":{"name":"pruner"}}' | oc create -f -
 oadm policy add-cluster-role-to-user system:image-pruner system:serviceaccount:default:pruner
@@ -50,6 +52,33 @@ oc config view --minify --flatten > pruner.kubeconfig
 ```
 
 Script will have no output, but will email on error.
+
+### Registry Pruning via Cluster cronjob
+
+Intent is to migrate cluster prune tasks to cluster cronjobs.  Image soft pruning has the following objects:
+
+* configmap - ${JOB_SOURCE_SCRIPT}
+* cronjob - ${JOB_NAME}
+* serviceAccount: ${JOB_SERVICE_ACCOUNT}
+* RBAC: ClusterRoleBinding for registry pruner to ${JOB_SERVICE_ACCOUNT}
+
+Edit Parameters section of [openshift/cronjob-registry-prune.yaml](openshift/cronjob-registry-prune.yaml) with appropriate changes and create
+the template objects with:
+
+```bash
+oc process -f openshift/cronjob-registry-prune.yaml | oc create -f -
+```
+
+Add manually: ${JOB_SERVICE_ACCOUNT} to admin role in project 'default' to allow redeploy of docker-registry
+
+```bash
+oc policy add-role-to-user admin system:serviceaccount:${NAMESPACE}:${JOB_SERVICE_ACCOUNT} -n default
+```
+
+All logs will be available in the pod logs, Still need to set some alerting up for job failure (if required).  
+Current default job history (pods) to keep is latest 5 successful, and latest 5 failed.
+
+`Maximum number of failed pods is ${FAILED_JOBS_HISTORY_LIMIT} * ${JOB_BACKOFF_LIMIT}`
 
 ## List of things to be monitored
 
