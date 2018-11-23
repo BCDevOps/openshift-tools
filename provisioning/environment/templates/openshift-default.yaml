@@ -159,7 +159,7 @@ objects:
       hard:
         limits.cpu: "16"
         limits.memory: 64Gi
-        requests.cpu: "12"
+        requests.cpu: "8"
         requests.memory: 32Gi
         pods: "100"
       scopes:

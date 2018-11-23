@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 TEMPLATE_NAME="$1"
 ADMIN_USER="system:serviceaccount:openshift:bcdevops-admin"
-TEMP_NAMESPACE="csnr-devops-lab-tools"
+TEMP_NAMESPACE="bcgov-tools"
 
 
 if [ ! -f input.env ]; then
