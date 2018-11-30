@@ -23,6 +23,11 @@ parameters:
     description: "Name of the Scheduled Job's ConfigMap script to Create."
     value: "soft-prune-script"
     required: true
+  - name: "JOB_PERSISTENT_STORAGE_NAME"
+    displayName: "Job Persistent Storage Name"
+    description: "Name of persistent PVC to use for log retention"
+    value: "cronjob-prune-logs"
+    required: true
   - name: "PRUNE_KEEP"
     displayName: "Prune Keep Options"
     description: "Keep options to pass to the prune job.  eg: --keep-younger-than=96h"
@@ -31,8 +36,8 @@ parameters:
   - name: "SCHEDULE"
     displayName: "Cron Schedule"
     description: "Cron Schedule to Execute the Job (in UTC)"
-    value: "0 5 * * *"
-#    value: "*/2 * * * *"
+# Currently targeting 5:00 AM
+    value: "0 13 * * *"
     required: true
   - name: "JOB_SERVICE_ACCOUNT"
     displayName: "Service Account Name"
@@ -64,19 +69,59 @@ objects:
       template: "cronjob-registry-prune"
   data:
     ${JOB_SOURCE_SCRIPT}: |
-      NOOP=echo
+      NOOP=
+      DATESTAMP=`date +%Y%m%d_%H%M%S`
+      LOGDIR='/mnt/oc-prune'
+      mkdir -p ${LOGDIR}
       timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
-      echo "$(timestamp): oc adm prune images ${PRUNE_KEEP}"
-      oc adm prune images ${PRUNE_KEEP}
-      rc=$?; if [ $rc -ne 0 ] ; then
-        date
-        echo "$(timestamp): Dry-Run Prune failed, aborting..."
-        exit $rc;
+      PRUNE_OPTIONS="${PRUNE_KEEP} --loglevel=4"
+      ## Build Prune
+      echo "$(timestamp): oc adm prune builds --orphans ${PRUNE_OPTIONS}"
+      oc adm prune builds --orphans ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-builds-dryrun.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-builds-dryrun.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Dry-Run Build prune failed, skipping builds prune..."
+        exit $rc
       fi
-      echo "$(timestamp) oc adm prune images ${PRUNE_KEEP} --confirm --loglevel=4"
-      ${NOOP} oc adm prune images ${PRUNE_KEEP} --confirm --loglevel=4
-      rc=$?; if [ $rc -ne 0 ] ; then
-        date
+      echo "$(timestamp) oc adm prune builds --orphans ${PRUNE_OPTIONS} --confirm"
+      ${NOOP} oc adm prune builds --orphans ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-builds-prune.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-builds-prune.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Build prune failed."
+        exit $rc
+      fi
+      ## Deployment Prune
+      echo "$(timestamp): oc adm prune deployments --orphans ${PRUNE_OPTIONS}"
+      oc adm prune deployments --orphans ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-deployments-dryrun.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-deployments-dryrun.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Dry-Run deployments prune failed, skipping deployments prune..."
+        exit $rc
+      fi
+      echo "$(timestamp) oc adm prune deployments --orphans ${PRUNE_OPTIONS} --confirm"
+      ${NOOP} oc adm prune deployments --orphans ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-deployments-prune.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-deployments-prune.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Deployment prune failed."
+        exit $rc
+      fi
+      # Prune
+      echo "$(timestamp): oc adm prune images ${PRUNE_OPTIONS}"
+      oc adm prune images ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-dryrun.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-image-dryrun.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Dry-Run Prune failed, aborting..."
+      fi
+      echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
+      ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-prune.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-image-prune.log -f
+      if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Prune failed, aborting..."
         exit $rc;
       fi
@@ -111,13 +156,18 @@ objects:
                 volumeMounts:
                   - mountPath: "/etc/config"
                     name: "registry-prune-volume"
+                  - mountPath: "/mnt"
+                    name: "registry-prune-log-volume"
             volumes:
-              - configMap:
+              - name: registry-prune-volume
+                configMap:
                   items:
                     - key: ${JOB_SOURCE_SCRIPT}
                       path: ${JOB_SOURCE_SCRIPT}
                   name: ${JOB_SOURCE_SCRIPT}
-                name: registry-prune-volume
+              - name: registry-prune-log-volume
+                persistentVolumeClaim:
+                  claimName: "${JOB_PERSISTENT_STORAGE_NAME}"
             restartPolicy: "Never"
             terminationGracePeriodSeconds: 30
             activeDeadlineSeconds: 1600
@@ -140,7 +190,8 @@ objects:
     labels:
       template: "cronjob-registry-prune"
   roleRef:
-    name: system:image-pruner
+#    name: system:image-pruner
+    name: cluster-admin
   subjects:
   - kind: ServiceAccount
     name: ${JOB_SERVICE_ACCOUNT}

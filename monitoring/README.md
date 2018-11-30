@@ -13,7 +13,7 @@ Requirements:
 
 To run:
 
-```
+``` bash
 ./check_urls.sh
 ```
 
@@ -21,7 +21,7 @@ There will be "false negatives" due to orphaned routes or broken apps, but the p
 
 Sample output (names, etc. changed to protect the guilty...):
 
-```
+``` bash
 =================
 Starting a run.
 =================
@@ -60,23 +60,17 @@ Intent is to migrate cluster prune tasks to cluster cronjobs.  Image soft prunin
 * configmap - ${JOB_SOURCE_SCRIPT}
 * cronjob - ${JOB_NAME}
 * serviceAccount: ${JOB_SERVICE_ACCOUNT}
-* RBAC: ClusterRoleBinding for registry pruner to ${JOB_SERVICE_ACCOUNT}
+* RBAC: ClusterRoleBinding for cluster-admin to ${JOB_SERVICE_ACCOUNT}
+* PVC (RWX) for storing logs long term - ${JOB_PERSISTENT_STORAGE_NAME}
 
-Edit Parameters section of [openshift/cronjob-registry-prune.yaml](openshift/cronjob-registry-prune.yaml) with appropriate changes and create
-the template objects with:
+1. Create Persistent Storage (as RWX)
+2. Edit Parameters section of [openshift/cronjob-registry-prune.yaml](openshift/cronjob-registry-prune.yaml) with appropriate changes and create the template objects with:
 
 ```bash
 oc process -f openshift/cronjob-registry-prune.yaml | oc create -f -
 ```
 
-Add manually: ${JOB_SERVICE_ACCOUNT} to admin role in project 'default' to allow redeploy of docker-registry
-
-```bash
-oc policy add-role-to-user admin system:serviceaccount:${NAMESPACE}:${JOB_SERVICE_ACCOUNT} -n default
-```
-
-All logs will be available in the pod logs, Still need to set some alerting up for job failure (if required).  
-Current default job history (pods) to keep is latest 5 successful, and latest 5 failed.
+Cron run-logs are available in the pod logs as well as compressed within the PVC.
 
 `Maximum number of failed pods is ${FAILED_JOBS_HISTORY_LIMIT} * ${JOB_BACKOFF_LIMIT}`
 
@@ -84,19 +78,19 @@ Current default job history (pods) to keep is latest 5 successful, and latest 5 
 
 ### critical (alert on issues)
 
-- CPU - reservations per node (alert at 80%?) `oc describe nodes -l region=app | grep -A4 'Allocated resources:' | grep '%' | awk '{print $2, $6}'`
-- Gluster thin pool usage
-- Gluster volumes for registry, logging, and metrics
-- Docker Pool usage - Currently monitored on all hosts with `lvs --noheadings -o data_percent /dev/docker-vg/docker-pool | tr -d [:space:]` and critical alerts at 90% (where docker will break)
+* CPU - reservations per node (alert at 80%?) `oc describe nodes -l region=app | grep -A4 'Allocated resources:' | grep '%' | awk '{print $2, $6}'`
+* Gluster thin pool usage
+* Gluster volumes for registry, logging, and metrics
+* Docker Pool usage - Currently monitored on all hosts with `lvs --noheadings -o data_percent /dev/docker-vg/docker-pool | tr -d [:space:]` and critical alerts at 90% (where docker will break)
 
 ### warning (needs a warning to the groups)
 
-- Build times (what should be the threshold?)
-- Number of items needing pruning. This can also let us know if the prune cron is failing
+* Build times (what should be the threshold?)
+* Number of items needing pruning. This can also let us know if the prune cron is failing
 
 ### notice (more things to track)
 
-- Disk - How many of each size of persistant volumes are available (Daily/Weekly report?) `oc get pv | grep Available | awk '{print $2}' | sort | uniq -c`
+* Disk - How many of each size of persistant volumes are available (Daily/Weekly report?) `oc get pv | grep Available | awk '{print $2}' | sort | uniq -c`
 
 ### trending (long term perfomance data)
 
