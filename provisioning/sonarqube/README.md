@@ -2,6 +2,8 @@
 
 Scripts to provide an easy means to deploy SonarQube to OpenShift.
 
+**These scripts have been deprecated.  For up-to-date information on setting up SonarQube please visit; [SonarQube on OpenShift](https://github.com/BCDevOps/sonarqube)**
+
 ## How to deploy
 
 In this folder, you'll find two shell scripts - `deploy-sonarqube.sh` and `update-sonarqube-password.sh`.  The first is for deploying a SonarQube instance, as well as the required PostGres database instance.
