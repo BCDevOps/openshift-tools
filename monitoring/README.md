@@ -55,24 +55,9 @@ Script will have no output, but will email on error.
 
 ### Registry Pruning via Cluster cronjob
 
-Intent is to migrate cluster prune tasks to cluster cronjobs.  Image soft pruning has the following objects:
+Intent is to migrate cluster prune tasks to cluster cronjobs.
 
-* configmap - ${JOB_SOURCE_SCRIPT}
-* cronjob - ${JOB_NAME}
-* serviceAccount: ${JOB_SERVICE_ACCOUNT}
-* RBAC: ClusterRoleBinding for cluster-admin to ${JOB_SERVICE_ACCOUNT}
-* PVC (RWX) for storing logs long term - ${JOB_PERSISTENT_STORAGE_NAME}
-
-1. Create Persistent Storage (as RWX)
-2. Edit Parameters section of [openshift/cronjob-registry-prune.yaml](openshift/cronjob-registry-prune.yaml) with appropriate changes and create the template objects with:
-
-```bash
-oc process -f openshift/cronjob-registry-prune.yaml | oc create -f -
-```
-
-Cron run-logs are available in the pod logs as well as compressed within the PVC.
-
-`Maximum number of failed pods is ${FAILED_JOBS_HISTORY_LIMIT} * ${JOB_BACKOFF_LIMIT}`
+* [openshift/cronjobs/README.md](openshift/cronjobs/README.md)
 
 ## List of things to be monitored
 
