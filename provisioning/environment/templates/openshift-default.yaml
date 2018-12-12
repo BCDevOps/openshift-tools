@@ -23,9 +23,9 @@ objects:
         project_type: user
         status: active
         template: default
-    annotations:
-      openshift.io/description: ${DESCRIPTION} (tools)
-      openshift.io/display-name: ${PRODUCT} (tools)
+      annotations:
+        openshift.io/description: ${DESCRIPTION} (tools)
+        openshift.io/display-name: ${PRODUCT} (tools)
   - kind: Project
     apiVersion: v1
     metadata:
@@ -39,9 +39,9 @@ objects:
         project_type: user
         status: active
         template: default
-    annotations:
-      openshift.io/description: ${DESCRIPTION} (dev)
-      openshift.io/display-name: ${PRODUCT} (dev)
+      annotations:
+        openshift.io/description: ${DESCRIPTION} (dev)
+        openshift.io/display-name: ${PRODUCT} (dev)
   - kind: Project
     apiVersion: v1
     metadata:
@@ -55,9 +55,9 @@ objects:
         project_type: user
         status: active
         template: default
-    annotations:
-      openshift.io/description: ${DESCRIPTION} (test)
-      openshift.io/display-name: ${PRODUCT} (test)
+      annotations:
+        openshift.io/description: ${DESCRIPTION} (test)
+        openshift.io/display-name: ${PRODUCT} (test)
   - kind: Project
     apiVersion: v1
     metadata:
@@ -71,9 +71,9 @@ objects:
         project_type: user
         status: active
         template: default
-    annotations:
-      openshift.io/description: ${DESCRIPTION} (prod)
-      openshift.io/display-name: ${PRODUCT} (prod)
+      annotations:
+        openshift.io/description: ${DESCRIPTION} (prod)
+        openshift.io/display-name: ${PRODUCT} (prod)
 #RoleBindings
   - apiVersion: authorization.openshift.io/v1
     kind: RoleBinding
