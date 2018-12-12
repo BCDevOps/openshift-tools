@@ -144,7 +144,7 @@ objects:
     kind: ResourceQuota
     metadata:
       name: default-compute-best-effort
-      namespace: ${NAME}-dev
+      namespace: ${NAME}-tools
     spec:
       hard:
         pods: "2"
@@ -178,6 +178,21 @@ objects:
         pods: "100"
       scopes:
       - Terminating
+  - apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: default-storage-quota
+      namespace: ${NAME}-tools
+    spec:
+      hard:
+        gluster-block.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-block.storageclass.storage.k8s.io/requests.storage: 200Gi
+        gluster-file-db.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-file-db.storageclass.storage.k8s.io/requests.storage: 200Gi
+        gluster-file.storageclass.storage.k8s.io/persistentvolumeclaims: "20"
+        gluster-file.storageclass.storage.k8s.io/requests.storage: 200Gi
+        persistentvolumeclaims: "20"
+        requests.storage: 200Gi
 # ResourceQuota - DEV
   - apiVersion: v1
     kind: ResourceQuota
