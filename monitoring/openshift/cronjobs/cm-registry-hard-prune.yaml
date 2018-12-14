@@ -1,0 +1,48 @@
+objects:
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: ${JOB_SOURCE_SCRIPT}
+    namespace: ${NAMESPACE}
+    labels:
+      template: "ops-cronjob"
+      cronjob: "${JOB_NAME}"
+  data:
+    ${JOB_SOURCE_SCRIPT}: |
+      NOOP=echo
+      DATESTAMP=`date +%Y%m%d_%H%M%S`
+      LOGDIR='/mnt/registry-hard-prune'
+      mkdir -p ${LOGDIR}
+      timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
+      PRUNE_OPTIONS="${PRUNE_KEEP} --loglevel=4"
+      # perform basic prune (do not trigger rollout as that will occur with readonly mode change)
+      # Prune
+      echo "$(timestamp): oc adm prune images ${PRUNE_OPTIONS}"
+      oc adm prune images ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-dryrun.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-image-dryrun.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Dry-Run Prune failed, aborting..."
+      fi
+      echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
+      ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-prune.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-image-prune.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Prune failed, aborting..."
+        exit $rc;
+      fi
+      echo $(timestamp)
+      # switch registry to read-only mode (will trigger a redeploy)
+      ${NOOP} oc env -n default dc/docker-registry 'REGISTRY_STORAGE_MAINTENANCE_READONLY={"enabled":true}'
+      # (if required: oc rollout latest dc/docker-registry -n default)
+      oc rollout status dc/docker-registry -n default
+      oc -n default exec -i -t "$(oc -n default get pods -l deploymentconfig=docker-registry \
+        -o jsonpath=$'{.items[0].metadata.name}\n')" \
+        -- /usr/bin/dockerregistry -prune=check 2>&1 | tee ${LOGDIR}/${DATESTAMP}-hardprune-check.log
+      ${NOOP} oc -n default exec -i -t "$(oc -n default get pods -l deploymentconfig=docker-registry \
+        -o jsonpath=$'{.items[0].metadata.name}\n')" -- /usr/bin/dockerregistry -prune=delete
+      # Switch registry back to read-write mode
+      ${NOOP} oc env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY-
+      oc rollout status dc/docker-registry -n default
+

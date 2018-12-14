@@ -1,0 +1,70 @@
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: ${JOB_SOURCE_SCRIPT}
+    namespace: ${NAMESPACE}
+    labels:
+      template: "ops-cronjob"
+      cronjob: "${JOB_NAME}"
+  data:
+    ${JOB_SOURCE_SCRIPT}: |
+      NOOP=
+      DATESTAMP=`date +%Y%m%d_%H%M%S`
+      LOGDIR='/mnt/oc-prune'
+      mkdir -p ${LOGDIR}
+      timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
+      PRUNE_OPTIONS="${PRUNE_KEEP} --loglevel=4"
+      ## Build Prune
+      echo "$(timestamp): oc adm prune builds --orphans ${PRUNE_OPTIONS}"
+      oc adm prune builds --orphans ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-builds-dryrun.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-builds-dryrun.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Dry-Run Build prune failed, skipping builds prune..."
+        exit $rc
+      fi
+      echo "$(timestamp) oc adm prune builds --orphans ${PRUNE_OPTIONS} --confirm"
+      ${NOOP} oc adm prune builds --orphans ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-builds-prune.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-builds-prune.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Build prune failed."
+        exit $rc
+      fi
+      ## Deployment Prune
+      echo "$(timestamp): oc adm prune deployments --orphans ${PRUNE_OPTIONS}"
+      oc adm prune deployments --orphans ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-deployments-dryrun.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-deployments-dryrun.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Dry-Run deployments prune failed, skipping deployments prune..."
+        exit $rc
+      fi
+      echo "$(timestamp) oc adm prune deployments --orphans ${PRUNE_OPTIONS} --confirm"
+      ${NOOP} oc adm prune deployments --orphans ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-deployments-prune.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-deployments-prune.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Deployment prune failed."
+        exit $rc
+      fi
+      # Prune
+      echo "$(timestamp): oc adm prune images ${PRUNE_OPTIONS}"
+      oc adm prune images ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-dryrun.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-image-dryrun.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Dry-Run Prune failed, aborting..."
+      fi
+      echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
+      ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-prune.log
+      rc=${PIPESTATUS[0]}
+      gzip ${LOGDIR}/${DATESTAMP}-image-prune.log -f
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Prune failed, aborting..."
+        exit $rc;
+      fi
+      echo $(timestamp)
+      ${NOOP} oc rollout latest dc/docker-registry -n default
+      ${NOOP} oc rollout status dc/docker-registry -n default
+      echo $(timestamp)

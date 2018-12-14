@@ -1,0 +1,62 @@
+---
+kind: "Template"
+apiVersion: "v1"
+metadata:
+  name: "cronjob-soft-prune"
+  annotations:
+    description: "Scheduled Task to perform a Registry soft prune and redeploy"
+    iconClass: "icon-shadowman"
+    tags: "management,cronjob,registry,prune"
+parameters:
+  - name: "NAMESPACE"
+    displayName: "Namespace"
+    description: "Name of the Namespace where to deploy the Scheduled Job"
+    value: "advsol-ops"
+    required: true
+  - name: "JOB_NAME"
+    displayName: "Job Name"
+    description: "Name of the Scheduled Job to Create."
+    value: "cronjob-registry-soft-prune"
+    required: true
+  - name: "JOB_SOURCE_SCRIPT"
+    displayName: "Job Source Script"
+    description: "Name of the Scheduled Job's ConfigMap script to Create."
+    value: "soft-prune-script"
+    required: true
+  - name: "JOB_PERSISTENT_STORAGE_NAME"
+    displayName: "Job Persistent Storage Name"
+    description: "Name of persistent PVC to use for log retention"
+    value: "cronjob-prune-logs"
+    required: true
+  - name: "PRUNE_KEEP"
+    displayName: "Prune Keep Options"
+    description: "Keep options to pass to the prune job.  eg: --keep-younger-than=96h"
+    required: false
+    value: "--keep-younger-than=96h"
+  - name: "SCHEDULE"
+    displayName: "Cron Schedule"
+    description: "Cron Schedule to Execute the Job (in UTC)"
+# Currently targeting 5:00 AM Daily
+    value: "0 13 * * *"
+    required: true
+  - name: "JOB_SERVICE_ACCOUNT"
+    displayName: "Service Account Name"
+    description: "Name of the Service Account To Exeucte the Job As."
+    value: "registry-pruner"
+    required: true
+  - name: "SUCCESS_JOBS_HISTORY_LIMIT"
+    displayName: "Successful Job History Limit"
+    description: "The number of successful jobs that will be retained"
+    value: "5"
+    required: true
+  - name: "FAILED_JOBS_HISTORY_LIMIT"
+    displayName: "Failed Job History Limit"
+    description: "The number of failed jobs that will be retained"
+    value: "5"
+    required: true
+  - name: "JOB_BACKOFF_LIMIT"
+    displayName: "Job Backoff Limit"
+    description: "The number of attempts to try for a successful job outcome (default: 6)"
+    value: "0"
+    required: false
+objects:

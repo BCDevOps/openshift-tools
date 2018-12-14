@@ -13,7 +13,7 @@ Requirements:
 
 To run:
 
-```
+``` bash
 ./check_urls.sh
 ```
 
@@ -21,7 +21,7 @@ There will be "false negatives" due to orphaned routes or broken apps, but the p
 
 Sample output (names, etc. changed to protect the guilty...):
 
-```
+``` bash
 =================
 Starting a run.
 =================
@@ -32,13 +32,15 @@ Run complete... Grabbing a coffee before next run...
 =================
 ```
 
-## prune.sh
+## Cluster Pruning jobs
+
+### Registry Prune via OS Cron script (prune.sh)
 
 This script will prune the builds, deployments, and images from the registry. Set up as a cron on one of the master servers.
 
 To create the pruner user for the script
 
-```
+```bash
 oc project default
 echo '{"kind":"ServiceAccount","apiVersion":"v1","metadata":{"name":"pruner"}}' | oc create -f -
 oadm policy add-cluster-role-to-user system:image-pruner system:serviceaccount:default:pruner
@@ -51,23 +53,29 @@ oc config view --minify --flatten > pruner.kubeconfig
 
 Script will have no output, but will email on error.
 
+### Registry Pruning via Cluster cronjob
+
+Intent is to migrate cluster prune tasks to cluster cronjobs.
+
+* [openshift/cronjobs/README.md](openshift/cronjobs/README.md)
+
 ## List of things to be monitored
 
 ### critical (alert on issues)
 
-- CPU - reservations per node (alert at 80%?) `oc describe nodes -l region=app | grep -A4 'Allocated resources:' | grep '%' | awk '{print $2, $6}'`
-- Gluster thin pool usage
-- Gluster volumes for registry, logging, and metrics
-- Docker Pool usage - Currently monitored on all hosts with `lvs --noheadings -o data_percent /dev/docker-vg/docker-pool | tr -d [:space:]` and critical alerts at 90% (where docker will break)
+* CPU - reservations per node (alert at 80%?) `oc describe nodes -l region=app | grep -A4 'Allocated resources:' | grep '%' | awk '{print $2, $6}'`
+* Gluster thin pool usage
+* Gluster volumes for registry, logging, and metrics
+* Docker Pool usage - Currently monitored on all hosts with `lvs --noheadings -o data_percent /dev/docker-vg/docker-pool | tr -d [:space:]` and critical alerts at 90% (where docker will break)
 
 ### warning (needs a warning to the groups)
 
-- Build times (what should be the threshold?)
-- Number of items needing pruning. This can also let us know if the prune cron is failing
+* Build times (what should be the threshold?)
+* Number of items needing pruning. This can also let us know if the prune cron is failing
 
 ### notice (more things to track)
 
-- Disk - How many of each size of persistant volumes are available (Daily/Weekly report?) `oc get pv | grep Available | awk '{print $2}' | sort | uniq -c`
+* Disk - How many of each size of persistant volumes are available (Daily/Weekly report?) `oc get pv | grep Available | awk '{print $2}' | sort | uniq -c`
 
 ### trending (long term perfomance data)
 
