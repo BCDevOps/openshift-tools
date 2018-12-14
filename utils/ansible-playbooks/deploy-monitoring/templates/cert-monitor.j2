@@ -26,15 +26,15 @@ then
 fi
 
 # Check for warning certs
-WARNING=$(/usr/local/bin/jq '.summary.warning' /tmp/cert-expiry-report.json 2>&1)
-if [[ "${WARNING}" -ne "0" ]]
+WARNING=$(/usr/local/bin/jq --ascii-output '.data|with_entries(select(.value|.[]|.[]|.health?=="warning"))|keys[] as $server| {($server): (.[$server]|with_entries(select(.value|.[]|.health?)))}' /tmp/cert-expiry-report.json 2>&1)
+if [[ -n "${WARNING}" ]]
 then
   echo -e "${WARNING}" | mail -a /tmp/cert-expiry-report.html -s "${EMAIL_ENV} WARNING - Certificates Expiring Soon" $MAILFROM $MAILTO
 fi
 
 # Check for expired certs
-EXPIRED=$(/usr/local/bin/jq '.summary.expired' /tmp/cert-expiry-report.json 2>&1)
-if [[ "${EXPIRED}" -ne "0" ]]
+EXPIRED=$(/usr/local/bin/jq --ascii-output '.data|with_entries(select(.value|.[]|.[]|.health?=="expired"))|keys[] as $server| {($server): (.[$server]|with_entries(select(.value|.[]|.health?)))}' /tmp/cert-expiry-report.json 2>&1)
+if [[ -n "${EXPIRED}" ]]
 then
   echo -e "${EXPIRED}" | mail -s "${EMAIL_ENV} ERROR - Expired Certificates!" $MAILFROM $MAILTO
 fi
