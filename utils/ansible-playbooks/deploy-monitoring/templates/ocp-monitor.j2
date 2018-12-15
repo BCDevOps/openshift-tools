@@ -981,6 +981,38 @@ else
   fi
 fi
 
+# 2018November30 Service Catalog Health check from api-manager pods
+echo -e "$(datestamp) Openshift Template Service Broker URL check inside controller-manager pods: "
+for POD in $(oc -n kube-service-catalog get pods --selector "app=controller-manager" --no-headers -o=custom-columns=NAME:.metadata.name)
+do
+  STATUS=$(oc -n kube-service-catalog exec ${POD} -- ${CURL} --insecure https://apiserver.openshift-template-service-broker.svc.cluster.local/healthz 2>&1)
+  if ! [ $(echo "${STATUS}" | grep -i OK) ]
+  then
+    MSG=$(echo -e "$(datestamp) ERROR: Template Service Broker https://apiserver.openshift-template-service-broker.svc.cluster.local/healthz in-accessible on pod ${POD}\n${STATUS}")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for OpenShift Template Service Broker Check" $MAILFROM $MAILTO
+  else
+    MSG=$(echo -e "$(datestamp) INFO: Template Service Broker https://apiserver.openshift-template-service-broker.svc.cluster.local/healthz accessible on pod ${POD}")
+    echo -e "${MSG}"
+  fi
+done
+
+echo -e "\n$(datestamp) Openshift Ansible Service Broker URL check inside controller-manager pods: "
+for POD in $(oc -n kube-service-catalog get pods --selector "app=controller-manager" --no-headers -o=custom-columns=NAME:.metadata.name)
+do
+  ASBHOST=$(oc -n openshift-ansible-service-broker get route --selector="service=asb" --no-headers -o=custom-columns=NAME:.spec.host)
+  STATUS=$(oc -n kube-service-catalog exec ${POD} -- ${CURL} --insecure https://${ASBHOST}/healthz 2>&1)
+  if ! [ $(echo "${STATUS}" | grep -i OK) ]
+  then
+    MSG=$(echo -e "$(datestamp) ERROR: Anisble Service Broker https://${ASBHOST}/healthz in-accessible on pod ${POD}\n${STATUS}")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Ansible Template Service Broker Check" $MAILFROM $MAILTO
+  else
+    MSG=$(echo -e "$(datestamp) INFO: Anisble Service Broker https://${ASBHOST}/healthz accessible on pod ${POD}")
+    echo -e "${MSG}"
+  fi
+done
+
 {% endraw %}
 {% endif %}
 
