@@ -27,9 +27,21 @@ docker prune to remove any unreferenced image blocks.  Once this is completed, i
 
 3. Run the included bash script that processes and creates the required objects.
 
-```bash
-create-cron.sh
-```
+    ```bash
+    create-cron.sh
+    ```
+
+4. Add the `system:image-pruner` role. The service account used to run the registry instances requires additional permissions in order to list some resources.
+
+    Get the service account name:
+
+    ```bash
+    service_account=$(oc get -n default \
+        -o jsonpath=$'system:serviceaccount:{.metadata.namespace}:{.spec.template.spec.serviceAccountName}\n' \
+        dc/docker-registry)
+    oc adm policy add-cluster-role-to-user \
+        system:image-pruner ${service_account}
+    ```
 
 Cron run-logs are available in the pod logs as well as compressed within the PVC.
 
