@@ -38,3 +38,11 @@ Cron run-logs are available in the pod logs as well as compressed within the PVC
 ### Outstanding
 
 * create cronjob success/fail monitoring and alert on last failure.
+
+## Testing
+
+Cronjobs can be tested by creating a job immediately based on the cronjob spec. This is simpler than trying to keep updating the schedule of the cronjob to be just in the future.
+
+```
+oc create job cronjob-registry-soft-prune-1 --from=cronjob/cronjob-registry-soft-prune
+```
