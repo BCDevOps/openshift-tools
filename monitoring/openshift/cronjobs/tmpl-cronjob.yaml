@@ -22,7 +22,7 @@
           spec:
             containers:
               - name: "${JOB_NAME}"
-                image: "openshift3/ose:v3.10.72"
+                image: "openshift3/ose-cli:v3.10.72"
                 command:
                   - "/bin/bash"
                   - "-c"
