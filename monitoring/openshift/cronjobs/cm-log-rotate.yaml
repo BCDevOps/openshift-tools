@@ -8,6 +8,7 @@
       cronjob: "${JOB_NAME}"
   data:
     ${JOB_SOURCE_SCRIPT}: |
+      #!/usr/bin/env bash
       NOOP=
       timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
       echo "$(timestamp): Delete old logs"
