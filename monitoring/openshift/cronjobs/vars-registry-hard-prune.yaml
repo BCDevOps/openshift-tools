@@ -36,8 +36,8 @@ parameters:
   - name: "SCHEDULE"
     displayName: "Cron Schedule"
     description: "Cron Schedule to Execute the Job (in UTC)"
-# Currently targeting 6:00 AM on the 10th of each month
-    value: "0 14 10 * *"
+# Currently targeting 1:00 AM on the 1st of each quarter
+    value: "0 9 1 */3 *"
     required: true
   - name: "JOB_SERVICE_ACCOUNT"
     displayName: "Service Account Name"
