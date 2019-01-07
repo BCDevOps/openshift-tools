@@ -37,11 +37,12 @@ objects:
       ${NOOP} oc env -n default dc/docker-registry 'REGISTRY_STORAGE_MAINTENANCE_READONLY={"enabled":true}'
       # (if required: oc rollout latest dc/docker-registry -n default)
       oc rollout status dc/docker-registry -n default
-      oc -n default exec -i -t "$(oc -n default get pods -l deploymentconfig=docker-registry \
-        -o jsonpath=$'{.items[0].metadata.name}\n')" \
+      oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
+        -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
         -- /usr/bin/dockerregistry -prune=check 2>&1 | tee ${LOGDIR}/${DATESTAMP}-hardprune-check.log
-      ${NOOP} oc -n default exec -i -t "$(oc -n default get pods -l deploymentconfig=docker-registry \
-        -o jsonpath=$'{.items[0].metadata.name}\n')" -- /usr/bin/dockerregistry -prune=delete
+      ${NOOP} oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
+        -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
+        -- /usr/bin/dockerregistry -prune=delete
       # Switch registry back to read-write mode
       ${NOOP} oc env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY-
       oc rollout status dc/docker-registry -n default
