@@ -1,0 +1,20 @@
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: ${JOB_SOURCE_SCRIPT}
+    namespace: ${NAMESPACE}
+    labels:
+      template: "ops-cronjob"
+      cronjob: "${JOB_NAME}"
+  data:
+    ${JOB_SOURCE_SCRIPT}: |
+      NOOP=
+      timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
+      echo "$(timestamp): Delete old logs"
+      find /logs -type f -mtime 180 -delete
+      rc=${PIPESTATUS[0]}
+      if [ $rc -ne 0 ] ; then
+        echo "$(timestamp): Log prune failed"
+        exit $rc
+      fi
+      echo "$(timestamp): Completed"

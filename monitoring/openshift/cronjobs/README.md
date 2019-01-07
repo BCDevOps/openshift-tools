@@ -17,6 +17,10 @@ Performs a cluster prune of builds, deployments, and images before a rollout of 
 Switches the registry to Read-Only mode before connecting to one of the active docker-registry pods and running a
 docker prune to remove any unreferenced image blocks.  Once this is completed, it will switch the registry back to normal operation.
 
+## Log Rotation
+
+Runs a `find` command on the logging PVC to delete old logs.
+
 ## Setup
 
 1. Create Persistent Storage (as RWX)
@@ -24,6 +28,7 @@ docker prune to remove any unreferenced image blocks.  Once this is completed, i
 
 * [vars-registry-soft-prune.yaml](vars-registry-soft-prune.yaml)
 * [vars-registry-hard-prune.yaml](vars-registry-hard-prune.yaml)
+* [vars-log-rotation.yaml](vars-log-rotation.yaml)
 
 3. Run the included bash script that processes and creates the required objects.
 
