@@ -10,26 +10,19 @@ objects:
   data:
     ${JOB_SOURCE_SCRIPT}: |
       NOOP=echo
-      DATESTAMP=`date +%Y%m%d_%H%M%S`
-      LOGDIR='/mnt/registry-hard-prune'
-      mkdir -p ${LOGDIR}
       timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
-      echo "Cleanup old logs"
-      find ${LOGDIR} -type f -mtime +180 -delete
       PRUNE_OPTIONS="${PRUNE_KEEP} --loglevel=4"
       # perform basic prune (do not trigger rollout as that will occur with readonly mode change)
       # Prune
       echo "$(timestamp): oc adm prune images ${PRUNE_OPTIONS}"
-      oc adm prune images ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-dryrun.log
+      oc adm prune images ${PRUNE_OPTIONS}
       rc=${PIPESTATUS[0]}
-      gzip ${LOGDIR}/${DATESTAMP}-image-dryrun.log -f
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Dry-Run Prune failed, aborting..."
       fi
       echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
-      ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-prune.log
+      ${NOOP} oc adm prune images ${PRUNE_OPTIONS}
       rc=${PIPESTATUS[0]}
-      gzip ${LOGDIR}/${DATESTAMP}-image-prune.log -f
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Prune failed, aborting..."
         exit $rc;
@@ -41,12 +34,10 @@ objects:
       oc rollout status dc/docker-registry -n default
       oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
         -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
-        -- /usr/bin/dockerregistry -prune=check 2>&1 | tee ${LOGDIR}/${DATESTAMP}-hardprune-check.log
-      gzip ${LOGDIR}/${DATESTAMP}-hardprune-check.log -f
+        -- /usr/bin/dockerregistry -prune=check
       ${NOOP} oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
         -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
-        -- /usr/bin/dockerregistry -prune=delete 2>&1 | tee ${LOGDIR}/${DATESTAMP}-hardprune-delete.log
-      gzip ${LOGDIR}/${DATESTAMP}-hardprune-delete.log -f
+        -- /usr/bin/dockerregistry -prune=delete
       # Switch registry back to read-write mode
       ${NOOP} oc env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY-
       oc rollout status dc/docker-registry -n default
