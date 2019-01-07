@@ -13,6 +13,8 @@
       LOGDIR='/mnt/oc-prune'
       mkdir -p ${LOGDIR}
       timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
+      echo "Cleanup old logs"
+      find ${LOGDIR} -type f -mtime +180 -delete
       PRUNE_OPTIONS="${PRUNE_KEEP} --loglevel=4"
       ## Build Prune
       echo "$(timestamp): oc adm prune builds --orphans ${PRUNE_OPTIONS}"
