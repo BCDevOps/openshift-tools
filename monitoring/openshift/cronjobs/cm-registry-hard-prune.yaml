@@ -22,7 +22,7 @@ objects:
         echo "$(timestamp): Dry-Run Prune failed, aborting..."
       fi
       echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
-      ${NOOP} oc adm prune images ${PRUNE_OPTIONS}
+      ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm
       rc=${PIPESTATUS[0]}
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Prune failed, aborting..."
