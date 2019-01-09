@@ -9,27 +9,22 @@ objects:
       cronjob: "${JOB_NAME}"
   data:
     ${JOB_SOURCE_SCRIPT}: |
+      #!/usr/bin/env bash
       NOOP=echo
-      DATESTAMP=`date +%Y%m%d_%H%M%S`
-      LOGDIR='/mnt/registry-hard-prune'
-      mkdir -p ${LOGDIR}
       timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
-      echo "Cleanup old logs"
-      find ${LOGDIR} -type f -mtime +180 -delete
       PRUNE_OPTIONS="${PRUNE_KEEP} --loglevel=4"
       # perform basic prune (do not trigger rollout as that will occur with readonly mode change)
       # Prune
       echo "$(timestamp): oc adm prune images ${PRUNE_OPTIONS}"
-      oc adm prune images ${PRUNE_OPTIONS} 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-dryrun.log
-      rc=${PIPESTATUS[0]}
-      gzip ${LOGDIR}/${DATESTAMP}-image-dryrun.log -f
+      oc adm prune images ${PRUNE_OPTIONS}
+      rc=$?
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Dry-Run Prune failed, aborting..."
+        exit $rc
       fi
       echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
-      ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm 2>&1 | tee ${LOGDIR}/${DATESTAMP}-image-prune.log
-      rc=${PIPESTATUS[0]}
-      gzip ${LOGDIR}/${DATESTAMP}-image-prune.log -f
+      ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm
+      rc=$?
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Prune failed, aborting..."
         exit $rc;
@@ -39,14 +34,22 @@ objects:
       ${NOOP} oc env -n default dc/docker-registry 'REGISTRY_STORAGE_MAINTENANCE_READONLY={"enabled":true}'
       # (if required: oc rollout latest dc/docker-registry -n default)
       oc rollout status dc/docker-registry -n default
+      sleep 5 # rollout may have some pods still spinning up
+      echo $(timestamp)
       oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
         -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
-        -- /usr/bin/dockerregistry -prune=check 2>&1 | tee ${LOGDIR}/${DATESTAMP}-hardprune-check.log
-      gzip ${LOGDIR}/${DATESTAMP}-hardprune-check.log -f
-      ${NOOP} oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
-        -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
-        -- /usr/bin/dockerregistry -prune=delete 2>&1 | tee ${LOGDIR}/${DATESTAMP}-hardprune-delete.log
-      gzip ${LOGDIR}/${DATESTAMP}-hardprune-delete.log -f
+        -- /usr/bin/dockerregistry -prune=check
+      rc=$?
+      echo $(timestamp)
+      if [ $rc -eq 0 ] ; then
+        ${NOOP} oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
+          -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
+          -- /usr/bin/dockerregistry -prune=delete
+          rc=$?
+      else
+        echo "$(timestamp): Hard prune check failed, skipping prune delete"
+      fi
+      echo $(timestamp)
       # Switch registry back to read-write mode
       ${NOOP} oc env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY-
-      oc rollout status dc/docker-registry -n default
+      oc rollout status dc/docker-registry -n default && exit $rc
