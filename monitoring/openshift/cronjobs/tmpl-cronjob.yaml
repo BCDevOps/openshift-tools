@@ -26,7 +26,7 @@
                 command:
                   - /bin/bash
                   - -c
-                  - /etc/config/${JOB_SOURCE_SCRIPT} 2>&1 | tee >(gzip >/logs/$(date +%Y%m%d_%H%M%S)-${JOB_NAME}.gz); sync;
+                  - /etc/config/${JOB_SOURCE_SCRIPT} 2>&1 | tee >(gzip >/logs/$(date +%Y%m%d_%H%M%S)-${JOB_NAME}.gz); rc=${PIPESTATUS[0]}; sync; exit $rc;
                 volumeMounts:
                   - mountPath: "/etc/config"
                     name: "job-cm-script"
