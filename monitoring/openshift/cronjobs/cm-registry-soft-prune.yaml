@@ -48,6 +48,7 @@
       rc=${PIPESTATUS[0]}
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Dry-Run Prune failed, aborting..."
+        exit $rc
       fi
       echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
       ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm
