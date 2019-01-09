@@ -796,29 +796,47 @@ do
   done
 
   # Check Peer Status
-  echo -n "$(datestamp) Confirm CNS pod ${POD} sees two connected peers: "
+  echo -n "$(datestamp) Confirm CNS pod ${POD} sees three connected peers: "
   PEERS=$(oc exec -n cns ${POD} -- gluster peer status | grep 'State: Peer in Cluster (Connected)' | wc -l)
   echo $PEERS
-  if [ "${PEERS}" -lt 2 ]
+  if [ "${PEERS}" -lt 3 ]
   then
     MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} not connected to peers")
     echo -e "${MSG}"
     MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster peer status)"
     echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for CNS peer check on pod ${POD}" $MAILFROM ${MAILTO}
+  elif [ "${PEERS}" -lt 2 ]
+  then
+    MSG=$(echo "$(datestamp) ERROR: CNS pod ${POD} not connected to peers")
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster peer status)"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for CNS peer check on pod ${POD}" $MAILFROM ${MAILTO}
   else
     echo "$(datestamp) INFO: CNS pod ${POD} can see all peers"
   fi
 
   # Check Pool List
-  echo -n "$(datestamp) Confirm CNS pod ${POD} sees 3 pool members: "
+  echo -n "$(datestamp) Confirm CNS pod ${POD} sees 4 pool members: "
   POOLS=$(oc exec -n cns ${POD} -- gluster pool list | grep Connected | wc -l)
   echo ${POOLS}
-  if [ "${POOLS}" -lt 3 ]
+  if [ "${POOLS}" -lt 4 ]
   then
-    MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} not connected to pool members")
+    MSG=$(echo "$(datestamp) WARN: CNS pod ${POD} not connected to all pool members")
     echo -e "${MSG}"
     MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster pool list)"
     echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for CNS pool check on pod ${POD}" $MAILFROM ${MAILTO}
+  elif [ "${POOLS}" -lt 3 ]
+  then
+    MSG=$(echo "$(datestamp) ERROR: CNS pod ${POD} not connected to all pool members")
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster pool list)"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for CNS pool check on pod ${POD}" $MAILFROM ${MAILTO}
+  elif [ "${POOLS}" -lt 2 ]
+  then
+    MSG=$(echo "$(datestamp) CRITICAL ERROR: CNS pod ${POD} not connected to all pool members")
+    echo -e "${MSG}"
+    MSG="${MSG}\n$(oc exec -n cns ${POD} -- gluster pool list)"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} CRITICAL ERROR event for CNS pool check on pod ${POD}" $MAILFROM ${MAILTO}
   else
     echo "$(datestamp) INFO: CNS pod ${POD} is connected to all pool members"
   fi
