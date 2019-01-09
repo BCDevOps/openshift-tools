@@ -21,6 +21,6 @@ EMAIL_ENV="{{ email_env }}"
 # Run the image prune
 if ! /bin/docker image prune --all --force 2>&1 | tee /var/log/docker-cache-cleanup.log
 then
-  cat /var/log/docker-cache-cleanup.log | mail -s "${EMAIL_ENV} ERROR - Docker image prune failed!!" $MAILFROM $MAILTO
+  cat /var/log/docker-cache-cleanup.log | mail -s "${EMAIL_ENV} ERROR - $(hostname) Docker image prune failed!!" $MAILFROM $MAILTO
   exit 1
 fi
