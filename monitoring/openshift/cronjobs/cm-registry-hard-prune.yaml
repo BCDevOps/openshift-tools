@@ -34,6 +34,7 @@ objects:
       ${NOOP} oc env -n default dc/docker-registry 'REGISTRY_STORAGE_MAINTENANCE_READONLY={"enabled":true}'
       # (if required: oc rollout latest dc/docker-registry -n default)
       oc rollout status dc/docker-registry -n default
+      sleep 5 # rollout may have some pods still spinning up
       echo $(timestamp)
       oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
         -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
