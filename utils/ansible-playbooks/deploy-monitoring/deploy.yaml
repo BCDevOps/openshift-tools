@@ -67,6 +67,12 @@
         mode: 0700
       when: ansible_fqdn == primary_master
 
+    - name: Docker cleanup script
+      template:
+        src: templates/docker-cache-cleanup.j2
+        dest: /usr/local/bin/docker-cache-cleanup
+        mode: 0700
+
     - name: OCP Monitor Ccron
       cron:
         name: OCP Monitor
@@ -87,3 +93,13 @@
         weekday: '{{ cron_weekday | default(omit) }}'
         job: /usr/local/bin/cert-monitor >/dev/null 2>&1
       when: ansible_fqdn == primary_master
+
+    - name: Docker Cleanup Ccron
+      cron:
+        name: Docker Cleanup
+        cron_file: /etc/cron.d/docker-cleanup
+        user: root
+        minute: "0"
+        hour: '0'
+        weekday: 'Tue'
+        job: /usr/local/bin/docker-cache-cleanup
