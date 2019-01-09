@@ -17,14 +17,14 @@ objects:
       # Prune
       echo "$(timestamp): oc adm prune images ${PRUNE_OPTIONS}"
       oc adm prune images ${PRUNE_OPTIONS}
-      rc=${PIPESTATUS[0]}
+      rc=$?
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Dry-Run Prune failed, aborting..."
         exit $rc
       fi
       echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
       ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm
-      rc=${PIPESTATUS[0]}
+      rc=$?
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Prune failed, aborting..."
         exit $rc;
@@ -39,17 +39,17 @@ objects:
       oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
         -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
         -- /usr/bin/dockerregistry -prune=check
-      rc=${PIPESTATUS[0]}
+      rc=$?
       echo $(timestamp)
       if [ $rc -eq 0 ] ; then
         ${NOOP} oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
           -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
           -- /usr/bin/dockerregistry -prune=delete
+          rc=$?
       else
         echo "$(timestamp): Hard prune check failed, skipping prune delete"
-        exit $rc;
       fi
       echo $(timestamp)
       # Switch registry back to read-write mode
       ${NOOP} oc env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY-
-      oc rollout status dc/docker-registry -n default
+      oc rollout status dc/docker-registry -n default && exit $rc

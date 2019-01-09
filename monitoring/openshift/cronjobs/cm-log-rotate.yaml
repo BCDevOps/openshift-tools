@@ -13,7 +13,7 @@
       timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
       echo "$(timestamp): Delete old logs"
       find /logs -type f -mtime 180 -delete
-      rc=${PIPESTATUS[0]}
+      rc=$?
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Log prune failed"
         exit $rc
