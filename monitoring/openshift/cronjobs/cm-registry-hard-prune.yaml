@@ -16,14 +16,14 @@ objects:
       # perform basic prune (do not trigger rollout as that will occur with readonly mode change)
       # Prune
       echo "$(timestamp): oc adm prune images ${PRUNE_OPTIONS}"
-      oc adm prune images ${PRUNE_OPTIONS}
+      oc adm prune images --force-insecure ${PRUNE_OPTIONS}
       rc=$?
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Dry-Run Prune failed, aborting..."
         exit $rc
       fi
       echo "$(timestamp) oc adm prune images ${PRUNE_OPTIONS} --confirm"
-      ${NOOP} oc adm prune images ${PRUNE_OPTIONS} --confirm
+      ${NOOP} oc adm prune images --force-insecure ${PRUNE_OPTIONS} --confirm
       rc=$?
       if [ $rc -ne 0 ] ; then
         echo "$(timestamp): Prune failed, aborting..."
