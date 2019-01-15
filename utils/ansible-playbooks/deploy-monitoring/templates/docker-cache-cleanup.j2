@@ -19,7 +19,7 @@ MAILFROM="-r hslinuxteam@dxcas.com"
 EMAIL_ENV="{{ email_env }}"
 
 # Run the image prune
-if ! /bin/docker image prune --all --force 2>&1 | tee /var/log/docker-cache-cleanup.log
+if ! /bin/docker image prune --all --force 2>&1 >/var/log/docker-cache-cleanup.log
 then
   cat /var/log/docker-cache-cleanup.log | mail -s "${EMAIL_ENV} ERROR - $(hostname) Docker image prune failed!!" $MAILFROM $MAILTO
   exit 1
