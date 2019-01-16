@@ -44,8 +44,8 @@
                 persistentVolumeClaim:
                   claimName: "${JOB_PERSISTENT_STORAGE_NAME}"
             restartPolicy: "Never"
-            terminationGracePeriodSeconds: 30
-            activeDeadlineSeconds: 1600
+            terminationGracePeriodSeconds: ${{JOB_GRACE_PERIOD}}
+            activeDeadlineSeconds: ${{JOB_ACTIVE_DEADLINE}}
             dnsPolicy: "ClusterFirst"
             serviceAccountName: "${JOB_SERVICE_ACCOUNT}"
             serviceAccount: "${JOB_SERVICE_ACCOUNT}"
