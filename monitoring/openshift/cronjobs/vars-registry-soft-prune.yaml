@@ -21,7 +21,7 @@ parameters:
   - name: "JOB_SOURCE_SCRIPT"
     displayName: "Job Source Script"
     description: "Name of the Scheduled Job's ConfigMap script to Create."
-    value: "soft-prune-script"
+    value: "soft-prune"
     required: true
   - name: "JOB_PERSISTENT_STORAGE_NAME"
     displayName: "Job Persistent Storage Name"
@@ -62,7 +62,7 @@ parameters:
   - name: "JOB_GRACE_PERIOD"
     displayName: "Job Termination Grace Period"
     description: "The amount of time to let the job attempt to exitbefore timing out annd killing it (default: 300)"
-    value: "300"
+    value: "30"
     required: true
   - name: "JOB_ACTIVE_DEADLINE"
     displayName: "Job Active Deadline"

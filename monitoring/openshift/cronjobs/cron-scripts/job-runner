@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Exit on error. Append "|| true" if you expect an error.
+set -o errexit
+# Exit on error inside any functions or subshells.
+set -o errtrace
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
+set -o nounset
+# Catch the error in case mysqldump fails (but gzip succeeds) in `mysqldump |gzip`
+set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
+
+# Safely exit if timed out
+function safe_exit () { 
+  trap '' INT TERM # ignore INT and TERM while shutting down
+  echo "Trapped SIGTERM in runner and cleaning up"
+  kill -TERM $BG_PID # Kill backgrounded script
+  wait $BG_PID # Wait for it to exit
+  kill -TERM 0 # Kill all other pids
+  wait # wait for all children to die
+  exit 1
+}
+
+trap safe_exit SIGTERM
+
+# Check for passed in script
+if [[ -z "${1:-}" ]]
+then
+  echo "Missing argument of script to run"
+  exit 1
+fi
+
+# Confirm it is executable
+if [[ ! -f "${1}" ]] || [[ ! -x "${1}" ]]
+then
+  echo "${1} is missing or not executable"
+  exit 1
+fi
+
+LOGFILE="/data/$(date +%Y%m%d_%H%M%S)-$(basename ${1}).log"
+
+# Run the script
+# Capture both STDOUT and STDERR
+# Tee into log file
+# Background the process and capture the PID in case we need to trap
+$1 2>&1 | tee "${LOGFILE}" &
+BG_PID=`jobs -p`
+# wait for job to finish, wait is interuptible by SIGTERM
+wait $BG_PID
+
+# Zip up the log if we've completed successfully
+gzip "${LOGFILE}"

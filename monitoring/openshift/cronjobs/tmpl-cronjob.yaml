@@ -24,22 +24,18 @@
               - name: "${JOB_NAME}"
                 image: "openshift3/ose-cli:v3.11.59"
                 command:
-                  - /bin/bash
-                  - -c
-                  - /etc/config/${JOB_SOURCE_SCRIPT} 2>&1 | tee >(gzip >/logs/$(date +%Y%m%d_%H%M%S)-${JOB_NAME}.gz); rc=${PIPESTATUS[0]}; sync; exit $rc;
+                  - /scripts/job-runner
+                  - /scripts/${JOB_SOURCE_SCRIPT}
                 volumeMounts:
-                  - mountPath: "/etc/config"
-                    name: "job-cm-script"
+                  - mountPath: "/scripts"
+                    name: "job-cm-scripts"
                   - mountPath: "/logs"
                     name: "cronjob-log-volume"
             volumes:
-              - name: job-cm-script
+              - name: job-cm-scripts
                 configMap:
-                  items:
-                    - key: ${JOB_SOURCE_SCRIPT}
-                      path: ${JOB_SOURCE_SCRIPT}
                   name: ${JOB_SOURCE_SCRIPT}
-                  defaultMode: 0777
+                  defaultMode: 0511
               - name: cronjob-log-volume
                 persistentVolumeClaim:
                   claimName: "${JOB_PERSISTENT_STORAGE_NAME}"

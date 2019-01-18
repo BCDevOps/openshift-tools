@@ -21,7 +21,7 @@ parameters:
   - name: "JOB_SOURCE_SCRIPT"
     displayName: "Job Source Script"
     description: "Name of the Scheduled Job's ConfigMap script to Create."
-    value: "hard-prune-script"
+    value: "hard-prune"
     required: true
   - name: "JOB_PERSISTENT_STORAGE_NAME"
     displayName: "Job Persistent Storage Name"
@@ -66,7 +66,7 @@ parameters:
     required: true
   - name: "JOB_ACTIVE_DEADLINE"
     displayName: "Job Active Deadline"
-    description: "The amount of time to let the job run before timing out and killing it (default: 14400)"
-    value: "14400"
+    description: "The amount of time to let the job run before timing out and killing it (default: 10800)"
+    value: "10800"
     required: true
 objects:

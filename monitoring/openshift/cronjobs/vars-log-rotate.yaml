@@ -54,4 +54,14 @@ parameters:
     description: "The number of attempts to try for a successful job outcome (default: 6)"
     value: "0"
     required: false
+  - name: "JOB_GRACE_PERIOD"
+    displayName: "Job Termination Grace Period"
+    description: "The amount of time to let the job attempt to exitbefore timing out annd killing it (default: 300)"
+    value: "30"
+    required: true
+  - name: "JOB_ACTIVE_DEADLINE"
+    displayName: "Job Active Deadline"
+    description: "The amount of time to let the job run before timing out and killing it (default: 3600)"
+    value: "3600"
+    required: true
 objects:
