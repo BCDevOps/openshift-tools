@@ -11,7 +11,7 @@ set -o pipefail
 # set -o xtrace
 
 # Safely exit if timed out
-function safe_exit () { 
+function safe_exit () {
   trap '' INT TERM # ignore INT and TERM while shutting down
   echo "Trapped SIGTERM in runner and cleaning up"
   kill -TERM $BG_PID # Kill backgrounded script
