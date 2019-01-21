@@ -33,7 +33,10 @@ oc set env -n default dc/docker-registry 'REGISTRY_STORAGE_MAINTENANCE_READONLY=
 oc rollout status dc/docker-registry -n default &
 BG_PID=`jobs -p`
 wait $BG_PID
-sleep 600 # rollout may have some pods still spinning up
+echo "Sleeping to allow rollout to complete"
+sleep 60 &
+BG_PID=`jobs -p`
+wait $BG_PID
 
 echo $(timestamp)
 oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
