@@ -3,7 +3,7 @@
 
 # Create config map of scripts
 oc create --save-config -o yaml --dry-run configmap cron-scripts --from-file=cron-scripts/ | oc apply -f -
-oc label cm cron-scripts template=ops-cronjob
+oc label cm cron-scripts template=ops-cronjob --overwrite
 
 # install log rotate script, cronjob, service account
 cat vars-log-rotate.yaml tmpl-cronjob.yaml tmpl-service-accounts.yaml \
