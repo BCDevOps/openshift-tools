@@ -34,7 +34,7 @@
             volumes:
               - name: job-cm-scripts
                 configMap:
-                  name: ${JOB_SOURCE_SCRIPT}
+                  name: cron-scripts
                   defaultMode: 0511
               - name: cronjob-log-volume
                 persistentVolumeClaim:
