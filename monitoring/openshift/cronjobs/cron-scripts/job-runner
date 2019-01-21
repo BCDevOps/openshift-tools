@@ -37,7 +37,7 @@ then
   exit 1
 fi
 
-LOGFILE="/data/$(date +%Y%m%d_%H%M%S)-$(basename ${1}).log"
+LOGFILE="/logs/$(date +%Y%m%d_%H%M%S)-$(basename ${1}).log"
 
 # Run the script
 # Capture both STDOUT and STDERR
