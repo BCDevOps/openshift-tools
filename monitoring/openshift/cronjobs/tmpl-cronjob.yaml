@@ -23,6 +23,7 @@
             containers:
               - name: "${JOB_NAME}"
                 image: "docker-registry.default.svc:5000/${NAMESPACE}/job-runner:latest"
+                imagePullPolicy: Always
                 args:
                   - /scripts/${JOB_SOURCE_SCRIPT}
                 volumeMounts:
