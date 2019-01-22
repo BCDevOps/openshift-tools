@@ -22,20 +22,13 @@
           spec:
             containers:
               - name: "${JOB_NAME}"
-                image: "openshift3/ose-cli:v3.11.59"
-                command:
-                  - /scripts/job-runner
+                image: "docker-registry.default.svc:5000/${NAMESPACE}/job-runner:latest"
+                args:
                   - /scripts/${JOB_SOURCE_SCRIPT}
                 volumeMounts:
-                  - mountPath: "/scripts"
-                    name: "job-cm-scripts"
                   - mountPath: "/logs"
                     name: "cronjob-log-volume"
             volumes:
-              - name: job-cm-scripts
-                configMap:
-                  name: cron-scripts
-                  defaultMode: 0511
               - name: cronjob-log-volume
                 persistentVolumeClaim:
                   claimName: "${JOB_PERSISTENT_STORAGE_NAME}"
