@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# Exit on error. Append "|| true" if you expect an error.
+set -o errexit
+# Exit on error inside any functions or subshells.
+set -o errtrace
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
+set -o nounset
+# Catch the error in case mysqldump fails (but gzip succeeds) in `mysqldump |gzip`
+set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
+
+# Safely exit if timed out
+function safe_exit () {
+  trap '' INT TERM # ignore INT and TERM while shutting down
+  echo "Trapped SIGTERM in script and cleaning up"
+  kill -TERM $BG_PID # Kill backgrounded script
+  wait $BG_PID # Wait for it to exit
+  oc set env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY-
+  oc rollout status dc/docker-registry -n default
+  exit 1
+}
+
+trap safe_exit SIGTERM
+
+timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
+PRUNE_OPTIONS="--keep-younger-than=96h --loglevel=4"
+
+echo $(timestamp)
+# switch registry to read-only mode (will trigger a redeploy)
+oc set env -n default dc/docker-registry 'REGISTRY_STORAGE_MAINTENANCE_READONLY={"enabled":true}'
+# oc rollout latest dc/docker-registry -n default
+oc rollout status dc/docker-registry -n default &
+BG_PID=`jobs -p`
+wait $BG_PID
+echo "Sleeping to allow rollout to complete"
+sleep 60 &
+BG_PID=`jobs -p`
+wait $BG_PID
+
+echo $(timestamp)
+oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
+  -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
+  -- /usr/bin/dockerregistry -prune=check &
+BG_PID=`jobs -p`
+wait $BG_PID
+rc=$?
+
+echo $(timestamp)
+if [ $rc -eq 0 ] ; then
+  oc -n default exec "$(oc -n default get pods -l deploymentconfig=docker-registry \
+    -o jsonpath=$'{.items[?(.status.phase=="Running")].metadata.name}'| cut -d " " -f1)" \
+    -- /usr/bin/dockerregistry -prune=delete &
+    BG_PID=`jobs -p`
+    wait $BG_PID
+    rc=$?
+else
+  echo "$(timestamp): Hard prune check failed, skipping prune delete"
+fi
+
+echo $(timestamp)
+# Switch registry back to read-write mode
+oc set env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY-
+oc rollout status dc/docker-registry -n default && exit $rc

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Exit on error. Append "|| true" if you expect an error.
+set -o errexit
+# Exit on error inside any functions or subshells.
+set -o errtrace
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
+set -o nounset
+# Catch the error in case mysqldump fails (but gzip succeeds) in `mysqldump |gzip`
+set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
+
+# Safely exit if timed out
+function safe_exit () {
+  trap '' INT TERM # ignore INT and TERM while shutting down
+  echo "Trapped SIGTERM in script and cleaning up"
+  kill -TERM $BG_PID # Kill backgrounded script
+  wait $BG_PID # Wait for it to exit
+  exit 1
+}
+
+trap safe_exit SIGTERM
+
+timestamp() { date +"%Y-%m-%d %H:%M:%S %Z"; }
+echo "$(timestamp): Delete old logs"
+find /logs -type f -mtime 180 -delete &
+BG_PID=`jobs -p`
+wait $BG_PID
+rc=$?
+if [ $rc -ne 0 ] ; then
+  echo "$(timestamp): Log prune failed"
+  exit $rc
+fi
+echo "$(timestamp): Completed"
