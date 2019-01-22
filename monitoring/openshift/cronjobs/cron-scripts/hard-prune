@@ -13,12 +13,17 @@ set -o pipefail
 # Safely exit if timed out
 function safe_exit () {
   trap '' INT TERM # ignore INT and TERM while shutting down
+  # Turn off all the safeties
+  set +o errexit
+  set +o errtrace
+  set +o nounset
+  set +o pipefail
   echo "Trapped SIGTERM in script and cleaning up PID ${BG_PID}"
   ps -up $BG_PID
-  kill -TERM $BG_PID || echo "Kill RC=$?" # Kill backgrounded script
-  wait $BG_PID || echo "Wait RC=$?" # Wait for it to exit
-  oc set env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY- || echo "oc env RC=$?"
-  oc rollout status dc/docker-registry -n default || echo "rollout RC=$?"
+  kill -TERM $BG_PID # Kill backgrounded script
+  wait $BG_PID # Wait for it to exit
+  oc set env -n default dc/docker-registry REGISTRY_STORAGE_MAINTENANCE_READONLY-
+  oc rollout status dc/docker-registry -n default
   exit 1
 }
 
