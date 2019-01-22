@@ -6,7 +6,6 @@ Performs a cluster prune of builds, deployments, and images before a rollout of 
 
 ### Object Requirements
 
-* configmap - ${JOB_SOURCE_SCRIPT}
 * cronjob - ${JOB_NAME}
 * serviceAccount: ${JOB_SERVICE_ACCOUNT}
 * RBAC: ClusterRoleBinding for cluster-admin to ${JOB_SERVICE_ACCOUNT}

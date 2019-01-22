@@ -20,7 +20,7 @@ parameters:
     required: true
   - name: "JOB_SOURCE_SCRIPT"
     displayName: "Job Source Script"
-    description: "Name of the Scheduled Job's ConfigMap script to Create."
+    description: "Name of the Scheduled Job's script to run."
     value: "log-rotate"
     required: true
   - name: "JOB_PERSISTENT_STORAGE_NAME"
