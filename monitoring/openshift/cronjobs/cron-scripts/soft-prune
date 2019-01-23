@@ -13,6 +13,11 @@ set -o pipefail
 # Safely exit if timed out
 function safe_exit () {
   trap '' INT TERM # ignore INT and TERM while shutting down
+  # Turn off all the safeties
+  set +o errexit
+  set +o errtrace
+  set +o nounset
+  set +o pipefail
   echo "Trapped SIGTERM in script and cleaning up"
   kill -TERM $BG_PID # Kill backgrounded script
   wait $BG_PID # Wait for it to exit
