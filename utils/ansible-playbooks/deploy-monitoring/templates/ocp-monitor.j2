@@ -1231,3 +1231,17 @@ else
   echo -e "${MSG}"
 fi
 
+# Check filesystem disk space for /var/lib/docker, alert if over 80% full
+
+echo -e "$(datestamp) Testing /var/lib/docker disk usage: "
+SPACE=$(df /var/lib/docker | awk '/docker/ {print $5}' | tr -d "%")
+FREE=$(echo 100 '-' $SPACE '>' 20 | bc -l)
+if [ "$FREE" -lt 1 ]
+then
+  MSG=$(echo "$(datestamp) ERROR: Low Disk Space in /var/lib/docker - $(echo 100 '-' $SPACE | bc -l)% free")
+  echo -e "${MSG}"
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Docker Container Space on `hostname`" $MAILFROM $MAILTO
+else
+  MSG=$(echo "$(datestamp) INFO: Sufficient Disk Space in /var/lib/docker - $(echo 100 '-' $SPACE | bc -l)% free")
+  echo -e "${MSG}"
+fi
