@@ -73,6 +73,13 @@
         dest: /usr/local/bin/docker-cache-cleanup
         mode: 0700
 
+    - name: Cron Monitor script
+      template:
+        src: templates/cron-monitor.j2
+        dest: /usr/local/bin/cron-monitor
+        mode: 0700
+      when: ansible_fqdn == primary_master
+
     - name: OCP Monitor Ccron
       cron:
         name: OCP Monitor
@@ -103,3 +110,14 @@
         hour: '0'
         weekday: 'Tue'
         job: /usr/local/bin/docker-cache-cleanup
+
+    - name: CronJob Monitor Ccron
+      cron:
+        name: Cron Monitor
+        cron_file: /etc/cron.d/ocp-cron-monitor
+        user: root
+        minute: "0"
+        hour: "9"
+        weekday: '{{ cron_weekday | default(omit) }}'
+        job: /usr/local/bin/cron-monitor >/dev/null 2>&1
+      when: ansible_fqdn == primary_master
