@@ -14,6 +14,7 @@ set -o pipefail
 # Global variables re-used through the script.
 MSG=""
 MAILTO="William.Hutchison@dxcas.com Steven.Barre@dxcas.com Dan.Deane@dxcas.com bcdevex@arctiq.ca Shea.Phillips@gov.bc.ca"
+#MAILTO="William.Hutchison@dxcas.com Steven.Barre@dxcas.com"
 MAILFROM="-r hslinuxteam@dxcas.com"
 
 # Define defaults for Curl
@@ -326,6 +327,31 @@ else
   MSG=$(echo "$(datestamp) INFO: Metrics Cassandra Space - $(echo 100 '-' $SPACE | bc -l)% free")
   echo -e "${MSG}"
 fi
+
+# Checks on disk space for Prometheus pods
+# WARNFREE calculates WARN threshold to be 75% or higher
+# ERRORFREE calculates ERROR threshold to be 85% or higher
+echo "$(datestamp) Prometheus Pod Disk Space Checks: "
+for POD in $(oc -n openshift-monitoring get pods --selector "prometheus=k8s" --no-headers -o=custom-columns=NAME:.metadata.name)
+do
+  SPACE=$(oc -n openshift-monitoring -c prometheus exec $POD -- sh -c 'echo "$(df /prometheus | awk '\''/prometheus/ {print $5}'\'' | tr -d "%")"')
+  WARNFREE=$(echo 100 '-' $SPACE '>' 25 | bc -l)
+  ERRORFREE=$(echo 100 '-' $SPACE '>' 15 | bc -l)
+  if [ "$ERRORFREE" -lt 1 ]
+  then
+    MSG=$(echo "$(datestamp) ERROR: Low Prometheus Disk Space on pod $POD - $(echo 100 '-' $SPACE | bc -l)% free")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} ERROR event for Prometheus Disk Space on pod $POD" $MAILFROM $MAILTO
+  elif [ "$WARNFREE" -lt 1 ]
+  then
+    MSG=$(echo "$(datestamp) WARN: Low Prometheus Disk Space on pod $POD - $(echo 100 '-' $SPACE | bc -l)% free")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for Prometheus Disk Space on pod $POD" $MAILFROM $MAILTO
+  else
+    MSG=$(echo "$(datestamp) INFO: Prometheus Disk Space on pod $POD - $(echo 100 '-' $SPACE | bc -l)% free")
+    echo -e "${MSG}"
+  fi
+done
 
 {% raw %}
 # Check that all nodes are Ready
