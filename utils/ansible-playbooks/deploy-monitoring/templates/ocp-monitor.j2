@@ -1194,7 +1194,7 @@ if STATUS=$(cd / && ls -lht $(/sbin/sysctl kernel.core_pattern | awk '{print $3}
 then
   MSG=$(echo -e "$(datestamp) WARN: Core files found\n${STATUS}")
   echo -e "${MSG}"
-  echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for Core File Check on `hostname`" $MAILFROM $MAILTOINTERNA
+  echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for Core File Check on `hostname`" $MAILFROM $MAILTOINTERNAL
 fi
 
 # Check and return applicable PIDs matching docker-containerd-current. If nothing is returned, then it may have been killed off.
