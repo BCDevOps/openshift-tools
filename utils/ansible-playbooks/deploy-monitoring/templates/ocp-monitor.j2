@@ -42,6 +42,9 @@ MEM_CAPACITY_THRESHOLD=85
 POD_CAPACITY_THRESHOLD=85
 GLUSTER_POD_THRESHOLD=50
 
+# variables related to core dumps
+CORE_CATCHALL_DIRECTORY="/advsol/unassigned_cores/"
+
 {% raw %}
 # Print a backtrace on error
 # https://github.com/ab/bin/blob/master/bash-backtrace.sh
@@ -1194,6 +1197,14 @@ if STATUS=$(cd / && ls -lht $(/sbin/sysctl kernel.core_pattern | awk '{print $3}
 then
   MSG=$(echo -e "$(datestamp) WARN: Core files found\n${STATUS}")
   echo -e "${MSG}"
+  if [ ! -d ${CORE_CATCHALL_DIRECTORY} ]; then
+    mkdir -p ${CORE_CATCHALL_DIRECTORY}
+  fi
+  COREFILELIST=$(find -L $(/sbin/sysctl kernel.core_pattern | awk '{print $3}' | sed 's/\/core$//g') -name "core*" -type f)
+  for EACHCOREFILE in $COREFILELIST; do
+    mv ${EACHCOREFILE} ${CORE_CATCHALL_DIRECTORY}
+    MSG="${MSG}\n$(echo "$(datestamp) INFO: Moved core dump file ${EACHCOREFILE} into ${CORE_CATCHALL_DIRECTORY}")"
+  done
   echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for Core File Check on `hostname`" $MAILFROM $MAILTOINTERNAL
 fi
 
