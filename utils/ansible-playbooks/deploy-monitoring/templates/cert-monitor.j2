@@ -19,7 +19,7 @@ MAILFROM="-r hslinuxteam@dxcas.com"
 EMAIL_ENV="{{ email_env }}"
 
 # Run the playbook
-if ! PLAYBOOK_RUN=$(/usr/bin/ansible-playbook /usr/local/bin/certificate_expiry/default.yaml 2>&1)
+if ! PLAYBOOK_RUN=$(/usr/bin/ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/openshift-checks/certificate_expiry/default.yaml 2>&1)
 then
   echo -e "${PLAYBOOK_RUN}" | mail -a /tmp/cert-expiry-report.html -s "${EMAIL_ENV} ERROR - Cert Monitor Playbook Failed!" $MAILFROM $MAILTO
   exit 1
