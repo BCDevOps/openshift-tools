@@ -338,8 +338,8 @@ echo "$(datestamp) Prometheus Pod Disk Space Checks: "
 for POD in $(oc -n openshift-monitoring get pods --selector "prometheus=k8s" --no-headers -o=custom-columns=NAME:.metadata.name)
 do
   SPACE=$(oc -n openshift-monitoring -c prometheus exec $POD -- sh -c 'echo "$(df /prometheus | awk '\''/prometheus/ {print $5}'\'' | tr -d "%")"')
-  WARNFREE=$(echo 100 '-' $SPACE '>' 25 | bc -l)
-  ERRORFREE=$(echo 100 '-' $SPACE '>' 15 | bc -l)
+  WARNFREE=$(echo 100 '-' $SPACE '>' 20 | bc -l)
+  ERRORFREE=$(echo 100 '-' $SPACE '>' 10 | bc -l)
   if [ "$ERRORFREE" -lt 1 ]
   then
     MSG=$(echo "$(datestamp) ERROR: Low Prometheus Disk Space on pod $POD - $(echo 100 '-' $SPACE | bc -l)% free")
