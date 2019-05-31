@@ -35,6 +35,7 @@ CPU_CAPACITY_STATE="0"
 MEM_CAPACITY_STATE="0"
 POD_CAPACITY_STATE="0"
 DOCKER_PROCESS_STATE="0"
+PVC_HEALTH_STATE="0"
 
 # capacity percentage thresholds to check for and warn/alert on.
 CPU_CAPACITY_THRESHOLD=85
@@ -155,6 +156,17 @@ function return_node_ready_count () {
 # Works on data stored in the global variable CURRENT_NODE_STATE to reduce duplication of queries to OpenShift.
 
   echo $(echo "${CURRENT_NODE_STATE}" | wc -l)
+}
+
+function during_business_hours () {
+# For now just returns a 1 while the finer details are worked out.
+#
+# day_of_week = date +%u (Monday=1, Sunday=7)
+# hour_of_day = date +%H (00 - 23)
+# valid_business_day = NOT (day_of_week = 6 or day_of_week = 7)
+# valid_hour_of_day = (hour_of_day >= 9) AND (hour_of_day <= 16)
+# currently_business_hours = valid_business_day AND valid_hour_of_day
+  echo 1
 }
 
 ## BEGIN TESTS
@@ -1089,6 +1101,72 @@ do
     echo -e "${MSG}"
   fi
 done
+
+# CHECK: look for PVCs not in a Bound state and not legacy Gluster, WARN if found during business hours
+# Stateful checks, with the following defined states:
+# - S0 = No PVC problems
+# - S1 = PVC problems during business hours
+# - S2 = PVC problems after business hours
+
+get_state pvchealth PVC_HEALTH_STATE
+
+# first perform check whether or not is business hours. Doing this once at the start to avoid weird
+# scenarios where repeated runs could hit the threshold between business hours and not business hours.
+IS_BUSINESS_DAY = $( currently_business_hours )
+
+# check for matching entries into PVC_STATUS which will mean at least one PVC needs investigation
+if ! PVC_STATUS=$(oc get pvc --all-namespaces | grep -Ev 'Bound|manual-storage|NAME' || true); then
+## Major check - no PVC issues
+
+  if [[ "${PVC_HEALTH_STATE}" -eq "0" ]]; then
+# S0 -> S0, no state change, no email notice
+    MSG=$(echo "$(datestamp) INFO: OpenShift PVCs are okay and in a Bound state")
+    echo -e "${MSG}"
+  elif [[ "${PVC_HEALTH_STATE}" -eq "1" ]]; then
+# S1 -> S0, state change, RECOVERY email notice
+    MSG=$(echo "$(datestamp) RECOVERY: OpenShift PVCs are okay and in a Bound state")
+    echo -e "${MSG}"
+    echo -e "${MSG}" | mail -s "${EMAIL_ENV} RECOVERY event for PVCCheck on `hostname`" $MAILFROM ${MAILTO}
+  elif [[ "${PVC_HEALTH_STATE}" -eq "2" ]]; then
+# S2 -> S0, state change, no email notice
+    MSG=$(echo "$(datestamp) RECOVERY: OpenShift PVCs are okay and in a Bound state")
+  fi
+else
+## Major check - PVC issues detected. Next state dependent on whether or not IS_BUSINESS_DAY is true or not.
+  if [[ ${IS_BUSINESS_DAY} ]]; then
+    if [[ "${PVC_HEALTH_STATE}" -eq "0" ]]; then
+# S0 -> S1, state change, WARN email notice
+      MSG=$(echo -e "$(datestamp) WARN: Issues found with OpenShift PVCs and listed below.\n${PVC_STATUS}")
+      echo -e "${MSG}"
+      echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for PVCCheck on `hostname`" $MAILFROM ${MAILTO}
+    elif [[ "${PVC_HEALTH_STATE}" -eq "1" ]]; then
+# S1 -> S1, no state change, WARN email notice
+      MSG=$(echo -e "$(datestamp) WARN: Issues found with OpenShift PVCs and listed below.\n${PVC_STATUS}")
+      echo -e "${MSG}"
+      echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for PVCCheck on `hostname`" $MAILFROM ${MAILTO}
+    elif [[ "${PVC_HEALTH_STATE}" -eq "2" ]]; then
+# S2 -> S1, state change, WARN email notice
+      MSG=$(echo -e "$(datestamp) WARN: Issues found with OpenShift PVCs and listed below.\n${PVC_STATUS}")
+      echo -e "${MSG}"
+      echo -e "${MSG}" | mail -s "${EMAIL_ENV} WARN event for PVCCheck on `hostname`" $MAILFROM ${MAILTO}
+    fi
+  else
+    if [[ "${PVC_HEALTH_STATE}" -eq "0" ]]; then
+# S0 -> S2, state change, no email notice
+      MSG=$(echo -e "$(datestamp) WARN: Issues found with OpenShift PVCs and listed below.\n${PVC_STATUS}")
+      echo -e "${MSG}"
+    elif [[ "${PVC_HEALTH_STATE}" -eq "1" ]]; then
+# S1 -> S2, state change, no email notice
+      MSG=$(echo -e "$(datestamp) WARN: Issues found with OpenShift PVCs and listed below.\n${PVC_STATUS}")
+      echo -e "${MSG}"
+    elif [[ "${PVC_HEALTH_STATE}" -eq "2" ]]; then
+# S2 -> S2, no state change, no email notice
+      MSG=$(echo -e "$(datestamp) WARN: Issues found with OpenShift PVCs and listed below.\n${PVC_STATUS}")
+      echo -e "${MSG}"
+    fi
+  fi
+fi
+
 
 {% endraw %}
 {% endif %}
