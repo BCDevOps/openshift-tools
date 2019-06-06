@@ -1,9 +1,0 @@
----
-- name: Exclude atomic openshift for {{ inventory_hostname }}
-  command: "{{ item }}"
-  with_items:
-    - "atomic-openshift-excluder exclude"
-    - "atomic-openshift-docker-excluder exclude"
-
-- name: Yum update {{ inventory_hostname }}
-  yum: update_cache=yes name=* state=latest skip_broken=yes

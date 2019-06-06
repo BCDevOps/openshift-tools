@@ -1,7 +1,0 @@
----
-- name: OCP Restart
-  hosts: all
-  serial: 1
-  gather_facts: no
-  roles:
-    - role: ocp-restart
