@@ -1,0 +1,23 @@
+action: "notta"
+service_account: "system:serviceaccount:openshift:bcdevops-admin"
+# ------ For project creation ------
+# six digit random string for project name
+project_name: "{{ lookup('password', '/dev/null length=6 chars=ascii_letters') | lower }}"
+# standard project set
+environments: 
+  - tools
+  - dev
+  - test
+  - prod
+# Project admin using github id
+admin_user_gh: 
+  - <github_id>
+display_name: 
+team_name: 
+product_name: 
+project_description: 
+product_lead_email: 
+product_owner_email: 
+
+# ------ Only used when deleting namespaces ------
+delete_project_name: 
