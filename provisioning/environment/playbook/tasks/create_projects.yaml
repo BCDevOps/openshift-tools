@@ -1,0 +1,36 @@
+---
+- name: Create {{ project_name }} namespace in {{ env }}
+  command: >
+    oc --as="{{ service_account }}" new-project "{{ project_name }}-{{ env }}" --display-name="{{ display_name }} ({{ env }})"
+
+- name: Add pathfinder labels
+  command: >
+    oc --as="{{ service_account }}" label namespace "{{ project_name }}-{{ env }}" "{{ item.label_name }}"="{{ item.label_value }}"
+  ignore_errors: true
+  with_items:
+    - { label_name: category, label_value: "pathfinder" }
+    - { label_name: status, label_value: "active" }
+    - { label_name: template, label_value: "default" }
+    - { label_name: environment, label_value: "{{ env }}" }
+    - { label_name: name, label_value: "{{ project_name }}" }
+    - { label_name: team, label_value: "{{ team_name }}" }
+    - { label_name: product, label_value: "{{ product_name }}" }
+
+- name: Add Project Annotations
+  command: >
+    oc --as="{{ service_account }}" annotate namespace "{{ project_name }}-{{ env }}" "{{ item.a_name }}"="{{ item.a_value }}" --overwrite=true
+  ignore_errors: true
+  with_items:
+    - { a_name: description, a_value: "{{ project_description }}" }
+    - { a_name: "openshift.io/description", a_value: "{{ project_description }}" }
+    - { a_name: "product-lead", a_value: "{{ product_lead_email }}" }
+    - { a_name: "product-owner", a_value: "{{ product_owner_email }}" }
+
+- name: Add Admin Users
+  command: > 
+    oc --as="{{ service_account }}" policy add-role-to-user admin "{{ admin_gh_username }}" -n "{{ project_name }}-{{ env }}"
+  with_items: 
+    - "{{ admin_user_gh }}"
+  loop_control: 
+    loop_var: admin_gh_username
+  ignore_errors: true
