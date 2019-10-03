@@ -1,3 +1,7 @@
+/**
+ * This script generates a CSV file of all project sets with labels from the cluster
+ */
+
 'use strict';
 
 const fs = require('fs');

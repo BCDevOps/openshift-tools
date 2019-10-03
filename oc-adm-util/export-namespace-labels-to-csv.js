@@ -1,3 +1,7 @@
+/**
+ * This script generates a CSV file of all namespaces with labels
+ */
+
 'use strict';
 
 /**
@@ -6,7 +10,7 @@ jq -r '(map(keys) | add | unique | map(select( . | startswith("openshift.io") | 
  */
 
 /**
-  * List Labels
+  * List Labels:
   jq -r 'map(keys) | add | unique | map(select( . | startswith("openshift.io") | not))' output/projects.json
   */
 

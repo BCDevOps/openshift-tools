@@ -1,3 +1,7 @@
+/**
+ * This script imports a CSV file and apply the labels to project sets
+ */
+
 'use strict';
 
 const fs = require('fs');
