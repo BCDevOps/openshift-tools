@@ -1,13 +1,22 @@
-"use strict";
+'use strict';
+
 const fs = require('fs');
-const { spawn, spawnSync } = require('child_process');
-const proc = spawnSync('oc', ['get', 'namespace', '--selector=name,environment', '--sort-by={.metadata.name}', '--output=json', '--no-headers=true'])
+const { spawnSync } = require('child_process');
+const proc = spawnSync('oc', [
+  'get',
+  'namespace',
+  '--selector=name,environment',
+  '--sort-by={.metadata.name}',
+  '--output=json',
+  '--no-headers=true'
+]);
 const namespaces = JSON.parse(proc.stdout);
 
 const products = new Map();
 const headers = new Map();
 
-function update(namespace, resource){
+function update(namespace, resource) {
+  // const annotations = resource.metadata.annotations.product-owner;
   const labels = resource.metadata.labels;
   const name = resource.metadata.labels['name'];
   const product = products.get(name) || {};
@@ -22,14 +31,16 @@ function update(namespace, resource){
   product.environments = product.environments || [];
   product.environments.push(labels.environment);
 
-  for (let label of Object.keys(labels)){
-    if (label != 'environment'){
+  for (let label of Object.keys(labels)) {
+    if (label != 'environment') {
       headers.set(label, true);
-      if (product[label] == null){
+      if (product[label] == null) {
         product[label] = labels[label];
-      }else{
-        if (product[label] != labels[label]){
-          throw new Error(`Expected '${product[label]}' but found '${labels[label]}' (namespace:${namespace}, label:'${label}')`)
+      } else {
+        if (product[label] != labels[label]) {
+          throw new Error(
+            `Expected '${product[label]}' but found '${labels[label]}' (namespace:${namespace}, label:'${label}')`
+          );
         }
       }
     }
@@ -38,32 +49,47 @@ function update(namespace, resource){
   //Object.assign(current, resource.metadata.labels);
 }
 
-for (let resource of namespaces.items){
-  console.log(`Processing ${resource.metadata.name}`)
-  update(resource.metadata.name, resource)
+for (let resource of namespaces.items) {
+  console.log(`Processing ${resource.metadata.name}`);
+  update(resource.metadata.name, resource);
 }
 
 //console.dir(headers);
 //fs.writeFileSync('products.json', JSON.stringify(Array.from(products.values())), {encoding:'utf8'});
 let colIndex = 0;
-for (let header of headers.keys()){
-  if (colIndex==0){
-    fs.writeFileSync('products.csv', `"${header}"`, {encoding:'utf8', flag:'w'});
-  }else{
-    fs.writeFileSync('products.csv', `,"${header}"`, {encoding:'utf8', flag:'a'});
+for (let header of headers.keys()) {
+  if (colIndex == 0) {
+    fs.writeFileSync('output/products.csv', `"${header}"`, {
+      encoding: 'utf8',
+      flag: 'w'
+    });
+  } else {
+    fs.writeFileSync('output/products.csv', `,"${header}"`, {
+      encoding: 'utf8',
+      flag: 'a'
+    });
   }
   colIndex++;
 }
 //fs.writeFileSync('products.csv', '\n', {encoding:'utf8'});
 
-for (let product of products.values()){
-  fs.writeFileSync('products.csv', '\n', {encoding:'utf8', flag:'a'});
-  colIndex=0;
-  for (let header of headers.keys()){
-    if (colIndex==0){
-      fs.writeFileSync('products.csv', `"${product[header] || ''}"`, {encoding:'utf8', flag:'a'});
-    }else{
-      fs.writeFileSync('products.csv', `,"${product[header] || ''}"`, {encoding:'utf8', flag:'a'});
+for (let product of products.values()) {
+  fs.writeFileSync('output/products.csv', '\n', {
+    encoding: 'utf8',
+    flag: 'a'
+  });
+  colIndex = 0;
+  for (let header of headers.keys()) {
+    if (colIndex == 0) {
+      fs.writeFileSync('output/products.csv', `"${product[header] || ''}"`, {
+        encoding: 'utf8',
+        flag: 'a'
+      });
+    } else {
+      fs.writeFileSync('output/products.csv', `,"${product[header] || ''}"`, {
+        encoding: 'utf8',
+        flag: 'a'
+      });
     }
     colIndex++;
   }

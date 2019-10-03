@@ -161,7 +161,4 @@ Network Trash Folder
 Temporary Items
 .apdisk
 **/node_modules
-oc-adm-util/products.csv
-oc-adm-util/products.json
-oc-adm-util/projects.csv
-oc-adm-util/projects.json
+oc-adm-util/output/*
