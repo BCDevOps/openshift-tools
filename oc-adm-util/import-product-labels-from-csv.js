@@ -10,6 +10,9 @@ const parse = require('csv-parse');
 // Create the parser
 const parser = parse({ delimiter: ',', columns: true });
 
+// Skip labels/annotation when applying changes:
+const ignoreFields = ['namespace', 'product-owner', 'product-lead'];
+
 // Use the readable stream api
 parser.on('readable', function() {
   let record;
@@ -21,7 +24,7 @@ parser.on('readable', function() {
       '--overwrite'
     ];
     for (let label of Object.keys(record)) {
-      if (label !== 'namespace') {
+      if (!ignoreFields.includes(label)) {
         /** @type {string} */
         const value = record[label];
         if (value.length > 0) {
