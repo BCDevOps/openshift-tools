@@ -10,7 +10,7 @@ const { spawnSync } = require('child_process');
 const proc = spawnSync('oc', [
   'get',
   'namespace',
-  '--selector=name,environment,mcio',
+  '--selector=name,environment',
   '--sort-by={.metadata.name}',
   '--output=json',
   '--no-headers=true'
