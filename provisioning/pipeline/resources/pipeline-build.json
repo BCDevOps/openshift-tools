@@ -25,6 +25,12 @@
             "github": {
               "secret": "${GITHUB_WEBHOOK_SECRET}"
             }
+          },
+          {
+            "type": "Generic",
+            "generic": {
+              "secret": "${GENERIC_WEBHOOK_SECRET}"
+            }
           }
         ],
         "runPolicy": "Parallel",
@@ -62,6 +68,13 @@
       "name": "GITHUB_WEBHOOK_SECRET",
       "displayName": "GitHub Webhook Secret",
       "description": "A secret string used to configure the GitHub webhook.",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{40}"
+    },
+    {
+      "name": "GENERIC_WEBHOOK_SECRET",
+      "displayName": "Generic Webhook Secret",
+      "description": "A secret string used to configure the Generic webhook.",
       "generate": "expression",
       "from": "[a-zA-Z0-9]{40}"
     },
