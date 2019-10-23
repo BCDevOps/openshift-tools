@@ -15,6 +15,12 @@
     - { label_name: name, label_value: "{{ project_name }}" }
     - { label_name: team, label_value: "{{ team_name }}" }
     - { label_name: product, label_value: "{{ product_name }}" }
+    - { label_name: team_type, label_value: "{{ team_type }}" }
+    - { label_name: bus_org_code, label_value: "{{ bus_org_code }}" }
+    - { label_name: bus_org_unit_code, label_value: "{{ bus_org_unit_code }}" }
+    - { label_name: mcio, label_value: "{{ mcio }}" }
+    - { label_name: miso, label_value: "{{ miso }}" }
+    - { label_name: mpo, label_value: "{{ mpo }}" }
 
 - name: Add Project Annotations
   command: >
@@ -25,6 +31,8 @@
     - { a_name: "openshift.io/description", a_value: "{{ project_description }}" }
     - { a_name: "product-lead", a_value: "{{ product_lead_email }}" }
     - { a_name: "product-owner", a_value: "{{ product_owner_email }}" }
+    - { a_name: "product-lead-rc-contact", a_value: "{{ product_lead_rc_username }}" }
+    - { a_name: "product-owner-rc-contact", a_value: "{{ product_owner_rc_username }}" }
 
 - name: Add Admin Users
   command: > 
