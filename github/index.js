@@ -100,6 +100,25 @@ const getInactiveUsers = async (org, expiryDate) => {
   }
 };
 
+/**
+ * Get the GitHub issue comments username
+ * @param {String} owner org of the issue
+ * @param {String} repo repo of the issue
+ * @param {String} issueNumber number of the issue
+ */
+const getReactions = async (owner, repo, issueNumber) => {
+  try {
+    const comments = await octokit.issues.listComments({
+      owner,
+      repo,
+      issue_number: issueNumber,
+    });
+    return comments.data.map(c => c.user.login);
+  } catch (err) {
+    throw err;
+  }
+}
+
 // Main:
 (async () => {
   const org = process.env.GITHUB_OWNER;
@@ -133,6 +152,19 @@ const getInactiveUsers = async (org, expiryDate) => {
       file,
       targetUsers,
     );
+
+    // get the users that have not yet replied to the ticket:
+    if (process.env.BCDEVOPS_ISSUE_OWNER && process.env.BCDEVOPS_ISSUE_REPO && process.env.BCDEVOPS_ISSUE_ID) {
+
+      const repliedUsers = await getReactions(process.env.BCDEVOPS_ISSUE_OWNER, process.env.BCDEVOPS_ISSUE_REPO, process.env.BCDEVOPS_ISSUE_ID);
+      const deleteUsers = targetUsers.filter(user => !repliedUsers.includes(user));
+  
+      console.log('The users that have replied:');
+      console.log(repliedUsers);
+      console.log('The users to be removed:');
+      console.log(deleteUsers);
+    }
+
   } catch (err) {
     console.error(err);
   }
