@@ -1,9 +1,9 @@
-from flask import Flask, request, render_template
-
+from flask import Flask, request
 app = Flask(__name__)
 
-@app.route('/')
-def dump_headers():
-    print(request.headers)
-
-    return render_template('header_dump.html')
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def dump_headers(path):
+  #print('{}\n\n'.format(request.method + ' ' + request.url))
+  #print(request.headers)
+  return '{}\n\nHEADERS:\n{}'.format(request.method + ' ' + request.url, str(request.headers)), 200, {'Content-Type': 'text/plain; charset=utf-8'}
