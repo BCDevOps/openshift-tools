@@ -1,0 +1,9 @@
+## Target ECS URLs
+objstore_admin_url: "https://ecs-api.objectstore.gov.bc.ca:4443"
+objstore_s3_url: "https://citz-dev-exchange.objectstore.gov.bc.ca"
+objstore_namespace: "citz-dev-exchange"
+
+## bucket to create
+OBC_name: test2
+OBC_project: jeff-tools
+OBC_type: platform

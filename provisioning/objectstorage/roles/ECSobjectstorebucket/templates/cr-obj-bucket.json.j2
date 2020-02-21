@@ -1,0 +1,13 @@
+{
+  "name": "{{ objectbucket.name }}",
+  "filesystem_enabled": "false",
+  "namespace": "{{ objstore_namespace }}",
+  "TagSet": [
+    {
+      "Key": "project",
+      "Value": "{{ objectbucket.tags.project }}"
+    }
+  ],
+  "is_encryption_enabled": "false",
+  "owner": "{{ objectbucket.name }}"
+}

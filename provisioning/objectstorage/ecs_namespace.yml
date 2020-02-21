@@ -1,0 +1,138 @@
+---
+- hosts: localhost
+  connection: local
+  become: false
+  gather_facts: no
+  vars:
+    action: unknown
+    ECS_cert_verify: "no"
+    objadmin:
+      name: "{{ lookup('env', 'ECS_ADMIN') }}"
+      token: "{{ lookup('env', 'ECS_ADMIN_TOKEN') }}"
+      project: "someprojectname"
+    sysadmin:
+      name: "{{ lookup('env', 'ECS_SYS_ADMIN') }}"
+      token: "{{ lookup('env', 'ECS_SYS_ADMIN_TOKEN') }}"
+    ns:
+      name: "ns2"
+      admins: "{{ objadmin.name }}"
+      bucket_default_block_quota: "2"
+      block_quota: "5"
+      encryption: "false"
+      allow_stale: "true"
+      enable_compliance: "false"
+      default_vpool: "rg1"
+      
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: login to admin
+      uri:
+        url: "{{ objstore_admin_url }}/login?using-cookies=true"
+        method: GET
+        user: "{{ sysadmin.name }}"
+        password: "{{ sysadmin.token }}"
+        status_code: 200
+        validate_certs: no
+      register: admin_login
+
+    - name: create namespace
+      uri:
+        url: "{{ objstore_admin_url }}/object/namespaces/namespace.json"
+        method: POST
+        validate_certs: "{{ ECS_cert_verify }}"
+        headers:
+          Cookie: "{{ admin_login.set_cookie }}"
+          Content-Type: "application/json"
+        body_format: json
+        body: "{{ lookup('template','create_namespace.json.j2') }}"
+      register: create_ns
+      changed_when: create_ns.status == 200
+      when: action == "provision"
+
+    - name: update namespace default Resource Group
+      uri:
+        url: "{{ objstore_admin_url }}/object/namespaces/namespace/{{ ns.name }}.json"
+        method: PUT
+        validate_certs: "{{ ECS_cert_verify }}"
+        headers:
+          Cookie: "{{ admin_login.set_cookie }}"
+          Content-Type: "application/json"
+        body_format: json
+        body: '{"default_data_services_vpool": "{{ ns.default_vpool }}"}'
+      register: update_ns
+      changed_when: update_ns.status == 200
+      when: action == "provision"
+
+    - name: update namespace quota
+      uri:
+        url: "{{ objstore_admin_url }}/object/namespaces/namespace/{{ ns.name }}/quota.json"
+        method: PUT
+        validate_certs: "{{ ECS_cert_verify }}"
+        headers:
+          Cookie: "{{ admin_login.set_cookie }}"
+          Content-Type: "application/json"
+        body_format: json
+        body: '{ "blockSize": "{{ ns.block_quota }}", "notificationSize": "" }'
+      register: update_ns
+      changed_when: update_ns.status == 200
+      when: action == "provision"
+
+    - name: get namespace
+      uri:
+        url: "{{ objstore_admin_url }}/object/namespaces/namespace/{{ ns.name }}.json"
+        method: GET
+        validate_certs: "{{ ECS_cert_verify }}"
+        headers:
+          Cookie: "{{ admin_login.set_cookie }}"
+          Content-Type: "application/json"
+      register: get_ns
+      changed_when: get_ns.status == 200
+      when: (action == "show") or (action == "provision")
+
+    - name: delete namespace
+      uri:
+        url: "{{ objstore_admin_url }}/object/namespaces/namespace/{{ ns.name }}/deactivate.json"
+        method: POST
+        validate_certs: "{{ ECS_cert_verify }}"
+        headers:
+          Cookie: "{{ admin_login.set_cookie }}"
+          Content-Type: "application/json"
+      register: delete_ns
+      changed_when: delete_ns.status == 200
+      when: action == "deprovision"
+
+    - name: show created
+      debug:
+        msg: "{{ create_ns }}"
+      when: action == "provision"
+    
+    - name: show updated
+      debug:
+        msg: "{{ update_ns }}"
+      when: action == "provision"
+
+    - name: show deleted
+      debug:
+        msg: "{{ delete_ns }}"
+      when: action == "deprovision"
+    
+    - name: show gotten
+      debug:
+        msg: "{{ get_ns }}"
+      when: (action == "show") or (action == "provision")
+
+
+      #    - name: Bucket Creation
+#      include_role:
+#        name: ECSobjectstorebucket
+#      vars:
+#        name: "{{ OBC_name }}"
+#        project: "{{ OBC_project }}"
+#        type: "{{ OBC_type }}"
+#    - name: Bucket Owner Debug
+#      debug:
+#        msg: "{{ s3_access_key_id }} / {{ s3_access_key_secret }}"
+
+

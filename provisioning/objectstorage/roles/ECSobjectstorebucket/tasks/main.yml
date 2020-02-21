@@ -1,0 +1,15 @@
+---
+- name: Check Admin Auth Cookie
+  assert:
+    that: 
+    - admin_login is defined
+    - admin_login.set_cookie is defined
+    - admin_login.set_cookie|length > 0
+    fail_msg: "You must login with admin credentials and set the admin_login.set_cookie value."
+    success_msg: "A value was found for the admin auth cookie"
+    quiet: true
+    
+- name: Include action tasks
+  include_tasks: "{{ action }}.yml"
+  when: admin_login.set_cookie|length > 0
+

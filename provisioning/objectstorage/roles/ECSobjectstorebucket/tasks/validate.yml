@@ -1,0 +1,15 @@
+---
+
+- name: list bucket
+  aws_s3:
+    bucket: "{{ objectbucket.name }}"
+    mode: list
+    s3_url: "{{ ECS_s3_url }}"
+    validate_certs: "{{ ECS_cert_verify }}"
+    aws_access_key: "{{ s3_access_key_id }}"
+    aws_secret_key: "{{ s3_access_key_secret }}"
+  register: bucket_info
+
+- name: show bucket
+  debug:
+    msg: "{{ bucket_info }}"

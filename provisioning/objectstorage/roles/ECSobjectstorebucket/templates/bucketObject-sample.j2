@@ -1,0 +1,14 @@
+{
+  "blockSize": "{{ bucket.hard_quota }}",
+  "name": "{{ bucket.name }}",
+  "filesystem_enabled": "false",
+  "namespace": "{{ objstore_namespace }}",
+  "TagSet": [
+    {
+      "Key": "project",
+      "Value": "{{ objectUser.project }}"
+    }
+  ],
+  "is_encryption_enabled": "false",
+  "owner": "{{ objectUser.name }}"
+}

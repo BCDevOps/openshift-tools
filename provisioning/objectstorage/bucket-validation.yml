@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  connection: local
+  become: false
+  gather_facts: no
+  vars: 
+    object_bucket:
+      name:
+      url:
+      s3_access_key_id:
+      s3_access_key_secret:
+  tasks:
+  - name: list S3 bucket
+    aws_s3:
+      bucket: "{{ objectbucket.name }}"
+      mode: list
+      s3_url: "{{ objectbucket.url }}"
+      validate_certs: "{{ ECS_cert_verify }}"
+      aws_access_key: "{{ objectbucket.s3_access_key_id }}"
+      aws_secret_key: "{{ objectbucket.s3_access_key_secret }}"
+    register: bucket_info
+
+  - name: show bucket
+    debug:
+      msg: "{{ bucket_info }}"
+
+

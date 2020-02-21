@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  connection: local
+  become: false
+  gather_facts: no
+  vars:
+    action: unknown
+    objadmin:
+      name: "{{ lookup('env', 'ECS_ADMIN') }}"
+      token: "{{ lookup('env', 'ECS_ADMIN_TOKEN') }}"
+  vars_files:
+    - vars.yml
+
+  tasks:
+    - name: login to admin
+      uri:
+        url: "{{ objstore_admin_url }}/login?using-cookies=true"
+        method: GET
+        user: "{{ objadmin.name }}"
+        password: "{{ objadmin.token }}"
+        status_code: 200
+        validate_certs: no
+      register: admin_login
+
+    - name: Bucket Creation
+      include_role:
+        name: ECSobjectstorebucket
+      vars:
+        name: "{{ OBC_name }}"
+        project: "{{ OBC_project }}"
+        type: "{{ OBC_type }}"
+#    - name: Bucket Owner Debug
+#      debug:
+#        msg: "{{ s3_access_key_id }} / {{ s3_access_key_secret }}"
+
+

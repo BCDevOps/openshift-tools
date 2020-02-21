@@ -1,0 +1,13 @@
+---
+# defaults file for objectserviceaccount
+
+objstore_namespace: ns1
+objectserviceaccount:
+  name: "{{ lookup('vars', 'name') }}"
+#  security_token: "{{ lookup('password', '/dev/null length=24 chars=ascii_letters,digits') }}"
+  security_token: "{{ token | default('') }}"
+  tags:
+    type: "{{ lookup('vars', 'type', default='Developer') }}"
+    project: "{{ lookup('vars', 'project') }}"
+
+

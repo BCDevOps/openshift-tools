@@ -1,0 +1,72 @@
+---
+- name: Create user
+  uri:
+    url: "{{ ECS_admin_url }}/object/users.json"
+    method: POST
+    validate_certs: "{{ ECS_cert_verify }}"
+    headers:
+      Cookie: "{{ admin_login.set_cookie }}"
+      Content-Type: "application/json"
+    body_format: json
+    body: "{{ lookup('template','cr-obj-user.json.j2') }}"
+  register: cruser
+  changed_when: cruser.status == 200
+
+### Save this for when we are examining/replacing existing tokens, for new users, this will fail.
+#- name: get token list for user
+#  uri:
+#    url: "{{ ECS_admin_url }}/object/user-secret-keys/{{ objectserviceaccount.name }}.json"
+#    method: GET
+#    return_content: yes
+#    validate_certs: "{{ ECS_cert_verify }}"
+#    headers:
+#      Cookie: "{{ admin_login.set_cookie }}"
+#  register: exToken
+#  ignore_errors: true
+
+- name: Create token for user
+  uri:
+    url: "{{ ECS_admin_url }}/object/user-secret-keys/{{ objectserviceaccount.name }}.json"
+    method: POST
+    validate_certs: "{{ ECS_cert_verify }}"
+    headers:
+      Cookie: "{{ admin_login.set_cookie }}"
+      Content-Type: "application/json"
+    body_format: json
+    body: "{{ lookup('template','cr-user-token.json.j2') }}"
+  register: crtoken
+  ignore_errors: true
+  changed_when: 
+     - crtoken.json.link.href
+     - crtoken.status == 200
+    
+- name: Set Owner Token facts
+  set_fact:
+    s3_access_key_id: "{{ objectserviceaccount.name }}"
+    s3_access_key_secret: "{{ crtoken.json.secret_key }}"
+
+- name: Check object user exists for bucket owner
+  uri:
+    url: "{{ ECS_admin_url }}/object/users/{{ name }}/info.json"
+    method: GET
+    validate_certs: "{{ ECS_cert_verify }}"
+    headers:
+      Cookie: "{{ admin_login.set_cookie }}"
+      Content-Type: "application/json"
+  register: ecsbucketowner
+
+- name: ECS Admin Create Bucket for user
+  uri:
+    url: "{{ ECS_admin_url }}/object/bucket.json"
+    method: POST
+    validate_certs: "{{ ECS_cert_verify }}"
+    headers:
+      Cookie: "{{ admin_login.set_cookie }}"
+      Content-Type: "application/json"
+    body_format: json
+    body: "{{ lookup('template','cr-obj-bucket.json.j2') }}"
+  register: ecsbucket
+  changed_when: ecsbucket.status == 200
+
+- name: validate bucket access
+  include_tasks: validate.yml

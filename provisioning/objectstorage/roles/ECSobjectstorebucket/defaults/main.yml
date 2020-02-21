@@ -1,0 +1,22 @@
+---
+# defaults file for ECSobjectstorebucket
+
+ECS_namespace: "{{ lookup('vars', 'objstore_namespace', default='ns1') }}"
+ECS_admin_url: "{{ lookup('vars', 'objstore_admin_url', default='https://sometest.com:4443') }}"
+ECS_s3_url: "{{ lookup('vars', 'objstore_s3_url', default='https://sometest.com:9021') }}"
+ECS_cert_verify: "{{ lookup('vars', 'objstore_cert_verify', default='no') }}"
+
+objectbucket:
+  name: "{{ lookup('vars', 'name') }}"
+  tags:
+    type: "{{ lookup('vars', 'type', default='Developer') }}"
+    project: "{{ lookup('vars', 'project') }}"
+
+objectserviceaccount:
+  name: "{{ lookup('vars', 'name') }}"
+  security_token: "{{ token | default('') }}"
+  tags:
+    type: "{{ lookup('vars', 'type', default='Developer') }}"
+    project: "{{ lookup('vars', 'project') }}"
+
+

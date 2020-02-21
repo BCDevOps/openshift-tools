@@ -1,0 +1,11 @@
+{ "user": "{{ objectserviceaccount.name }}",
+  "namespace": "{{ objstore_namespace }}",
+  "tags": [
+    { "name": "type",
+      "value": "{{ objectserviceaccount.tags.type }}"
+    },
+    { "name": "project",
+      "value": "{{ objectserviceaccount.tags.project }}"
+    }
+  ]
+}

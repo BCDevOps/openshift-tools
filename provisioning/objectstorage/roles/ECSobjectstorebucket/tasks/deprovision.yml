@@ -1,0 +1,25 @@
+---
+- name: ECS Admin Delete Bucket
+  uri:
+    url: "{{ ECS_admin_url }}/object/bucket/{{ objectbucket.name }}/deactivate.json?namespace={{ ECS_namespace }}"
+    method: POST
+    validate_certs: "{{ ECS_cert_verify }}"
+    headers:
+      Cookie: "{{ admin_login.set_cookie }}"
+      Content-Type: "application/json"
+  register: ecsbucket
+  changed_when: ecsbucket.status == 200
+
+- name: ECS Admin Delete Bucket Owner
+  uri:
+    url: "{{ ECS_admin_url }}/object/users/deactivate"
+    method: POST
+    return_content: yes
+    validate_certs: "{{ ECS_cert_verify }}"
+    headers:
+      Cookie: "{{ admin_login.set_cookie }}"
+      Content-Type: "application/json"
+    body_format: json
+    body: '{ "user": "{{ objectserviceaccount.name }}" }'
+  register: delowner
+  changed_when: delowner.status == 200
