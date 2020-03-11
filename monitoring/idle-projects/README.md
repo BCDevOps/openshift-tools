@@ -15,3 +15,11 @@ Our plan is to:
 6. for those that do not respond, we will spin down the pods to 0
 7. after a set amount of time (also TBD), we will archive the projects
 8. rinse and repeat on a regular basis (probably with automation later)
+
+## List Generation
+
+The following is a quick command that can be run to gather a list of namespaces that have *problem* pods in them, along with a count of the problem pods:
+
+``` bash
+oc get pods --all-namespaces | grep -v -e Completed -e Running -e NAMESPACE | awk '{print $1}' | uniq -c | sort -n
+```
