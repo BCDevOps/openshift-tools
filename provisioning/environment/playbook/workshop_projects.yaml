@@ -2,7 +2,7 @@
 - hosts: localhost
   become: false
   vars_files: 
-    vars.yaml
+    vars-local.yaml
   tasks:
     - name: Create Projects
       include_tasks: tasks/create_environments.yaml
