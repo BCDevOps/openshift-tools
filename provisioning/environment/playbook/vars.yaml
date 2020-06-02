@@ -9,15 +9,33 @@ environments:
   - dev
   - test
   - prod
-# Project admin using github id
+# 1. Project admin using github id:
 admin_user_gh: 
   - <github_id>
-display_name: 
+# 2. Project and team info:
 team_name: 
 product_name: 
+display_name: 
 project_description: 
 product_lead_email: 
 product_owner_email: 
+product_lead_rc_username: 
+product_owner_rc_username: 
+# 3. Team type if either Hybrid or Gov:
+team_type: 
+# 4. BC Gov Directory Info, available at https://dir.gov.bc.ca/
+# Based on the PO:
+bus_org_code: 
+bus_org_unit_code: 
+# Format: <orgCode>-<branchCode>
+mcio: 
+miso: 
+mpo: 
 
 # ------ Only used when deleting namespaces ------
-delete_project_name: 
+# delete_project_name: 
+
+# ------ Sample notification message ------
+# Project set created as `xxx-tools`, `xxx-dev`, `xxx-test`, `xxx-prod`. `xxx` is the admin of all four namespaces.
+# Please check at https://console.pathfinder.gov.bc.ca:8443/console/projects.
+# For network security policy setup, please refer to https://developer.gov.bc.ca/Trust-No-One.

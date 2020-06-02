@@ -88,7 +88,6 @@ parser.on('readable', function() {
     }
 
     projectSet.forEach(namespace => {
-      // apply labels:
       const args = [
         '--as=system:serviceaccount:openshift:bcdevops-admin',
         'label',

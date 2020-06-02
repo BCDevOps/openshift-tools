@@ -84,7 +84,6 @@ function update(namespace, resource) {
     //   product[keyName] = timestamps;
     // }
     // ------------------------------------
-
   }
   products.set(name, product);
 }
