@@ -21,14 +21,18 @@
 'use strict';
 
 import dotenv from 'dotenv';
+import config from './config';
+import { verifyAuth } from './utils/github';
 
 dotenv.config();
 
 // Main:
 (async () => {
+  const inputFile = './invite_users.txt';
+  const outputFile = './output/inactive_users.json';
+
   try {
-    const owner = process.env.GITHUB_OWNER;
-    console.log(owner);
+    await verifyAuth(config.get('github:owner'));
   } catch (err) {
     console.error(err);
   }
