@@ -25,7 +25,6 @@ const checkUserEvents = async (username, expiryDate) => {
 
     // Check for latest activity:
     if (date <= expiryDate) {
-      console.log(`@${username}`);
       return {
         username,
         expired: true,
@@ -101,6 +100,48 @@ const getInactiveUsers = async (org, expiryDate) => {
 };
 
 /**
+ * Add user to the repo for commenting
+ * @param {String} owner org of the issue
+ * @param {String} repo repo of the issue
+ * @param {String} users target users
+ */
+const addUserToRepo = async (owner, repo, users) => {
+  try {
+    for (let username of users) {
+      await octokit.repos.addCollaborator({
+        owner,
+        repo,
+        username,
+        permission: 'pull',
+      });
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+/**
+ * Remove user to the repo for commenting
+ * @param {String} owner org of the issue
+ * @param {String} repo repo of the issue
+ * @param {String} users target users
+ */
+const removeUserToRepo = async (owner, repo, users) => {
+  try {
+    for (let username of users) {
+      await octokit.repos.removeCollaborator({
+        owner,
+        repo,
+        username,
+      });
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+
+/**
  * Get the GitHub issue comments username
  * @param {String} owner org of the issue
  * @param {String} repo repo of the issue
@@ -140,30 +181,22 @@ const getReactions = async (owner, repo, issueNumber) => {
     // Get users inactive for three months:
     var expiryDate = new Date();
     expiryDate.setMonth(expiryDate.getMonth() - 3);
-    console.log(`------Inactive Users since ${expiryDate}-------`);
     const result = await getInactiveUsers(org, expiryDate);
-
+    
     // filter out the OPS team members:
     const opsTeamMember = await getOpsTeam(org, process.env.OPS_TEAM_NAME);
-    const targetUsers = result.inactiveUsers.filter(user => !opsTeamMember.includes(user));
+    const excludingUser = process.env.EXCLUDE_USER;
+    const targetUsers = result.inactiveUsers.filter(user => !opsTeamMember.includes(user) && user !== excludingUser);
+    
+    // Print out results:
+    console.log(`------Total user count in org ${org} is ${result.totalUser}, there are ${result.inactiveUser} inactive users.------\n`);
+    console.log(`------Inactive Users since ${expiryDate}-------`);
+    targetUsers.forEach(u => console.log(`@${u}`));
 
-    console.log(`------Total user count in org ${org} is ${result.totalUser}, there are ${result.inactiveUser} inactive users.------`);
     await fs.outputFile(
       file,
       targetUsers,
     );
-
-    // get the users that have not yet replied to the ticket:
-    if (process.env.BCDEVOPS_ISSUE_OWNER && process.env.BCDEVOPS_ISSUE_REPO && process.env.BCDEVOPS_ISSUE_ID) {
-
-      const repliedUsers = await getReactions(process.env.BCDEVOPS_ISSUE_OWNER, process.env.BCDEVOPS_ISSUE_REPO, process.env.BCDEVOPS_ISSUE_ID);
-      const deleteUsers = targetUsers.filter(user => !repliedUsers.includes(user));
-  
-      console.log('The users that have replied:');
-      console.log(repliedUsers);
-      console.log('The users to be removed:');
-      console.log(deleteUsers);
-    }
 
   } catch (err) {
     console.error(err);
