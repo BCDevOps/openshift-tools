@@ -200,3 +200,63 @@ export const getReactions = async (owner, repo, issueNumber) => {
     throw err;
   }
 };
+
+/**
+ * Check if GitHub username exist
+ * @param {String} username GitHub username
+ */
+export const checkUserExist = async username => {
+  try {
+    // check if user exists
+    const user = await octokit.users.getByUsername({
+      username,
+    });
+    if (user.status === 200) return 1;
+    return 0;
+  } catch (err) {
+    return 0;
+  }
+};
+
+/**
+ * Add a user to GitHub organization
+ * @param {String} username GitHub username
+ * @param {String} org GitHub Org
+ */
+export const addUserToOrg = async (username, org) => {
+  try {
+    const result = await octokit.orgs.addOrUpdateMembership({
+      org,
+      username,
+    });
+    console.log(`Invited user ${username} to ${org} with status ${result.status}`);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+/**
+ * Check if user have a membership in an org
+ * @param {String} username GitHub username
+ * @param {String} org GitHub Org
+ */
+export const detectUserMembership = async (username, org) => {
+  try {
+    // check if user in org
+    const membership = await octokit.orgs.checkMembership({
+      org,
+      username,
+    });
+    if (membership.status === 204) {
+      console.log(`${username} in ${org} is ${membership.status}`);
+    }
+    return 200;
+  } catch (err) {
+    // no membership:
+    if (err.status === 404) {
+      return 404;
+    }
+    console.error(err);
+    return 500;
+  }
+};
