@@ -24,19 +24,18 @@ import config from './config';
 import { getInactiveUsers, getOpsTeam, addUserToRepo, removeUserToRepo, getReactions } from './utils/github';
 
 /**
- * Get the GitHub issue comments username
+ * Notify inactive users
  * @param {String} org org of the issue
- * @param {String} repo repo of the issue
- * @param {String} issueNumber number of the issue
+ * @param {Int} inactivePeriod number of month
  * @param {String} outputFile path to output
  */
-export const notifyInactiveUsers = async (org, outputFile) => {
+export const notifyInactiveUsers = async (org, inactivePeriod = 3, outputFile) => {
   try {
     // TODO: Get users without 2FA:
 
     // Get users inactive for three months:
     var expiryDate = new Date();
-    expiryDate.setMonth(expiryDate.getMonth() - 3);
+    expiryDate.setMonth(expiryDate.getMonth() - inactivePeriod);
     const result = await getInactiveUsers(org, expiryDate);
     
     // filter out the OPS team members:
