@@ -198,6 +198,36 @@ const getReactions = async (owner, repo, issueNumber) => {
       targetUsers,
     );
 
+    // TODO: better ways for action input
+    // Manage target users access to the private notification repo:
+    if (process.env.USER_ACTION && process.env.NOTIFICATION_ISSUE_REPO) {
+      const repo = process.env.NOTIFICATION_ISSUE_REPO;
+      if (process.env.USER_ACTION === 'add') {
+        console.log(`Adding user to notification repo at ${repo}`);
+        await addUserToRepo(org, repo, targetUsers);
+        console.log('All users added.');
+      } else if (process.env.USER_ACTION === 'remove') {
+        console.log(`Removing users to notification repo at ${repo}`);
+        await removeUserToRepo(org, repo, targetUsers);
+        console.log('All users removed.');
+      } else {
+        console.log('Action not matching');
+      }
+    }
+
+    // get the users that have not yet replied to the ticket:
+    if (process.env.NOTIFICATION_ISSUE_OWNER && process.env.NOTIFICATION_ISSUE_REPO && process.env.NOTIFICATION_ISSUE_ID) {
+      console.log(`Check on target users response at ${process.env.NOTIFICATION_ISSUE_OWNER} - ${process.env.NOTIFICATION_ISSUE_REPO} - ${process.env.NOTIFICATION_ISSUE_ID}`);
+
+      const repliedUsers = await getReactions(process.env.NOTIFICATION_ISSUE_OWNER, process.env.NOTIFICATION_ISSUE_REPO, process.env.NOTIFICATION_ISSUE_ID);
+      const deleteUsers = targetUsers.filter(user => !repliedUsers.includes(user));
+  
+      console.log('The users that have replied:');
+      console.log(repliedUsers);
+      console.log('The users to be removed:');
+      console.log(deleteUsers);
+    }
+
   } catch (err) {
     console.error(err);
   }
