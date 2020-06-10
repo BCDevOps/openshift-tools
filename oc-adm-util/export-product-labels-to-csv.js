@@ -71,6 +71,19 @@ function update(namespace, resource) {
         }
       }
     }
+    // --------------- Optional fields: --------------------- 
+    // if (annotation == 'openshift.io/description') {
+    //   headers.set(annotation, true);
+    //   product[annotation] = annotations[annotation];
+    // }
+
+    // const timestamps = resource.metadata.creationTimestamp;
+    // if (timestamps) {
+    //   const keyName = 'creation';
+    //   headers.set(keyName, true);
+    //   product[keyName] = timestamps;
+    // }
+    // ------------------------------------
   }
   products.set(name, product);
 }

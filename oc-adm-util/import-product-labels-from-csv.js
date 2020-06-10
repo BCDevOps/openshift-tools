@@ -1,5 +1,5 @@
 /**
- * This script imports a CSV file and apply the labels to project sets
+ * This script imports a CSV file and apply the labels+annotations to project sets
  */
 
 'use strict';
@@ -17,6 +17,26 @@ const ignoreFields = [
   'environments',
   'product-owner',
   'product-lead'
+];
+
+// The fileds to apply for labels and annotations:
+const labelFields = [
+  'name',
+  'category',
+  'mcio',
+  'miso',
+  'mpo',
+  'bus_org_code',
+  'bus_org_unit_code',
+  'product',
+  'project_type',
+  'team',
+  'expiry',
+];
+
+const annotationFields = [
+  'product-owner',
+  'product-lead',
 ];
 
 // Use the readable stream api
@@ -39,14 +59,30 @@ parser.on('readable', function() {
 
     // update:
     const labelArgs = [];
-    for (let label of Object.keys(record)) {
-      if (!ignoreFields.includes(label)) {
+    const annotationArgs = [];
+
+    for (let fieldName of Object.keys(record)) {
+      // get all labels to add:
+      if (labelFields.includes(fieldName)) {
         /** @type {string} */
-        const value = record[label];
+        const value = record[fieldName];
         if (value.length > 0) {
-          labelArgs.push(`${label}=${record[label]}`);
+          labelArgs.push(`${fieldName}=${value}`);
         } else {
-          labelArgs.push(`${label}-`);
+          labelArgs.push(`${fieldName}-`);
+        }
+      }
+
+      // get all annotations to add:
+      // TODO: Skipping for now
+      if (annotationFields.includes(fieldName)) {
+        /** @type {string} */
+        const value = record[fieldName];
+        if (value.length > 0) {
+          annotationArgs.push(`${fieldName}=${value}`);
+        } else {
+          // do not remove annotations:
+          annotationArgs.push(`${label}-`);
         }
       }
     }

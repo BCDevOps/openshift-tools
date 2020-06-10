@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint --fix . && echo 'Lint complete.'"
+    "lint": "eslint --fix . && echo 'Lint complete.'",
+    "export-products": "node export-product-labels-to-csv.js",
+    "update-product-labels": "node import-product-labels-from-csv.js"
   },
   "author": "",
   "license": "Apache-2.0",
