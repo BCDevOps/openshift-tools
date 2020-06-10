@@ -2,10 +2,10 @@
   "name": "github-awesomer",
   "version": "1.0.0",
   "description": "GitHub Organization Management Tool",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "inspect": "node index.js",
+    "inspect": "babel-node src/index.js",
     "lint": "eslint --fix *.js ."
   },
   "repository": {
@@ -20,12 +20,18 @@
   "dependencies": {
     "@octokit/rest": "^16.35.0",
     "dotenv": "^8.2.0",
-    "fs-extra": "^8.1.0"
+    "fs-extra": "^8.1.0",
+    "minimist": "^1.2.5",
+    "nconf": "^0.10.0"
   },
   "devDependencies": {
-    "babel-eslint": "^10.0.3",
-    "eslint": "^6.7.2",
-    "eslint-plugin-prettier": "^3.1.1",
-    "prettier": "^1.19.1"
+    "@babel/cli": "^7.10.1",
+    "@babel/core": "^7.10.2",
+    "@babel/node": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.16.0",
+    "eslint-plugin-prettier": "^3.1.0",
+    "prettier": "^1.17.1"
   }
 }
