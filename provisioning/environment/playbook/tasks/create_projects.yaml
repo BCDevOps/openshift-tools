@@ -14,6 +14,7 @@
     - { label_name: environment, label_value: "{{ env }}" }
     - { label_name: name, label_value: "{{ project_name }}" }
     - { label_name: team, label_value: "{{ team_name }}" }
+    - { label_name: product_group, label_value: "{{ product_group }}" }
     - { label_name: product, label_value: "{{ product_name }}" }
     - { label_name: team_type, label_value: "{{ team_type }}" }
     - { label_name: bus_org_code, label_value: "{{ bus_org_code }}" }
@@ -33,6 +34,7 @@
     - { a_name: "product-owner", a_value: "{{ product_owner_email }}" }
     - { a_name: "product-lead-rc-contact", a_value: "{{ product_lead_rc_username }}" }
     - { a_name: "product-owner-rc-contact", a_value: "{{ product_owner_rc_username }}" }
+    - { a_name: "other-contacts", a_value: "{{ other_contacts }}" }
 
 - name: Add Admin Users
   command: > 
