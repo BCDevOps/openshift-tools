@@ -21,7 +21,7 @@
     "@octokit/rest": "^16.35.0",
     "dotenv": "^8.2.0",
     "fs-extra": "^8.1.0",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "nconf": "^0.10.0"
   },
   "devDependencies": {
